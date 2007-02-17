@@ -1,0 +1,88 @@
+from __future__ import division
+import md5, urllib, time
+from sets import Set
+from StringIO import StringIO
+from twisted.application import internet, service
+from nevow import appserver
+from nevow import loaders, rend, static, tags as T
+import Image
+
+def thumb(localURL, maxSize=100):
+
+    cksum = md5.new(localURL + "?size=%s" % maxSize).hexdigest()
+    
+    print "resizing", localURL
+    try:
+        f = open("/my/pic/digicam/~thumb/%s" % cksum)
+    except IOError:
+        pass
+    else:
+        return f.read()
+    
+    fullimg = StringIO(urllib.urlopen(localURL).read())
+    img = Image.open(fullimg)
+    img.thumbnail((maxSize, maxSize))
+    jpg = StringIO()
+    jpg.name = localURL
+    q = 75
+    if maxSize == 100:
+        q = 40
+    img.save(jpg, quality=q, optimize=True)
+    open("/my/pic/digicam/~thumb/%s" % cksum, "w").write(jpg.getvalue())
+    return jpg.getvalue()
+
+class ImagePage(rend.Page):
+    def __init__(self, uri):
+        self.uri = uri
+
+    def render_large(self, ctx, data):
+        return T.img(src=self.uri.replace('file:/my/pic','') + '?size=large')
+    
+    docFactory = loaders.stan(T.html[T.body[
+        'ho', T.directive("large"),
+        ]])
+
+class Main(rend.Page):
+    docFactory = loaders.stan(T.html[T.body[
+
+T.h2["index_html"],
+T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
+
+        ]])
+    
+    def __init__(self):
+        return
+        self.thumb = {} # urlmd5 : small jpeg
+        self.urlmd5 = {} # urlmd5 : local uri
+
+        for local in graph.objects(None, PR['localFile']):
+            self.urlmd5[md5.md5(local).hexdigest()] = local
+        
+
+
+    def locateChild(self, ctx, segments):
+        if segments[0] == 'digicam':
+            # danger, user data!
+            filename = 'file:/my/pic/digicam/' + '/'.join(segments[1:])
+            cksum = md5.new(filename).hexdigest()
+
+            if ctx.arg('page'):
+                return ImagePage(filename), ()
+
+            size = {'thumb' : 100,
+                    'medium' : 250,
+                    'large' : 600}.get(ctx.arg('size'), 100)
+
+            jpg = thumb(filename, size)
+            
+            return static.Data(jpg, "image/jpeg"), ()
+
+        else:
+            return ''
+            return rend.Page.locateChild(self, ctx, segments)
+
+
+
+application = service.Application('photo')
+webServer = internet.TCPServer(8086, appserver.NevowSite(Main()))
+webServer.setServiceParent(application)

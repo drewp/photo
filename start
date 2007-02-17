@@ -1,0 +1,3 @@
+#!/bin/sh
+cd /my/site/photo
+exec twistd -noy serve
