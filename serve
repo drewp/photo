@@ -7,6 +7,8 @@ from nevow import appserver
 from nevow import loaders, rend, static, tags as T
 import Image
 
+class Full(object): pass
+
 def thumb(localURL, maxSize=100):
 
     cksum = md5.new(localURL + "?size=%s" % maxSize).hexdigest()
@@ -18,9 +20,17 @@ def thumb(localURL, maxSize=100):
         pass
     else:
         return f.read()
-    
-    fullimg = StringIO(urllib.urlopen(localURL).read())
-    img = Image.open(fullimg)
+
+    # localURL like http://photo.bigasterisk.com/digicam/housewarm/00023.jpg
+    #         means /my/pic/digicam/housewarm/00023.jpg
+    assert localURL.startswith("http://photo.bigasterisk.com/")
+    localPath = "/my/pic/" + localURL[len("http://photo.bigasterisk.com/"):]
+    print localPath
+
+    if maxSize is Full:
+        return open(localPath).read()
+
+    img = Image.open(localPath)
     img.thumbnail((maxSize, maxSize))
     jpg = StringIO()
     jpg.name = localURL
@@ -63,22 +73,24 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
     def locateChild(self, ctx, segments):
         if segments[0] == 'digicam':
             # danger, user data!
-            filename = 'file:/my/pic/digicam/' + '/'.join(segments[1:])
-            cksum = md5.new(filename).hexdigest()
+            uri = "http://photo.bigasterisk.com/digicam/" + '/'.join(segments[1:])
+
+            if uri not in map(str.strip, open("allowed.urls").readlines()):
+                return "access denied", []
 
             if ctx.arg('page'):
-                return ImagePage(filename), ()
+                return ImagePage(uri), ()
 
             size = {'thumb' : 100,
                     'medium' : 250,
-                    'large' : 600}.get(ctx.arg('size'), 100)
+                    'large' : 600,
+                    'full' : Full}.get(ctx.arg('size'), 100)
 
-            jpg = thumb(filename, size)
+            jpg = thumb(uri, size)
             
             return static.Data(jpg, "image/jpeg"), ()
 
         else:
-            return ''
             return rend.Page.locateChild(self, ctx, segments)
 
 
