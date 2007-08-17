@@ -1,0 +1,13 @@
+@prefix : <http://photo.bigasterisk.com/0.1/> .
+@prefix place: <http://photo.bigasterisk.com/2007/place/> .
+@prefix event: <http://photo.bigasterisk.com/2007/event/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix pers: <http://photo.bigasterisk.com/2007/person/> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+pers:matthew a foaf:Person;
+  foaf:name "Matthew Rehrer" .
+
+place:home a :Place;
+ rdfs:label "home" .
