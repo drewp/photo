@@ -1,0 +1,14 @@
+@prefix : <http://photo.bigasterisk.com/0.1/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+:viewableBy rdfs:comment "what group this resource may be served to" .
+
+:friends 
+  rdfs:comment "people who we trust with data, anything above anonymous" .
+
+:anyone
+  rdfs:comment "anyone, including anonymous users" .
+
+
+:Event rdfs:label "Event" .

@@ -1,56 +1,58 @@
 from __future__ import division
-import md5, urllib, time
+import sys, os, md5, urllib, time, logging
 from sets import Set
 from StringIO import StringIO
 from twisted.application import internet, service
-from nevow import appserver
+from nevow import appserver, inevow
 from nevow import loaders, rend, static, tags as T
 import Image
+from photos import Full, thumb
+from rdflib.Graph import ConjunctiveGraph
+from rdflib import Namespace, RDF, RDFS
+sys.path.append("/my/proj/ffg/sparqlhttp")
+from sparqlhttp.syncimport import SyncImport
+from sparqlhttp.dictquery import Graph2
 
-class Full(object): pass
+log = logging.getLogger()
 
-def thumb(localURL, maxSize=100):
+PHO = Namespace("http://photo.bigasterisk.com/0.1/")
+SITE = Namespace("http://photo.bigasterisk.com/")
+FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 
-    cksum = md5.new(localURL + "?size=%s" % maxSize).hexdigest()
-    
-    print "resizing", localURL
-    try:
-        f = open("/my/pic/digicam/~thumb/%s" % cksum)
-    except IOError:
-        pass
-    else:
-        return f.read()
-
-    # localURL like http://photo.bigasterisk.com/digicam/housewarm/00023.jpg
-    #         means /my/pic/digicam/housewarm/00023.jpg
-    assert localURL.startswith("http://photo.bigasterisk.com/")
-    localPath = "/my/pic/" + localURL[len("http://photo.bigasterisk.com/"):]
-    print localPath
-
-    if maxSize is Full:
-        return open(localPath).read()
-
-    img = Image.open(localPath)
-    img.thumbnail((maxSize, maxSize))
-    jpg = StringIO()
-    jpg.name = localURL
-    q = 75
-    if maxSize == 100:
-        q = 40
-    img.save(jpg, quality=q, optimize=True)
-    open("/my/pic/digicam/~thumb/%s" % cksum, "w").write(jpg.getvalue())
-    return jpg.getvalue()
+class SyncImportFast(SyncImport):
+    def allInputFiles(self):
+        # faster to cull files more, here
+        for root, dirs, files in os.walk(self.inputDirectory):
+            for filename in files:
+                # the dot hides emacs partial-save files, which i
+                # didn't notice anyway
+                if not filename.endswith(".n3") or filename.startswith('.'):
+                    continue
+                filename = os.path.join(root, filename)
+                yield filename
 
 class ImagePage(rend.Page):
-    def __init__(self, uri):
-        self.uri = uri
+    def __init__(self, graph, uri):
+        self.graph, self.uri = graph, uri
 
     def render_large(self, ctx, data):
         return T.img(src=self.uri.replace('file:/my/pic','') + '?size=large')
     
     docFactory = loaders.stan(T.html[T.body[
-        'ho', T.directive("large"),
+        'page', T.directive("large"),
         ]])
+
+class StaticCached(static.Data):
+    """
+    from http://twistedmatrix.com/pipermail/twisted-web/2005-March/001358.html
+    """
+    def __init__(self, data, mime, mtime):
+        self.mtime = mtime
+        static.Data.__init__(self, data, mime)
+    def renderHTTP(self, ctx):
+        request = inevow.IRequest(ctx)
+        request.setLastModified(self.mtime)
+        return static.Data.renderHTTP(self, ctx)
 
 class Main(rend.Page):
     docFactory = loaders.stan(T.html[T.body[
@@ -60,8 +62,10 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
 
         ]])
     
-    def __init__(self):
+    def __init__(self, graph):
+        self.graph = graph
         return
+    
         self.thumb = {} # urlmd5 : small jpeg
         self.urlmd5 = {} # urlmd5 : local uri
 
@@ -69,32 +73,61 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
             self.urlmd5[md5.md5(local).hexdigest()] = local
         
 
+    def viewable(self, uri):
+        # someday this will also get the login/auth stuff for a better check
+
+        return (self.graph.contains((uri, PHO['viewableBy'], PHO['friends']))
+             or self.graph.contains((uri, PHO['viewableBy'], PHO['anyone'])))
+        #if uri not in map(str.strip, open("allowed.urls").readlines()):
 
     def locateChild(self, ctx, segments):
-        if segments[0] == 'digicam':
-            # danger, user data!
-            uri = "http://photo.bigasterisk.com/digicam/" + '/'.join(segments[1:])
+        # danger, user data!
+        uri = SITE['/'.join(segments)]
+        log.debug("fetch uri %s", uri)
+        if segments[0] in ['digicam', 'phonecam']:
+            if self.graph.contains((uri, RDF.type, FOAF['Image'])):
+                if not self.viewable(uri):
+                    return "access denied", []
 
-            if uri not in map(str.strip, open("allowed.urls").readlines()):
-                return "access denied", []
+                if ctx.arg('page'):
+                    return ImagePage(graph, uri), ()
 
-            if ctx.arg('page'):
-                return ImagePage(uri), ()
+                reqSize = ctx.arg('size')
+                size = {'thumb' : 100,
+                        'medium' : 250,
+                        'large' : 600,
+                        'full' : Full}.get(reqSize, 100)
 
-            size = {'thumb' : 100,
-                    'medium' : 250,
-                    'large' : 600,
-                    'full' : Full}.get(ctx.arg('size'), 100)
+                jpg, mtime = thumb(uri, size)
 
-            jpg = thumb(uri, size)
-            
-            return static.Data(jpg, "image/jpeg"), ()
+                return StaticCached(jpg, "image/jpeg", mtime), ()
 
-        else:
-            return rend.Page.locateChild(self, ctx, segments)
+        if segments[0] in ['2007']:
+            if self.graph.contains((uri, RDF.type, PHO['Event'])):
+                import imageSet
+                reload(imageSet)
+                return imageSet.ImageSet(ctx, graph, uri), ()
 
+        return rend.Page.locateChild(self, ctx, segments)
+
+    def child_events(self, ctx):
+        import search
+        reload(search)
+        return search.Events(ctx, graph)
+
+logging.basicConfig(level=logging.INFO)
+
+
+graph = Graph2(ConjunctiveGraph(), initNs=dict(foaf=FOAF, rdfs=RDFS))
+sync = SyncImportFast(graph, inputDirectory='/my/pic/',
+                      contextPrefix="http://photo.bigasterisk.com/",
+                      pollSeconds=8)
+
+sync2 = SyncImport(graph, inputDirectory=os.path.abspath("input/"),
+                   contextPrefix="http://photo.bigasterisk.com/internal/",
+                   pollSeconds=8)
 
 
 application = service.Application('photo')
-webServer = internet.TCPServer(8086, appserver.NevowSite(Main()))
+webServer = internet.TCPServer(8086, appserver.NevowSite(Main(graph)))
 webServer.setServiceParent(application)

@@ -1,0 +1,40 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:n="http://nevow.com/ns/nevow/0.1">
+  <head>
+    <!-- if we're on a phone screen, things should shrink accordingly -->
+    <style type="text/css">
+      body {
+      background: black;
+      color: white;
+      }
+      h1 {
+        font-size: 110%;
+      }
+      h2 {
+        font-size: 105%;
+      }
+a {
+  color: #ccf;
+} 
+div {
+  margin-left: 2em;
+}
+div.imageInfo {
+  margin: 1em;
+  padding: 1em;
+position: relative; 
+display:inline;
+  border: 1px solid gray;
+}
+img {
+  border: 1px solid #668;
+}  
+    </style>
+    <title>Search</title>
+  </head>
+  <body>
+    <h1>Search</h1>
+
+    <n:invisible n:render="topics"/>
+
+  </body>
+</html>
