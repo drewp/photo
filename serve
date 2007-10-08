@@ -103,7 +103,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
                 return StaticCached(jpg, "image/jpeg", mtime), ()
 
         if segments[0] in ['2007']:
-            if self.graph.contains((uri, RDF.type, PHO['Event'])):
+            if self.graph.contains((uri, RDF.type, PHO['Event'])) or self.graph.contains((uri, RDF.type, PHO['Place'])):
                 import imageSet
                 reload(imageSet)
                 return imageSet.ImageSet(ctx, graph, uri), ()

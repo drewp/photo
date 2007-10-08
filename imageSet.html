@@ -2,16 +2,20 @@
   <head>
     <!-- if we're on a phone screen, things should shrink accordingly -->
     <style type="text/css">
-      body {
-      background: black;
-      color: white;
-      }
-      h1 {
-        font-size: 110%;
-      }
-      h2 {
-        font-size: 105%;
-      }
+* {
+font-family: sans-serif;
+
+}
+body {
+  background: black;
+  color: white;
+}
+h1 {
+  font-size: 110%;
+}
+h2 {
+  font-size: 105%;
+}
 a {
   color: #ccf;
 } 
@@ -21,18 +25,26 @@ div {
 div.imageInfo {
   margin: 1em;
   padding: 1em;
-position: relative; 
-display:inline;
+  position: relative; 
+  display:inline;
   border: 1px solid gray;
 }
 img {
   border: 1px solid #668;
 }  
+div.intro {
+  border: 1px solid gray;
+  padding-left: 1em;
+  margin-right: 10%;
+  background: #502000;
+}
     </style>
     <title><n:invisible n:render="title"/></title>
   </head>
   <body>
     <h1>Results for <span class="tag"><n:invisible n:render="setLabel"/></span></h1>
+
+    <div class="intro" n:render="intro"></div>
 
     <div>
       <h2><n:invisible n:render="currentLabel">Mark and Stephanie play Magic [1 of 16]</n:invisible></h2>

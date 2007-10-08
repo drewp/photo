@@ -51,7 +51,6 @@ class ImageSet(rend.Page):
         for photo in self.photos:
             data, mtime = thumb(photo, maxSize=Full)
             zf.writestr(str(photo.split('/')[-1]), data)
-            break
 
         zf.close()
         request = inevow.IRequest(ctx)
@@ -66,6 +65,14 @@ class ImageSet(rend.Page):
         
     def render_title(self, ctx, data):
         return self.graph.label(self.uri)
+
+    def render_intro(self, ctx, data):
+        intro = self.graph.value(self.uri, PHO['intro'])
+        if intro is not None:
+            intro = intro.replace(r'\n', '\n') # rdflib parse bug?
+            return ctx.tag[T.raw(intro)]
+        else:
+            return ''
     
     def render_setLabel(self, ctx, data):
         return self.graph.label(self.uri)
