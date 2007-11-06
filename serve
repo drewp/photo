@@ -93,7 +93,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
                     return ImagePage(graph, uri), ()
 
                 reqSize = ctx.arg('size')
-                size = {'thumb' : 100,
+                size = {'thumb' : 50,
                         'medium' : 250,
                         'large' : 600,
                         'full' : Full}.get(reqSize, 100)

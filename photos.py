@@ -38,8 +38,8 @@ def thumb(localURL, maxSize=100):
     jpg = StringIO()
     jpg.name = localURL
     q = 75
-    if maxSize == 100:
-        q = 20
-    img.save(jpg, quality=q, optimize=True)
+    if maxSize <= 100:
+        q = 40
+    img.save(jpg, quality=q)
     open(thumbPath, "w").write(jpg.getvalue())
     return jpg.getvalue(), time.time()

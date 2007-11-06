@@ -11,3 +11,4 @@ pers:matthew a foaf:Person;
 
 place:home a :Place;
  rdfs:label "home" .
+

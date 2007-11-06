@@ -1,0 +1,47 @@
+
+OK phonecam accessable
+
+OK phonecam urls
+
+OK tag mark's party
+
+OK fake results page
+
+OK working results page
+
+OK zip file
+
+proper ACL with opaque url for mark's party
+
+quick update ajax in the page
+
+rotations, like http://photo.bigasterisk.com/2007/place/bedroom?current=http://photo.bigasterisk.com/digicam/dl-2007-11-04/IMG_0458.JPG
+
+
+semantic radar should find stuff
+
+any page should be tabulatorable
+
+put flickr pics in my results, and display them in the page
+
+serve pics fast. multi-pass?
+
+imageSet, for nonviewable pic, should draw something better than brokenimage
+
+URLs:
+  any photo 
+    http://photo.bigasterisk.com/phonecam/Photo_071407_019.jpg?size=full&page=1
+  set based on tag,person,place,etc:
+    http://photo.bigasterisk.com/2007/event/markBachelorParty
+  allow short versions that redirect?
+    http://photo.bigasterisk.com/markBachelorParty
+
+  index page
+    http://photo.bigasterisk.com/events
+
+
+Looks:
+http://www.digitalblasphemy.com/fshow.shtml?i=summerwood&w=1152&h=864&y=2005&n=Summerwood&b=count&z=
+http://www.crestock.com/uploads/blog/wallpapers/crestock-50599-1024x768.jpg
+http://www.digitalblasphemy.com/fshow.shtml?i=verdure&w=1152&h=864&y=2006&n=Verdure&b=count&z=
+
