@@ -1,9 +1,8 @@
 from __future__ import division
-import sys, os, md5, urllib, time, logging, zipfile
+import logging, zipfile
 from StringIO import StringIO
-from twisted.application import internet, service
-from nevow import loaders, rend, static, tags as T, inevow
-from rdflib import Namespace, RDF, RDFS, Variable, URIRef
+from nevow import loaders, rend, tags as T, inevow
+from rdflib import Namespace, Variable, URIRef
 from zope.interface import implements
 from twisted.python.components import registerAdapter, Adapter
 from photos import Full, thumb
@@ -28,7 +27,6 @@ class ImageSet(rend.Page):
     docFactory = loaders.xmlfile("imageSet.html")
     def __init__(self, ctx, graph, uri):
         self.graph, self.uri = graph, uri
-
         q = self.graph.queryd("""SELECT ?photo WHERE {
                                    ?photo foaf:depicts ?u
                                  }""",
@@ -42,6 +40,11 @@ class ImageSet(rend.Page):
 
     def renderHTTP(self, ctx):
         if ctx.arg('archive') == 'zip':
+            request = inevow.IRequest(ctx)
+            ua = request.getHeader('User-agent')
+            if 'Googlebot' in ua or 'Yahoo! Slurp' in ua:
+                raise ValueError("bots, you don't want these huge zip files")
+
             return self.archiveZip(ctx)
         return rend.Page.renderHTTP(self, ctx)
 
