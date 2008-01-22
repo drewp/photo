@@ -38,15 +38,21 @@ div.intro {
   margin-right: 10%;
   background: #502000;
 }
+span.imageLink {
+  color: #666;
+}
+div.featured {
+  margin-bottom: 1em;
+}
     </style>
     <title><n:invisible n:render="title"/></title>
   </head>
   <body>
-    <h1>Results for <span class="tag"><n:invisible n:render="setLabel"/></span></h1>
+    <h1>Pictures of <span class="tag"><n:invisible n:render="setLabel"/></span></h1>
 
     <div class="intro" n:render="intro"></div>
 
-    <div>
+    <div class="featured">
       <h2><n:invisible n:render="currentLabel">Mark and Stephanie play Magic [1 of 16]</n:invisible></h2>
       <div>
 	<img width="500" height="300" alt="Mark and Stephanie" n:render="featured"/>
@@ -60,6 +66,8 @@ div.intro {
 
       </div>
     </div>
+
+    <div><span class="imageLink">Link to this image: <n:invisible n:render="link"/></span></div>
 
     <div>
       <h2>All photos in set:</h2>
@@ -80,6 +88,21 @@ div.intro {
 	 <h2>Related</h2>
 	 
 	 </div>-->
+
+    <script type="text/javascript" src="/static/prototype-1.6.js"></script>
+    <script type="text/javascript" n:render="prevNextJs"/>
+    <script type="text/javascript">
+      Event.observe(window, 'keypress', function(event) { 
+        var k = event.keyCode;
+        if (k == Event.KEY_LEFT) {
+          document.location = "?current=" + arrowPages.prev;
+        } else if (k == Event.KEY_RIGHT) {
+          document.location = "?current=" + arrowPages.next;
+        } else if (k == Event.KEY_UP) {
+          document.location = "/events";
+        }
+      });
+    </script>
 
   </body>
 </html>

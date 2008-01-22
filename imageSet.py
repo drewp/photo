@@ -28,7 +28,8 @@ class ImageSet(rend.Page):
     def __init__(self, ctx, graph, uri):
         self.graph, self.uri = graph, uri
         q = self.graph.queryd("""SELECT ?photo WHERE {
-                                   ?photo foaf:depicts ?u
+                                   ?photo foaf:depicts ?u ;
+                                          pho:viewableBy pho:friends .
                                  }""",
                               initBindings={Variable('?u') : self.uri})
 
@@ -42,11 +43,17 @@ class ImageSet(rend.Page):
         if ctx.arg('archive') == 'zip':
             request = inevow.IRequest(ctx)
             ua = request.getHeader('User-agent')
-            if 'Googlebot' in ua or 'Yahoo! Slurp' in ua:
+            if 'Googlebot' in ua or 'Yahoo! Slurp' in ua or 'http://search.msn.com/msnbot.htm' in ua:
                 raise ValueError("bots, you don't want these huge zip files")
 
             return self.archiveZip(ctx)
-        return rend.Page.renderHTTP(self, ctx)
+        ret = rend.Page.renderHTTP(self, ctx)
+        return ret
+
+    def render_zipSizeWarning(self, ctx, data):
+        mb = 17.3 / 9 * len(self.photos)
+        secs = mb * 1024 / 40 
+        return "(file will be roughly %d MB and take %d mins to download)" % (mb, secs / 60)
 
     def archiveZip(self, ctx):
         f = StringIO('')
@@ -91,7 +98,15 @@ class ImageSet(rend.Page):
         return self.photos
     
     def render_thumb(self, ctx, data):
-        return T.a(href=["?current=", data])[T.img(src=[data, "?size=thumb"])]
+        if data == self.currentPhoto:
+            return T.span(style="position: relative")[
+                T.span["["],
+                T.img(src=[data, "?size=thumb"], border=5),
+                #T.img(style="position: absolute; left: 0; opacity: .99; width: 60", # without opac, firefox doesn't draw the overlay until you click another img :(
+                #      src="/static/thumb-arrow.png")
+                T.span["]"],
+                ]
+        return T.span(style="position: relative")[T.a(href=["?current=", data])[T.img(src=[data, "?size=thumb"])]]
 
     def render_featured(self, ctx, data):
         return T.a(href=[self.currentPhoto, "?size=full"])[T.img(src=[self.currentPhoto, "?size=large"],
@@ -99,3 +114,14 @@ class ImageSet(rend.Page):
 
     def render_zipUrl(self, ctx, data):
         return [self.uri, "?archive=zip"]
+
+    def render_link(self, ctx, data):
+        return '<img src="%s?size=large"/>' % self.currentPhoto
+
+    def render_prevNextJs(self, ctx, data):
+        i = self.photos.index(self.currentPhoto)
+        
+        return ctx.tag['var arrowPages = {prev : "%s", next : "%s"}' %
+                       (self.photos[max(0, i - 1)],
+                        self.photos[min(len(self.photos) - 1, i + 1)])]
+    

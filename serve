@@ -3,6 +3,7 @@ import sys, os, md5, urllib, time, logging
 from sets import Set
 from StringIO import StringIO
 from twisted.application import internet, service
+from twisted.python.util import sibpath
 from nevow import appserver, inevow
 from nevow import loaders, rend, static, tags as T
 import Image
@@ -102,11 +103,13 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
 
                 return StaticCached(jpg, "image/jpeg", mtime), ()
 
-        if segments[0] in ['2007']:
-            if self.graph.contains((uri, RDF.type, PHO['Event'])) or self.graph.contains((uri, RDF.type, PHO['Place'])):
+        if segments[0] in ['2006', '2007']:
+            its = lambda o: self.graph.contains((uri, RDF.type, o))
+            if its(PHO['Event']) or its(PHO['Place']) or its(PHO['Person']):
                 import imageSet
                 reload(imageSet)
                 return imageSet.ImageSet(ctx, graph, uri), ()
+            print "uri %r not a searchable set" % uri
 
         return rend.Page.locateChild(self, ctx, segments)
 
@@ -115,17 +118,20 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         reload(search)
         return search.Events(ctx, graph)
 
+    def child_static(self, ctx):
+        return static.File(sibpath(__file__, "static"))
+
 logging.basicConfig(level=logging.INFO)
 
 
-graph = Graph2(ConjunctiveGraph(), initNs=dict(foaf=FOAF, rdfs=RDFS))
+graph = Graph2(ConjunctiveGraph(), initNs=dict(foaf=FOAF, rdfs=RDFS, pho=PHO))
 sync = SyncImportFast(graph, inputDirectory='/my/pic/',
                       contextPrefix="http://photo.bigasterisk.com/",
-                      pollSeconds=8)
+                      pollSeconds=15)
 
 sync2 = SyncImport(graph, inputDirectory=os.path.abspath("input/"),
                    contextPrefix="http://photo.bigasterisk.com/internal/",
-                   pollSeconds=8)
+                   pollSeconds=15)
 
 
 application = service.Application('photo')
