@@ -139,7 +139,6 @@ class ImageSet(rend.Page):
         # copied from what flickr emits
         request.setHeader("Content-Type", "text/xml; charset=utf-8")
 
-
         items = []
         for pic in self.photos:
             content = pic + '?size=large'

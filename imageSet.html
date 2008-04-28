@@ -63,6 +63,13 @@ img.current {
   <body>
     <h1>Pictures of <span class="tag"><n:invisible n:render="setLabel"/></span></h1>
 
+    <div>
+      <a href="javascript:PicLensLite.start();">View as slideshow 
+      <img src="http://lite.piclens.com/images/PicLensButton.png" 
+	   alt="PicLens" width="16" height="12" border="0" 
+	   align="absmiddle" /></a>
+    </div>
+
     <div class="intro" n:render="intro"></div>
 
     <div class="featured">
@@ -98,14 +105,6 @@ img.current {
       Download a <a rel="nofollow"><n:attr name="href"><n:invisible n:render="zipUrl"/></n:attr>.zip file of the full size images on this page</a> <n:invisible n:render="zipSizeWarning"/>
     </div>
 
-
-<div>
-<h2>Slideshow</h2>
-      <a href="javascript:PicLensLite.start();">PicLens Lite 
-          <img src="http://lite.piclens.com/images/PicLensButton.png" 
-          alt="PicLens" width="16" height="12" border="0" 
-          align="absmiddle" /></a>
-</div>
 
     <!--    <div>
 	 <h2>Related</h2>
