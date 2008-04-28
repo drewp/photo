@@ -1,5 +1,9 @@
 from __future__ import division
 import sys, os, md5, urllib, time, logging
+
+# from /usr/share/doc/python-xml/changelog.Debian.gz
+sys.path.append('/usr/lib/python%s/site-packages/oldxml' % sys.version[:3])
+
 from sets import Set
 from StringIO import StringIO
 from twisted.application import internet, service
@@ -125,13 +129,19 @@ logging.basicConfig(level=logging.INFO)
 
 
 graph = Graph2(ConjunctiveGraph(), initNs=dict(foaf=FOAF, rdfs=RDFS, pho=PHO))
-sync = SyncImportFast(graph, inputDirectory='/my/pic/',
-                      contextPrefix="http://photo.bigasterisk.com/",
-                      pollSeconds=15)
+syncs = []
 
-sync2 = SyncImport(graph, inputDirectory=os.path.abspath("input/"),
-                   contextPrefix="http://photo.bigasterisk.com/internal/",
-                   pollSeconds=15)
+syncs.append(SyncImport(graph, inputDirectory=os.path.abspath("input/"),
+                        contextPrefix="http://photo.bigasterisk.com/internal/",
+                        pollSeconds=15))
+
+# path choices should be listed in rdf under input/
+for picRoot in [#'/my/pic',
+                'laptop-test',
+                ]:
+    syncs.append(SyncImportFast(graph, inputDirectory=picRoot,
+                                contextPrefix="http://photo.bigasterisk.com/",
+                                pollSeconds=15))
 
 
 application = service.Application('photo')

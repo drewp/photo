@@ -6,6 +6,7 @@ from rdflib import Namespace, Variable, URIRef
 from zope.interface import implements
 from twisted.python.components import registerAdapter, Adapter
 from photos import Full, thumb
+from urls import localSite
 log = logging.getLogger()
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 SITE = Namespace("http://photo.bigasterisk.com/")
@@ -40,6 +41,12 @@ class ImageSet(rend.Page):
             self.currentPhoto = self.photos[0]
 
     def renderHTTP(self, ctx):
+        if ctx.arg('rss'):
+            # can't use a /rss child, since we're not receiving
+            # segments anymore here. That's probably going to be a
+            # problem later, but rss=1 is ok today.
+            return self.photoRss(ctx)
+        
         if ctx.arg('archive') == 'zip':
             request = inevow.IRequest(ctx)
             ua = request.getHeader('User-agent')
@@ -109,7 +116,8 @@ class ImageSet(rend.Page):
         return T.span(style="position: relative")[T.a(href=["?current=", data])[T.img(src=[data, "?size=thumb"])]]
 
     def render_featured(self, ctx, data):
-        return T.a(href=[self.currentPhoto, "?size=full"])[T.img(src=[self.currentPhoto, "?size=large"],
+        currentLocal = localSite(self.currentPhoto)
+        return T.a(href=[currentLocal, "?size=full"])[T.img(src=[currentLocal, "?size=large"],
                      alt=self.graph.label(self.currentPhoto))]
 
     def render_zipUrl(self, ctx, data):
@@ -125,3 +133,30 @@ class ImageSet(rend.Page):
                        (self.photos[max(0, i - 1)],
                         self.photos[min(len(self.photos) - 1, i + 1)])]
     
+    def photoRss(self, ctx):
+        request = inevow.IRequest(ctx)
+
+        # copied from what flickr emits
+        request.setHeader("Content-Type", "text/xml; charset=utf-8")
+
+
+        items = []
+        for pic in self.photos:
+            content = pic + '?size=med'
+            items.append(T.Tag('item')[
+                T.Tag('title')['title'],
+                T.Tag('link')[content],
+                T.Tag('media:thumbnail')(url=pic + '?size=thumb'),
+                T.Tag('media:content')(url=content),
+                ])
+
+        from nevow import flat
+        return """<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+        <rss version="2.0" 
+          xmlns:media="http://search.yahoo.com/mrss"
+          xmlns:atom="http://www.w3.org/2005/Atom">
+            <channel>
+            """ + flat.flatten(items) + """
+            </channel>
+        </rss>
+        """

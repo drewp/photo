@@ -1,5 +1,11 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:n="http://nevow.com/ns/nevow/0.1">
   <head>
+    <!-- per http://www.piclens.com/lite/webmasterguide.php -->
+    <link rel="alternate" href="?rss=1" 
+	  type="application/rss+xml" title="" id="gallery" />
+    <script type="text/javascript" 
+          src="http://lite.piclens.com/current/piclens.js" />
+
     <!-- if we're on a phone screen, things should shrink accordingly -->
     <style type="text/css">
 * {
@@ -84,6 +90,16 @@ div.featured {
     <div>
       Download a <a rel="nofollow"><n:attr name="href"><n:invisible n:render="zipUrl"/></n:attr>.zip file of the full size images on this page</a> <n:invisible n:render="zipSizeWarning"/>
     </div>
+
+
+<div>
+<h2>Slideshow</h2>
+      <a href="javascript:PicLensLite.start();">PicLens Lite 
+          <img src="http://lite.piclens.com/images/PicLensButton.png" 
+          alt="PicLens" width="16" height="12" border="0" 
+          align="absmiddle" /></a>
+</div>
+
     <!--    <div>
 	 <h2>Related</h2>
 	 
