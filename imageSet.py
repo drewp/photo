@@ -142,7 +142,7 @@ class ImageSet(rend.Page):
 
         items = []
         for pic in self.photos:
-            content = pic + '?size=med'
+            content = pic + '?size=large'
             items.append(T.Tag('item')[
                 T.Tag('title')['title'],
                 T.Tag('link')[content],
