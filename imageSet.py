@@ -143,7 +143,7 @@ class ImageSet(rend.Page):
         for pic in self.photos:
             content = pic + '?size=large'
             items.append(T.Tag('item')[
-                T.Tag('title')['title'],
+                T.Tag('title')[self.graph.label(pic, default=pic.split('/')[-1])],
                 T.Tag('link')[content],
                 T.Tag('media:thumbnail')(url=pic + '?size=thumb'),
                 T.Tag('media:content')(url=content),
