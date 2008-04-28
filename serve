@@ -136,8 +136,8 @@ syncs.append(SyncImport(graph, inputDirectory=os.path.abspath("input/"),
                         pollSeconds=15))
 
 # path choices should be listed in rdf under input/
-for picRoot in [#'/my/pic',
-                'laptop-test',
+for picRoot in ['/my/pic',
+                #'laptop-test',
                 ]:
     syncs.append(SyncImportFast(graph, inputDirectory=picRoot,
                                 contextPrefix="http://photo.bigasterisk.com/",
