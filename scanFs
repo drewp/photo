@@ -1,0 +1,73 @@
+#!/usr/bin/python
+"""
+read a tree of the filesystem and write rdf about the images we find
+
+ uri a foaf:Image
+ uri :inDirectory dir
+ dir a :DiskDirectory
+ dir :inDirectory dir
+ uri :filename basename
+
+"""
+import sys, os, urllib
+from rdflib.Graph import ConjunctiveGraph
+from rdflib import Namespace, RDF, RDFS, URIRef, Literal
+
+PHO = Namespace("http://photo.bigasterisk.com/0.1/")
+SITE = Namespace("http://photo.bigasterisk.com/")
+FOAF = Namespace("http://xmlns.com/foaf/0.1/")
+
+def uriOfFilename(filename, rootUri, root):
+    return URIRef(rootUri + urllib.quote(filename[len(root) + len('/'):]))
+
+def goodDirNames(names):
+    ret = []
+    for name in names:
+        if not (name.startswith('.') or name.startswith('~')):
+            ret.append(name)
+    return ret
+
+def filenameIsImage(filename):
+    for ext in ['.jpg', '.gif']:
+        if filename.lower().endswith(ext):
+            return True
+    return False
+
+def main(root, topDir='/my/pic'):
+    root = os.path.abspath(root)
+    assert root.startswith(topDir) or root == topDir
+
+    graph = ConjunctiveGraph()
+    
+    rootUri = SITE[root[len(topDir) + len('/'):]]
+    for dirpath, dirnames, filenames in os.walk(root, topdown=True):
+        print >>sys.stderr, "visit", dirpath
+
+        dirnames[:] = goodDirNames(dirnames)
+
+        dirUri = uriOfFilename(dirpath, rootUri, root)
+
+        for subdir in dirnames:
+            subdirAbs = os.path.abspath(os.path.join(dirpath, subdir))
+            subdirUri = uriOfFilename(subdirAbs, rootUri, root)
+            graph.add((subdirUri, RDF.type, PHO['DiskDirectory']))
+            graph.add((subdirUri, PHO['filename'], Literal(subdir)))
+            graph.add((dirUri, RDF.type, PHO['DiskDirectory']))
+            graph.add((dirUri, PHO['filename'],
+                       Literal(os.path.basename(dirpath))))
+            graph.add((subdirUri, PHO['inDirectory'], dirUri))
+
+        for filename in filenames:
+            if not filenameIsImage(filename):
+                continue
+            fileUri = uriOfFilename(os.path.abspath(os.path.join(dirpath,
+                                                                 filename)),
+                                    rootUri, root)
+            graph.add((fileUri, RDF.type, FOAF['Image']))
+            graph.add((fileUri, PHO['inDirectory'], dirUri))
+            graph.add((fileUri, PHO['filename'], Literal(filename)))
+
+    print >>sys.stderr, "done, writing %d triples" % len(graph)
+    print graph.serialize(format='nt')
+
+main(sys.argv[1])

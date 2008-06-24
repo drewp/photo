@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+          "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title></title>
+
+    <style type="text/css">
+      table td { vertical-align: top; }
+img.preview { }
+span.dir { background: #fcf; }
+span.access { background: #fdc; }
+      </style>
+    <link rel="stylesheet" type="text/css" href="../static/ext-2.1/resources/css/ext-all.css" />
+    <script type="text/javascript" src="../static/prototype-1.6.js"></script>
+
+    <script type="text/javascript" src="../static/ext-2.1/adapter/ext/ext-base.js"></script>
+    <script type="text/javascript">
+      Ext.BLANK_IMAGE_URL = "../static/ext-2.1/resources/images/default/s.gif";
+    </script>
+    <script type="text/javascript" src="../static/ext-2.1/ext-all.js"></script>
+
+  </head>
+  <body>
+    <table>
+      <tr>
+	<td>
+	  <div id="tree-div" style="height:800px;xwidth:400px;"></div>
+	  </td><td>
+	  <div id="selected"></div>
+	</td>
+      </tr>
+    </table>
+    <script type="text/javascript">
+    function setupLibraryTree() {
+        var loader = new Ext.tree.TreeLoader({dataUrl:'treeData'});       
+
+        var selection = new Ext.tree.MultiSelectionModel();
+        var tree = new Ext.tree.TreePanel({
+            el:'tree-div',
+            autoScroll:true,
+            animate:true,
+            containerScroll: true, 
+            loader: loader,
+            selModel: selection
+        });
+
+        var root = new Ext.tree.AsyncTreeNode({
+            text: 'Photos',
+            draggable:false,
+            id:'http://photo.bigasterisk.com/'
+        });
+        tree.setRootNode(root);
+
+        selection.addListener('selectionchange', function (model, nodes) {
+            $('selected').innerHTML = '';
+            $A(nodes).each(function (node) {
+		var img = new Element('img', {src : node.id, 
+		    class: 'preview'});
+                $('selected').insert(new Element('a', {href:node.id + '?size=full'}).update(img));
+            });
+        });
+
+        tree.render();
+        root.expand();
+    }
+    setupLibraryTree();
+    </script>
+
+
+  </body>
+</html>
