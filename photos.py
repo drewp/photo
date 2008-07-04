@@ -39,7 +39,7 @@ def thumb(localURL, maxSize=100):
     jpg.name = localURL
     q = 85
     if maxSize <= 100:
-        q = 80
+        q = 60
     img.save(jpg, quality=q)
     open(thumbPath, "w").write(jpg.getvalue())
     return jpg.getvalue(), time.time()
