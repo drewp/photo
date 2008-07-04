@@ -101,6 +101,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
                 size = {'thumb' : 75,
                         'medium' : 250,
                         'large' : 600,
+                        'screen' : 1000,
                         'full' : Full}.get(reqSize, 250)
 
                 jpg, mtime = thumb(uri, size)
