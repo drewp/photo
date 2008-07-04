@@ -1,5 +1,6 @@
 from nevow import rend, loaders, tags as T
 from rdflib import Namespace
+from urls import localSite
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 
 class Events(rend.Page):
@@ -20,8 +21,9 @@ class Events(rend.Page):
             rows = []
             for topic in topics:
                 lab = graph.label(topic, default=graph.value(topic, FOAF['name'], default=topic))
-                
-                rows.append((lab.lower(), T.div[T.a(href=topic)[lab]]))
+
+                localUrl = localSite(topic)
+                rows.append((lab.lower(), T.div[T.a(href=localUrl)[lab]]))
             rows.sort()
             yield [r[1] for r in rows]
 
