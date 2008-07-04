@@ -105,16 +105,17 @@ class ImageSet(rend.Page):
         return self.photos
     
     def render_thumb(self, ctx, data):
+        cls = "not-current"
+        thisThumbSrc = localSite(data)
         if data == self.currentPhoto:
             cls = "current"
             return T.span(style="position: relative")[
-                T.span["["],
-                T.img(src=[data, "?size=thumb"], border=5),
-                #T.img(style="position: absolute; left: 0; opacity: .99; width: 60", # without opac, firefox doesn't draw the overlay until you click another img :(
-                #      src="/static/thumb-arrow.png")
-                T.span["]"],
+                T.img(class_=cls, src=[thisThumbSrc, "?size=thumb"]),
                 ]
-        return T.span(style="position: relative")[T.a(href=["?current=", data])[T.img(src=[data, "?size=thumb"])]]
+
+        return T.span(style="position: relative")[
+            T.a(href=["?current=", data])[
+            T.img(class_=cls, src=[thisThumbSrc, "?size=thumb"])]]
 
     def render_featured(self, ctx, data):
         currentLocal = localSite(self.currentPhoto)
