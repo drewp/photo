@@ -110,7 +110,10 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
 
         if segments[0] in ['2006', '2007', '2008']:
             its = lambda o: self.graph.contains((uri, RDF.type, o))
-            if its(PHO['Event']) or its(PHO['Place']) or its(PHO['Person']):
+            if (its(PHO['Event']) or
+                its(PHO['Place']) or
+                its(PHO['Person']) or # oops
+                its(FOAF['Person'])):
                 import imageSet
                 reload(imageSet)
                 return imageSet.ImageSet(ctx, graph, uri), ()
@@ -137,16 +140,15 @@ logging.basicConfig(level=logging.INFO)
 graph = Graph2(ConjunctiveGraph(), initNs=dict(foaf=FOAF, rdfs=RDFS, pho=PHO))
 syncs = []
 
-syncs.append(SyncImport(graph, inputDirectory=os.path.abspath("input/"),
-                        contextPrefix="http://photo.bigasterisk.com/internal/",
-                        pollSeconds=15))
-
 # path choices should be listed in rdf under input/
-for picRoot in ['/my/pic',
-                #'laptop-test',
-                ]:
+for picRoot, prefix in [
+    (os.path.abspath("input/"), "http://photo.bigasterisk.com/internal/"),
+    ('/my/pic',"http://photo.bigasterisk.com/"),
+    #'laptop-test',
+    ('webinput', "http://photo.bigasterisk.com/webinput/"),
+    ]:
     syncs.append(SyncImportFast(graph, inputDirectory=picRoot,
-                                contextPrefix="http://photo.bigasterisk.com/",
+                                contextPrefix=prefix,
                                 pollSeconds=15))
 
 

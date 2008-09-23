@@ -6,7 +6,7 @@ from rdflib import Namespace, Variable, URIRef
 from zope.interface import implements
 from twisted.python.components import registerAdapter, Adapter
 from photos import Full, thumb
-from urls import localSite
+from urls import localSite, absoluteSite
 log = logging.getLogger()
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 SITE = Namespace("http://photo.bigasterisk.com/")
@@ -138,17 +138,18 @@ class ImageSet(rend.Page):
     def photoRss(self, ctx):
         request = inevow.IRequest(ctx)
 
+        # this should be making atom!
+
         # copied from what flickr emits
         request.setHeader("Content-Type", "text/xml; charset=utf-8")
 
         items = []
         for pic in self.photos:
-            content = pic + '?size=screen'
             items.append(T.Tag('item')[
                 T.Tag('title')[self.graph.label(pic, default=pic.split('/')[-1])],
-                T.Tag('link')[content],
-                T.Tag('media:thumbnail')(url=pic + '?size=small'),
-                T.Tag('media:content')(url=content),
+                T.Tag('link')[absoluteSite(pic) + '?size=screen'],
+                T.Tag('media:thumbnail')(url=absoluteSite(pic) + '?size=small'),
+                T.Tag('media:content')(url=absoluteSite(pic) + '?size=screen'),
                 ])
 
         from nevow import flat

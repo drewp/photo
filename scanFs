@@ -17,8 +17,12 @@ PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 SITE = Namespace("http://photo.bigasterisk.com/")
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 
-def uriOfFilename(filename, rootUri, root):
-    return URIRef(rootUri + urllib.quote(filename[len(root) + len('/'):]))
+def uriOfFilename(rootUri, root, filename):
+    prefix = root.rstrip('/')
+    if not filename.startswith(prefix):
+        raise ValueError("%s doesn't start with %s" % (filename, prefix))
+    relFile = filename[len(prefix):]
+    return URIRef(rootUri + urllib.quote(relFile))
 
 def goodDirNames(names):
     ret = []

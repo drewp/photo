@@ -1,5 +1,5 @@
 #!/bin/zsh
-for s (thumb medium large full) {
+for s (thumb medium large screen full) {
    echo -n "$s "
    curl -s "http://photo.bigasterisk.com/digicam/housewarm/00023.jpg?size=$s" | wc -c
 }
