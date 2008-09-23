@@ -131,6 +131,11 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         reload(browse)
         return browse.FileBrowse(ctx, graph)
 
+    def child_edit(self, ctx):
+        import edit
+        reload(edit)
+        return edit.Edit(ctx, graph)
+
     def child_static(self, ctx):
         return static.File(sibpath(__file__, "static"))
 

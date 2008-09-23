@@ -37,6 +37,16 @@ def filenameIsImage(filename):
             return True
     return False
 
+## def addDirStatements(graph, subdirAbs, rootUri, dirUri):
+##     subdirUri = uriOfFilename(rootUri, root, subdirAbs)
+##     graph.add((subdirUri, RDF.type, PHO['DiskDirectory']))
+##     graph.add((subdirUri, PHO[        addDirStatements(graph, dirpath, rootUri, dirUri)        addDirStatementsaddDirStatements(graph, dirpath, rootUri, dirUri)'filename        addDirStatements(graph, dirpath, rootUri, dirUri)'], Literal(subdir)))
+    
+##     graph.add((dirUri, RDF.type, PHO['DiskDirectory']))
+##     graph.add((dirUri, PHO['filename'],
+##                Literal(os.path.basename(dirpath))))
+##     graph.add((subdirUri, PHO['inDirectory'], dirUri))
+
 def main(root, topDir='/my/pic'):
     root = os.path.abspath(root)
     assert root.startswith(topDir) or root == topDir
@@ -49,24 +59,21 @@ def main(root, topDir='/my/pic'):
 
         dirnames[:] = goodDirNames(dirnames)
 
-        dirUri = uriOfFilename(dirpath, rootUri, root)
-
+        dirUri = uriOfFilename(rootUri, root, dirpath)
+        graph.add((dirUri, RDF.type, PHO['DiskDirectory']))
+        graph.add((dirUri, PHO['filename'], Literal(dirpath)))
+        
         for subdir in dirnames:
             subdirAbs = os.path.abspath(os.path.join(dirpath, subdir))
-            subdirUri = uriOfFilename(subdirAbs, rootUri, root)
-            graph.add((subdirUri, RDF.type, PHO['DiskDirectory']))
-            graph.add((subdirUri, PHO['filename'], Literal(subdir)))
-            graph.add((dirUri, RDF.type, PHO['DiskDirectory']))
-            graph.add((dirUri, PHO['filename'],
-                       Literal(os.path.basename(dirpath))))
-            graph.add((subdirUri, PHO['inDirectory'], dirUri))
+            subdirUri = uriOfFilename(rootUri, root, subdirAbs)
+            graph.add((dirUri, PHO['inDirectory'], subdirUri))
 
         for filename in filenames:
             if not filenameIsImage(filename):
                 continue
-            fileUri = uriOfFilename(os.path.abspath(os.path.join(dirpath,
-                                                                 filename)),
-                                    rootUri, root)
+            fileUri = uriOfFilename(rootUri, root,
+                                    os.path.abspath(os.path.join(dirpath,
+                                                                 filename)))
             graph.add((fileUri, RDF.type, FOAF['Image']))
             graph.add((fileUri, PHO['inDirectory'], dirUri))
             graph.add((fileUri, PHO['filename'], Literal(filename)))

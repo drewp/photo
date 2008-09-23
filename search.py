@@ -1,3 +1,4 @@
+import urllib
 from nevow import rend, loaders, tags as T
 from rdflib import Namespace
 from urls import localSite
@@ -27,3 +28,16 @@ class Events(rend.Page):
             rows.sort()
             yield [r[1] for r in rows]
 
+    def render_saveSets(self, ctx, data):
+        sets = set()
+        for row in self.graph.queryd("""
+        SELECT DISTINCT ?set ?label WHERE {
+          ?img pho:saveSet ?set .
+          #OPTIONAL { ?set rdfs:label ?label }
+        }"""):
+            yield T.div[
+                T.a(href="/edit?saveSet=%s" %
+                    urllib.quote(row['set'], safe=''))[
+                        row['label'] or row['set']]
+                ]
+            

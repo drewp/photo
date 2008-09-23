@@ -1,0 +1,174 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:n="http://nevow.com/ns/nevow/0.1">
+  <head>
+    <script type="text/javascript" src="../static/prototype-1.6.js"></script>
+    <script type="text/javascript" src="../static/edit.js"></script>
+    <style type="text/css">
+        table.tagger {
+          border: 1px solid gray;
+          border-collapse: collapse;
+          float: left;
+        }
+        table.tagger td {
+          border: 1px solid gray;
+          vertical-align: top;
+          padding: 3px;
+        }
+
+        table.tagger img {
+
+        }
+        div.addTag {
+          border: 1px solid gray;
+          width: 35em;
+	  background:#ffc;
+	  left:10em;
+	  padding:0.5em;
+	  position:absolute;
+        }
+        td.selected-stmts {
+          background: yellow;
+        }
+        .add-column div {
+          display: table;
+        }
+	.add-column a {
+	    text-decoration: none;
+	}
+	.add-column-button {
+	    background:#DDDDDD;
+	    border:3px outset #444444;
+	    padding:0.3em;
+	    text-align:center;
+	    cursor: pointer;
+	}
+        #add-uri {
+         width: 40em;
+        }
+	#copy-row {
+	    position: relative;
+	    top: 0px;
+	    float: left; /* or z-index:-1 (to allow clicks on table columns) */
+	}
+	span.key {
+	    background:#FFFFCC;
+	    border:1px outset black;
+	    padding:0 3px;
+	}
+/* from http://www.imaputz.com/cssStuff/bigFourVersion.html */
+/*
+
+.tagger tbody.scrollContent {
+display:block;
+height:262px;
+overflow:auto;
+width:100%;
+}
+
+thead.fixedHeader tr {
+position:relative;
+}
+html > body thead.fixedHeader tr {
+display:block;
+}
+thead.fixedHeader th {
+background:#CC9966 none repeat scroll 0 0;
+border-left:1px solid #EEBB88;
+border-right:1px solid #BB7744;
+border-top:1px solid #EEBB88;
+font-weight:normal;
+padding:4px 3px;
+text-align:left;
+}
+thead.fixedHeader a, thead.fixedHeader a:link, thead.fixedHeader a:visited {
+color:#FFFFFF;
+display:block;
+text-decoration:none;
+width:100%;
+}
+tbody.scrollContent td, tbody.scrollContent tr.normalRow td {
+background:#FFFFFF none repeat scroll 0 0;
+border-color:#DDDDDD #CCCCCC -moz-use-text-color -moz-use-text-color;
+border-style:solid solid none none;
+border-width:1px 1px medium medium;
+padding:2px 3px 3px 4px;
+}
+tbody.scrollContent tr.alternateRow td {
+background:#EEEEEE none repeat scroll 0 0;
+border-color:#DDDDDD #CCCCCC -moz-use-text-color -moz-use-text-color;
+border-style:solid solid none none;
+border-width:1px 1px medium medium;
+padding:2px 3px 3px 4px;
+}
+html > body thead.fixedHeader th {
+width:200px;
+}
+html > body thead.fixedHeader th + th {
+width:240px;
+}
+html > body thead.fixedHeader th + th + th {
+width:316px;
+}
+html > body tbody.scrollContent td {
+width:200px;
+}
+html > body tbody.scrollContent td + td {
+width:240px;
+}
+html > body tbody.scrollContent td + td + td {
+width:300px;
+}
+*/
+    </style>
+    <title>editing tags for ..</title>
+  </head>
+  <body>
+    <h1>foaf:depicts editor</h1>
+    <input type="submit" value="Save"
+	   onClick="photo.postStatements(); return false;"/>
+
+    <table class="tagger" id="tagger">
+      <thead class="fixedHeader">
+	<tr>
+	  <td/>
+	  <n:invisible n:render="thead"/>
+	  <th>
+	    <div class="add-column">
+	      <div class="add-column-button" onClick="photo.toggleAddColumn(); return false"> 
+		Add column <span class="key">a</span><br/>&#x2193;
+	      </div>
+	      <div class="addTag" id="addTag" style="display: none">
+		<form id="addForm" action="#">
+		  <div>Class:
+		  <select name="class" size="3"> <!-- should be radios-->
+		    <option value="http://xmlns.com/foaf/0.1/Person">Person</option>
+		    <option value="http://photo.bigasterisk.com/0.1/Place">Place</option>
+		    <option value="http://photo.bigasterisk.com/0.1/Event">Event</option>
+		  </select>
+		  <div>Label: <input name="label" id="addColumnLabel" type="text"/></div>
+		  <div>URI: <input id="add-uri" name="uri" type="text"/></div>
+		  <div>
+		    <input type="submit" value="Add"
+			   onClick="photo.onAddForm(); return false;"/></div>
+		  </div>
+		</form>
+	      </div>
+	    </div>
+
+	  </th>
+	</tr>
+      </thead>
+      <tbody class="scrollContent">
+	<n:invisible n:render="table"/>
+      </tbody>
+    </table>
+
+    <div id="copy-row" onClick="photo.copyToNextRow(); return false;">
+      <span style="font-size:200%; position: relative; top: 0.5em">&#x2938;</span> Copy this row <span class="key">c</span></div>
+    <div style="clear: left"/>
+    <div>
+      Statements to add:
+      <div id="statements"></div>
+    </div>
+  </body>
+</html>
