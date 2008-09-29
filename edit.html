@@ -140,7 +140,7 @@ width:300px;
     <n:invisible n:render="chooseSet" />
 
     <input type="submit" value="Save"
-	   onClick="photo.postStatements(); return false;"/>
+	   onClick="javascript:photo.postStatements();"/>
 
     <table class="tagger" id="tagger">
       <thead class="fixedHeader">
@@ -153,7 +153,7 @@ width:300px;
 		Add column <span class="key">a</span><br/>&#x2193;
 	      </div>
 	      <div class="addTag" id="addTag" style="display: none">
-		<form id="addForm" action="#">
+		<form id="addForm" action="javascript:photo.onAddForm();">
 		  <div>Class:
 		  <select name="class" size="3"> <!-- should be radios-->
 		    <option value="http://xmlns.com/foaf/0.1/Person">Person</option>
@@ -164,7 +164,7 @@ width:300px;
 		  <div>URI: <input id="add-uri" name="uri" type="text"/></div>
 		  <div>
 		    <input type="submit" value="Add"
-			   onClick="photo.onAddForm(); return false;"/></div>
+			   /></div>
 		  </div>
 		</form>
 	      </div>
@@ -182,7 +182,7 @@ width:300px;
       <span style="font-size:200%; position: relative; top: 0.5em">&#x2938;</span> Copy this row <span class="key">c</span></div>
     <div style="clear: left"/>
     <div>
-      Statements to add:
+      Statements to add (<span style="color: blue;" onclick="javascript:photo.getStatements()">refresh this</span>):
       <div id="statements"></div>
     </div>
 

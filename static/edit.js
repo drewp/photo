@@ -2,19 +2,22 @@
 todo: 
 OK keyboard for row copy
 OK visual row copy feedback
-don't leave if they press enter on the form
+OK don't leave if they press enter on the form
+#imagePreview should always hover in the top right, and get bigger with the browser
+stop the n^2 regen of the statements all the time
 drag multiple rows to check them faster
 brick-layout the images so they can be bigger. highlight rows on hover.
 click existing columns to edit their params
 only offer to save if we're logged in (but show stmts always)
 complete on already-used tags. show usage: "2008/picnic (3 photos)"
-scroll table internally, hold headers
+scroll table internally, hold headers: http://www.imaputz.com/cssStuff/bigFourVersion.html
 if we already used an initial for a column, look for a different one
 face detect and zoom on those
 disallow selection on the tag cells
 get imgs by sparql, including the POST resource to send results back to
 make copyrow widget disappear if we're at the bottom or haven't started
 click outside addColumn to make it disappear
+flickr interface- query your flickr images through the flickr gateway, tag them here
 
 */
 
@@ -24,16 +27,6 @@ var photo = (function() {
 
     // though this looks nice too: http://n2.talis.com/wiki/RDF_JSON_Brainstorming#ARC_triples_array_in_PHP_structure
     
-    function getStatements() {
-	/* js/rdf for all the 'stmts' attrs on elements with the
-	'selected-stmts' class */
-	var ret = [];
-	$$(".selected-stmts").each(function(elem) {
-	    ret.push(elem.getAttribute('stmts').evalJSON())
-	});
-	$('statements').innerHTML = $A(ret).toJSON();
-	return ret;
-    }
 
     var lastRow = 0;
 
@@ -43,7 +36,6 @@ var photo = (function() {
 	} else {
 	    cellChecked(cell);
 	}
-	getStatements();
     }
 
     function cellChecked(cell) {
@@ -56,6 +48,16 @@ var photo = (function() {
     }
 
     return {
+	getStatements: function () {
+	    /* js/rdf for all the 'stmts' attrs on elements with the
+	'selected-stmts' class */
+	    var ret = [];
+	    $$(".selected-stmts").each(function(elem) {
+		ret.push(elem.getAttribute('stmts').evalJSON())
+	    });
+	    $('statements').innerHTML = $A(ret).toJSON();
+	    return ret;
+	},
 	setLastRow: function(tr) {
 	    /* note the last-clicked row, so the user can request a copy
       	       of its values to the next row. Update the UI tip */
@@ -98,7 +100,6 @@ var photo = (function() {
 		    tr.appendChild(td);
 		}
 	    });
-	    getStatements();
 	},
 
 	onAddForm: function() {
@@ -107,10 +108,11 @@ var photo = (function() {
 	    var label = f['label'].getValue();
 	    var uri = f['uri'].getValue();
 	    photo.addColumn(uri, label, class_);
+	    photo.hideAddColumn();
 	},
 
 	postStatements: function() {
-	    var stmts = getStatements();
+	    var stmts = photo.getStatements();
 	    new Ajax.Request('saveStatements', {
 		method: 'post',
 		contentType: 'application/json',
@@ -135,12 +137,15 @@ var photo = (function() {
 
 	showAddColumn: function() { 
 	    Element.show('addTag');
-	    Form.Element.focus('addColumnLabel').clear();
+	  //broken?  Form.Element.focus('addColumnLabel').clear();
+	},
+	hideAddColumn: function() {
+	    Element.hide('addTag');
 	},
 
 	toggleAddColumn: function () {
 	    if ($('addTag').visible()) {
-		Element.hide('addTag');
+		photo.hideAddColumn();
 	    } else {
 		photo.showAddColumn();
 	    }
@@ -164,7 +169,6 @@ var photo = (function() {
 		    cellUnchecked(nextTds[i]);
 		}
 	    }
-	    getStatements();
 	    photo.setLastRow(nextRow);
 	},
 	showLarge: function (largePicUrl) {
