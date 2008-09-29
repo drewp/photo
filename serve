@@ -152,17 +152,18 @@ logging.basicConfig(level=logging.INFO)
 graph = Graph2(ConjunctiveGraph(), initNs=dict(foaf=FOAF, rdfs=RDFS, pho=PHO))
 syncs = []
 
-# path choices should be listed in rdf under input/
-for picRoot, prefix in [
-    (os.path.abspath("input/"), "http://photo.bigasterisk.com/internal/"),
-    ('/my/pic',"http://photo.bigasterisk.com/"),
-    #'laptop-test',
-    ('webinput', "http://photo.bigasterisk.com/webinput/"),
-    ]:
-    syncs.append(SyncImportFast(graph, inputDirectory=picRoot,
-                                contextPrefix=prefix,
-                                pollSeconds=15))
-
+def setupGraphSyncs():
+    # path choices should be listed in rdf under input/
+    for picRoot, prefix in [
+        (os.path.abspath("input/"), "http://photo.bigasterisk.com/internal/"),
+        ('/my/pic',"http://photo.bigasterisk.com/"),
+        #'laptop-test',
+        ('webinput', "http://photo.bigasterisk.com/webinput/"),
+        ]:
+        syncs.append(SyncImportFast(graph, inputDirectory=picRoot,
+                                    contextPrefix=prefix,
+                                    pollSeconds=15))
+reactor.callLater(0, setupGraphSyncs)
 
 application = service.Application('photo')
 webServer = internet.TCPServer(8086, appserver.NevowSite(Main(graph)))
