@@ -46,7 +46,9 @@ class Edit(rend.Page):
         rows = []
         d = URIRef("http://photo.bigasterisk.com/digicam/dl-2008-09-22")
         for i, (pic, filename) in enumerate(sorted(self.picsInDirectory(d))[:]):
-            img = T.img(src=[localSite(pic), '?size=thumb'])
+            img = T.img(src=[localSite(pic), '?size=thumb'],
+                        onclick='javascript:photo.showLarge("%s")' %
+                        (localSite(pic) + "?size=large"))
 
             picCols = [''] * self.brickColumns
             for fill in range(i, self.brickColumns):

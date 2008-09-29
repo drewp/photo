@@ -166,6 +166,9 @@ var photo = (function() {
 	    }
 	    getStatements();
 	    photo.setLastRow(nextRow);
+	},
+	showLarge: function (largePicUrl) {
+	    $('largeImg').src = largePicUrl;
 	}
     };
 })();
