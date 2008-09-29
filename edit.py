@@ -44,7 +44,7 @@ class Edit(rend.Page):
 
     def render_table(self, ctx, data):
         rows = []
-        d = URIRef("http://photo.bigasterisk.com/digicam/dl-2008-09-22")
+        d = URIRef(ctx.arg('dir')) # "http://photo.bigasterisk.com/digicam/dl-2008-09-25")
         for i, (pic, filename) in enumerate(sorted(self.picsInDirectory(d))[:]):
             img = T.img(src=[localSite(pic), '?size=thumb'],
                         onclick='javascript:photo.showLarge("%s")' %
@@ -75,6 +75,17 @@ class Edit(rend.Page):
             ):
             yield row['pic'], row['fn']
 
+    def render_chooseSet(self, ctx, data):
+        """if there's no dir, list some"""
+        if ctx.arg('dir'):
+            return ''
+        dirs = []
+        for row in self.graph.queryd(
+            """
+            SELECT ?d ?f WHERE { ?d a pho:DiskDirectory; pho:filename ?f }
+            """):
+            dirs.append(T.li[T.a(href=url.here.add('dir', row['d']))[row['f']]])
+        return T.ul[dirs]
 
 #
 # convertor from http://n2.talis.com/wiki/RDF_JSON_Specification to rdflib
