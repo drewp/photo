@@ -8,12 +8,14 @@ from sets import Set
 from StringIO import StringIO
 from twisted.application import internet, service
 from twisted.python.util import sibpath
+from twisted.internet import reactor
+from twisted.web import http
 from nevow import appserver, inevow
 from nevow import loaders, rend, static, tags as T
 import Image
 from photos import Full, thumb
 from rdflib.Graph import ConjunctiveGraph
-from rdflib import Namespace, RDF, RDFS
+from rdflib import Namespace, RDF, RDFS, Literal, Variable
 sys.path.append("/my/proj/ffg/sparqlhttp")
 from sparqlhttp.syncimport import SyncImport
 from sparqlhttp.dictquery import Graph2
@@ -69,17 +71,19 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
     
     def __init__(self, graph):
         self.graph = graph
-        return
-    
-        self.thumb = {} # urlmd5 : small jpeg
-        self.urlmd5 = {} # urlmd5 : local uri
 
-        for local in graph.objects(None, PR['localFile']):
-            self.urlmd5[md5.md5(local).hexdigest()] = local
-        
-
-    def viewable(self, uri):
+    def viewable(self, uri,  ctx):
         # someday this will also get the login/auth stuff for a better check
+
+        request = inevow.IRequest(ctx)
+        username, password = request.getUser(), request.getPassword()
+        if username and password:
+            userMatches = self.graph.queryd(
+                """SELECT ?user WHERE { ?user pho:username ?u; pho:password ?p . }""",
+                initBindings={Variable("?u") : Literal(request.getUser()),
+                              Variable("?p") : Literal(request.getPassword())})
+            if userMatches:
+                return True
 
         return (self.graph.contains((uri, PHO['viewableBy'], PHO['friends']))
              or self.graph.contains((uri, PHO['viewableBy'], PHO['anyone'])))
@@ -91,8 +95,11 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         log.debug("fetch uri %s", uri)
         if segments[0] in ['digicam', 'phonecam']:
             if self.graph.contains((uri, RDF.type, FOAF['Image'])):
-                if not self.viewable(uri):
-                    return "access denied", []
+                if not self.viewable(uri, ctx):
+                    request = inevow.IRequest(ctx)
+                    request.setHeader('WWW-Authenticate', 'Basic realm="topsecret"')
+                    request.setResponseCode(http.UNAUTHORIZED)
+                    return "Authentication required.", []
 
                 if ctx.arg('page'):
                     return ImagePage(graph, uri), ()
