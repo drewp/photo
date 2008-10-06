@@ -139,6 +139,7 @@ class ImageSet(rend.Page):
         request = inevow.IRequest(ctx)
 
         # this should be making atom!
+        # it needs to return the most recent pics, with a link to the next set!
 
         # copied from what flickr emits
         request.setHeader("Content-Type", "text/xml; charset=utf-8")
@@ -148,6 +149,8 @@ class ImageSet(rend.Page):
             items.append(T.Tag('item')[
                 T.Tag('title')[self.graph.label(pic, default=pic.split('/')[-1])],
                 T.Tag('link')[absoluteSite(pic) + '?size=screen'],
+                T.Tag('description')[
+                  '<img src="%s" />' % (absoluteSite(pic) + '?size=thumb')],
                 T.Tag('media:thumbnail')(url=absoluteSite(pic) + '?size=small'),
                 T.Tag('media:content')(url=absoluteSite(pic) + '?size=screen'),
                 ])
