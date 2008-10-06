@@ -9,6 +9,7 @@ drag multiple rows to check them faster
 brick-layout the images so they can be bigger. highlight rows on hover.
 click existing columns to edit their params
 only offer to save if we're logged in (but show stmts always)
+don't send rdfs:label unless this is a newly created thing that we made some use of
 complete on already-used tags. show usage: "2008/picnic (3 photos)"
 scroll table internally, hold headers: http://www.imaputz.com/cssStuff/bigFourVersion.html
 if we already used an initial for a column, look for a different one
@@ -67,15 +68,17 @@ var photo = (function() {
 	    $('copy-row').setStyle('top: '+tr.offsetTop+'px');
 	},
 
-	addColumn: function(obj, label, classUri) {
+	addColumn: function(obj, label, predicate, classUri) {
 	    /* add a table column for a new tag obj */
 	    $('tagger').getElementsBySelector('tr').each(function(tr, i) {
 		if (i == 0) {
 		    var stmts = {};
 		    stmts[obj] = {'http://www.w3.org/2000/01/rdf-schema#label': 
-				  [{type: 'literal', value: label}], 
-				  'http://www.w3.org/1999/02/22-rdf-syntax-ns#type':
-				  [{type: 'uri', value: classUri}]};
+				  [{type: 'literal', value: label}]}
+		    if (classUri != null) {
+			stmts[obj][
+			    'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'
+			] = [{type: 'uri', value: classUri}]};
 		    var th = new Element('th', {'class' : 'selected-stmts',
 			'stmts' : $H(stmts).toJSON()}).insert(label);
 		    var thAdd = tr.childElements().last();
@@ -83,9 +86,8 @@ var photo = (function() {
 		    
 		} else {
 		    var stmts = {};
-		    stmts[tr.getAttribute('subj')] = {
-			"http://xmlns.com/foaf/0.1/depicts" : 
-			[{type: 'uri', value: obj}]};
+		    stmts[tr.getAttribute('subj')] = {};
+                    stmts[tr.getAttribute('subj')][predicate] = [{type: 'uri', value: obj}];
 
 		    var td = new Element('td', {obj: obj, 
 		        stmts: $H(stmts).toJSON()});
@@ -107,7 +109,8 @@ var photo = (function() {
 	    var class_ = f['class'].getValue();
 	    var label = f['label'].getValue();
 	    var uri = f['uri'].getValue();
-	    photo.addColumn(uri, label, class_);
+	    photo.addColumn(uri, label, "http://xmlns.com/foaf/0.1/depicts", 
+			    class_);
 	    photo.hideAddColumn();
 	},
 
@@ -178,14 +181,22 @@ var photo = (function() {
 })();
 
 Event.observe(window, "load", function() {
+    
+    photo.addColumn("http://photo.bigasterisk.com/0.1/friends",
+		    "public",
+		    "http://photo.bigasterisk.com/0.1/viewableBy",
+		    null);
     photo.addColumn("http://photo.bigasterisk.com/2007/person/drew", 
 		    "Drew", 
+		    "http://xmlns.com/foaf/0.1/depicts",
 		    "http://xmlns.com/foaf/0.1/Person");
     photo.addColumn("http://photo.bigasterisk.com/2007/person/kelsi", 
 		    "Kelsi", 
+		    "http://xmlns.com/foaf/0.1/depicts",
 		    "http://xmlns.com/foaf/0.1/Person");
     photo.addColumn("http://photo.bigasterisk.com/2008/person/apollo", 
 		    "Apollo", 
+		    "http://xmlns.com/foaf/0.1/depicts",
 		    "http://xmlns.com/foaf/0.1/Person");
     
     Event.observe($('addForm')['label'], 'change', photo.updateTagUrl);
