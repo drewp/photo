@@ -144,13 +144,15 @@ class ImageSet(rend.Page):
         # copied from what flickr emits
         request.setHeader("Content-Type", "text/xml; charset=utf-8")
 
-        items = []
+        items = [T.Tag('title')["bigasterisk %s photos" % self.graph.label(self.uri)]]
         for pic in self.photos:
             items.append(T.Tag('item')[
                 T.Tag('title')[self.graph.label(pic, default=pic.split('/')[-1])],
                 T.Tag('link')[absoluteSite(pic) + '?size=screen'],
                 T.Tag('description')[
-                  '<img src="%s" />' % (absoluteSite(pic) + '?size=thumb')],
+                  '<a href="%s"><img src="%s" /></a>' %
+                  (absoluteSite(pic) + '?size=large',
+                   absoluteSite(pic) + '?size=thumb')],
                 T.Tag('media:thumbnail')(url=absoluteSite(pic) + '?size=small'),
                 T.Tag('media:content')(url=absoluteSite(pic) + '?size=screen'),
                 ])
