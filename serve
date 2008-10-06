@@ -72,9 +72,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
     def __init__(self, graph):
         self.graph = graph
 
-    def viewable(self, uri,  ctx):
-        # someday this will also get the login/auth stuff for a better check
-
+    def httpAuthorized(self, ctx):
         request = inevow.IRequest(ctx)
         username, password = request.getUser(), request.getPassword()
         if username and password:
@@ -84,7 +82,11 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
                               Variable("?p") : Literal(request.getPassword())})
             if userMatches:
                 return True
+        return False
 
+    def viewable(self, uri,  ctx):
+        if self.httpAuthorized(ctx):
+            return True
         return (self.graph.contains((uri, PHO['viewableBy'], PHO['friends']))
              or self.graph.contains((uri, PHO['viewableBy'], PHO['anyone'])))
         #if uri not in map(str.strip, open("allowed.urls").readlines()):
@@ -96,10 +98,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         if segments[0] in ['digicam', 'phonecam']:
             if self.graph.contains((uri, RDF.type, FOAF['Image'])):
                 if not self.viewable(uri, ctx):
-                    request = inevow.IRequest(ctx)
-                    request.setHeader('WWW-Authenticate', 'Basic realm="topsecret"')
-                    request.setResponseCode(http.UNAUTHORIZED)
-                    return "Authentication required.", []
+                    return self.needAuth(ctx), []
 
                 if ctx.arg('page'):
                     return ImagePage(graph, uri), ()
@@ -128,6 +127,12 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
 
         return rend.Page.locateChild(self, ctx, segments)
 
+    def needAuth(self, ctx):
+        request = inevow.IRequest(ctx)
+        request.setHeader('WWW-Authenticate', 'Basic realm="topsecret"')
+        request.setResponseCode(http.UNAUTHORIZED)
+        return "Authentication required."        
+
     def child_events(self, ctx):
         import search
         reload(search)
@@ -139,6 +144,8 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         return browse.FileBrowse(ctx, graph)
 
     def child_edit(self, ctx):
+        if not self.httpAuthorized(ctx):
+            return self.needAuth(ctx)
         import edit
         reload(edit)
         return edit.Edit(ctx, graph)
