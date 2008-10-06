@@ -14,4 +14,4 @@ def absoluteSite(url):
     """
     # would it help to pass ctx? still might not be enough info unless
     # i use vhost monster style
-    return 'http://localhost:8086' + localSite(url)
+    return 'http://photo.bigasterisk.com' + localSite(url)
