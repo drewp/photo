@@ -84,8 +84,10 @@ class Edit(rend.Page):
             """
             SELECT ?d ?f WHERE { ?d a pho:DiskDirectory; pho:filename ?f }
             """):
-            dirs.append(T.li[T.a(href=url.here.add('dir', row['d']))[row['f']]])
-        return T.ul[dirs]
+            dirs.append((row['d'],
+                         T.li[T.a(href=url.here.add('dir', row['d']))[row['f']]]))
+        dirs.sort()
+        return T.ul[[d[1] for d in dirs]]
 
 #
 # convertor from http://n2.talis.com/wiki/RDF_JSON_Specification to rdflib
