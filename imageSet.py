@@ -1,5 +1,5 @@
 from __future__ import division
-import logging, zipfile
+import logging, zipfile, datetime
 from StringIO import StringIO
 from nevow import loaders, rend, tags as T, inevow
 from rdflib import Namespace, Variable, URIRef
@@ -134,6 +134,13 @@ class ImageSet(rend.Page):
         return ctx.tag['var arrowPages = {prev : "%s", next : "%s"}' %
                        (self.photos[max(0, i - 1)],
                         self.photos[min(len(self.photos) - 1, i + 1)])]
+
+    def render_facts(self, ctx, data):
+        if self.graph.contains((self.currentPhoto, FOAF['depicts'], URIRef("http://photo.bigasterisk.com/2008/person/apollo"))):
+            birth = datetime.date(2008, 7, 22)
+            photoDate = datetime.date.today()
+            return "Apollo is about %s months old" % ((photoDate - birth).days / 30)
+        return ''
     
     def photoRss(self, ctx):
         request = inevow.IRequest(ctx)
