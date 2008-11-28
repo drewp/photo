@@ -213,4 +213,37 @@ Event.observe(window, "load", function() {
     });
 
     photo.setLastRow($('tagger').getElementsBySelector('tr')[5]);
+    StartFloat();
 });
+
+// lose this once the table has inner scrolling:
+
+// Copyright 2001 William Bontrager
+var Type = 'Z';
+function StartFloat() {
+    if(document.all) {
+        document.all.imagePreview.style.pixelLeft = document.body.clientWidth - document.all.imagePreview.offsetWidth;
+        document.all.imagePreview.style.visibility = 'visible';
+        Type = 'A';
+    }
+    else if(document.layers) {
+        document.imagePreview.left = window.innerWidth - document.imagePreview.clip.width - 16;
+        document.imagePreview.visibility = 'show';
+        Type = 'B';
+    }
+    else if(document.getElementById) {
+        //               document.getElementById('imagePreview').style.left = (window.innerWidth - 35) + 'px';
+        document.getElementById('imagePreview').style.visibility = 'visible';
+        Type = 'C';
+    }
+    if (document.all) { window.onscroll = Float; }
+    else { setInterval('Float()', 100); }
+}
+function Float() {
+    if (Type == 'A') { document.all.imagePreview.style.pixelTop = document.body.scrollTop; }
+    else if (Type == 'B') { document.imagePreview.top = window.pageYOffset; }
+    else if (Type == 'C') { 
+        document.getElementById('imagePreview').style.top = Math.max(window.pageYOffset, 144) + 'px'; 
+    }
+} 
+

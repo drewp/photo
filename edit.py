@@ -40,7 +40,7 @@ class Edit(rend.Page):
         g.serialize(outFile, format='nt')
         return "wrote %s" % outFile
 
-    brickColumns = 1
+    brickColumns = 3
 
     def render_table(self, ctx, data):
         rows = []
