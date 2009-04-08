@@ -155,8 +155,15 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
 
 logging.basicConfig(level=logging.INFO)
 
+if 0:
+    graph = Graph2(ConjunctiveGraph(), initNs=dict(
+        foaf=FOAF,
+        rdfs=RDFS.RDFSNS,
+        pho=PHO))
+else:
+    from remotesparql import RemoteSparql
+    graph = RemoteSparql("http://localhost:10001/sesame/repositories", "photo")
 
-graph = Graph2(ConjunctiveGraph(), initNs=dict(foaf=FOAF, rdfs=RDFS, pho=PHO))
 syncs = []
 
 def setupGraphSyncs():
