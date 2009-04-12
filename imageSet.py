@@ -36,6 +36,9 @@ class ImageSet(rend.Page):
 
         self.photos = sorted([row['photo'] for row in q])
 
+        if not self.photos:
+            raise ValueError("No photos found for %s" % uri)
+
         self.currentPhoto = URIRef(ctx.arg('current'))
         if self.currentPhoto not in self.photos:
             self.currentPhoto = self.photos[0]
