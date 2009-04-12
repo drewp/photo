@@ -8,7 +8,9 @@ that will be slower.
 this should be run after new photos are imported, and maybe every
 night to catch strays.
 
-it would be faster to make the 75px images out of the 600px images.
+it would be faster to make the 75px images out of the 600px
+images. photos.py should just remember and use its last one resize,
+and then we can ask for 600 followed by 75.
 
 """
 
