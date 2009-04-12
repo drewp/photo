@@ -1,24 +1,24 @@
 from __future__ import division
-import sys, os, md5, urllib, time, logging
-from sets import Set
+import os, md5, time
 from StringIO import StringIO
-from twisted.application import internet, service
-from nevow import appserver, inevow
-from nevow import loaders, rend, static, tags as T
 import Image
 
 class Full(object): pass
 
-def thumb(localURL, maxSize=100):
+def thumb(localURL, maxSize=100, justCache=False):
     """returns jpeg data, mtime"""
     cksum = md5.new(localURL + "?size=%s" % maxSize).hexdigest()
 
-    thumbPath = "/my/pic/~thumb/%s" % cksum
+    thumbPath = "/my/pic/~thumb/%s/%s" % (cksum[:2], cksum[2:])
+    if not os.path.isdir(os.path.split(thumbPath)[0]):
+        os.makedirs(os.path.split(thumbPath)[0])
     try:
         f = open(thumbPath)
     except IOError:
         pass
     else:
+        if justCache:
+            return
         return f.read(), os.path.getmtime(thumbPath)
 
 
@@ -26,20 +26,30 @@ def thumb(localURL, maxSize=100):
     #         means /my/pic/digicam/housewarm/00023.jpg
     assert localURL.startswith("http://photo.bigasterisk.com/")
     localPath = "/my/pic/" + localURL[len("http://photo.bigasterisk.com/"):]
-    print localPath
 
     if maxSize is Full:
+        if justCache:
+            return
         return open(localPath).read(), os.path.getmtime(localPath)
 
-    print "resizing %s" % localURL
+    print "resizing %s to %s" % (localPath, thumbPath)
 
     img = Image.open(localPath)
-    img.thumbnail((maxSize, maxSize))
+
+    # img.thumbnail is faster, but much lower quality
+    w, h = img.size
+    scl = min(maxSize / w, maxSize / h)
+    img = img.resize((int(round(w * scl)), int(round(h * scl))),
+                     Image.ANTIALIAS)
+
     jpg = StringIO()
     jpg.name = localURL
-    q = 85
+    q = 80
     if maxSize <= 100:
         q = 60
     img.save(jpg, quality=q)
-    open(thumbPath, "w").write(jpg.getvalue())
+    open(thumbPath + ".tmp", "w").write(jpg.getvalue())
+    os.rename(thumbPath + ".tmp", thumbPath)
+    if justCache:
+        return
     return jpg.getvalue(), time.time()

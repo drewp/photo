@@ -1,0 +1,24 @@
+#!/usr/bin/python
+
+"""
+make sure we have the thumb+large sizes of all /my/pic/digicam jpgs
+ready for serving. Photo site can make its own if any are missing, but
+that will be slower.
+
+this should be run after new photos are imported, and maybe every
+night to catch strays.
+
+"""
+
+import subprocess
+from photos import thumb
+
+for filename in subprocess.Popen(
+    "/usr/bin/find /my/pic/digicam -name *.jpg -o -name *.JPG".split(),
+    stdout=subprocess.PIPE).communicate()[0].splitlines():
+    filename = filename.strip()
+
+    for size in [75, 600]:
+        thumb("http://photo.bigasterisk.com/%s" % filename[len("/my/pic/"):],
+              maxSize=size, justCache=True)
+        
