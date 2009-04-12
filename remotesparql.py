@@ -45,8 +45,9 @@ class RemoteSparql(Graph2):
 
         xml = self.root.get('/' + self.repoName,
                             query=query, queryLn='SPARQL',
-                            headers={'Content-Type' :
-                                     'application/sparql-results+xml'})
+                            headers={'Accept' :
+                                     'application/sparql-results+xml'}
+                            )
         return parseSparqlResults(xml)
 
     def safeParse(self, source, publicID=None, format="xml"):
