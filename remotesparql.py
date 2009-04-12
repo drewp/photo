@@ -4,6 +4,8 @@ import sys
 sys.path.insert(0, "/home/drewp/projects/wesabe/py-restclient/build/lib")
 import restclient
 
+restclient.RequestFailed.__str__ = lambda self: self.message
+
 sys.path.append("/home/drewp/projects/ffg/sparqlhttp/sparqlhttp")
 from sparqlxml import parseSparqlResults
 from dictquery import Graph2
