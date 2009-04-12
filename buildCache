@@ -8,17 +8,26 @@ that will be slower.
 this should be run after new photos are imported, and maybe every
 night to catch strays.
 
+it would be faster to make the 75px images out of the 600px images.
+
 """
 
-import subprocess
+import subprocess, random
 from photos import thumb
 
-for filename in subprocess.Popen(
+files = [f for f in subprocess.Popen(
     "/usr/bin/find /my/pic/digicam -name *.jpg -o -name *.JPG".split(),
-    stdout=subprocess.PIPE).communicate()[0].splitlines():
+    stdout=subprocess.PIPE).communicate()[0].splitlines()
+         if '.xvpics' not in f]
+
+# this is so i can run multiple instances of this process in parallel
+random.shuffle(files)
+
+for i, filename in enumerate(files):
     filename = filename.strip()
 
     for size in [75, 600]:
         thumb("http://photo.bigasterisk.com/%s" % filename[len("/my/pic/"):],
               maxSize=size, justCache=True)
-        
+    if i % 50 == 0:
+        print "finished %s of %s" % (i, len(files))

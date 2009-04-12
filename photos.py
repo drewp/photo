@@ -1,9 +1,11 @@
 from __future__ import division
-import os, md5, time
+import os, md5, time, random, string
 from StringIO import StringIO
 import Image
 
 class Full(object): pass
+
+tmpSuffix = ".tmp" + ''.join([random.choice(string.letters) for c in range(5)])
 
 def thumb(localURL, maxSize=100, justCache=False):
     """returns jpeg data, mtime"""
@@ -48,8 +50,8 @@ def thumb(localURL, maxSize=100, justCache=False):
     if maxSize <= 100:
         q = 60
     img.save(jpg, quality=q)
-    open(thumbPath + ".tmp", "w").write(jpg.getvalue())
-    os.rename(thumbPath + ".tmp", thumbPath)
+    open(thumbPath + tmpSuffix, "w").write(jpg.getvalue())
+    os.rename(thumbPath + tmpSuffix, thumbPath)
     if justCache:
         return
     return jpg.getvalue(), time.time()
