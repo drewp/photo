@@ -35,9 +35,12 @@ class RemoteSparql(Graph2):
         self.sparqlHeader = ''.join('PREFIX %s: <%s>\n' % (p, f)
                                     for p,f in initNs.items())
 
-        allegroCall(self.root.post, id=self.repoName,
-                    directory='/tmp/agraph-catalog',
-                    **{'if-exists' : 'open'})
+        if 'openrdf-sesame' in repoUrl:
+            pass
+        else:
+            allegroCall(self.root.post, id=self.repoName,
+                        directory='/tmp/agraph-catalog',
+                        **{'if-exists' : 'open'})
 
     def queryd(self, query, initBindings={}):
         # initBindings keys can be Variable, but they should not
