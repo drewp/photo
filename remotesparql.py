@@ -6,10 +6,11 @@ import restclient
 
 restclient.RequestFailed.__str__ = lambda self: self.message
 
-sys.path.append("/home/drewp/projects/ffg/sparqlhttp/sparqlhttp")
-from sparqlxml import parseSparqlResults
-from dictquery import Graph2
-from remotegraph import interpolateSparql
+sys.path.append("/home/drewp/projects/ffg/sparqlhttp")
+sys.path.append("/my/proj/ffg/sparqlhttp")
+from sparqlhttp.sparqlxml import parseSparqlResults
+from sparqlhttp.dictquery import Graph2
+from sparqlhttp.remotegraph import interpolateSparql
 
 
 def allegroCall(call, *args, **kwargs):
@@ -80,4 +81,25 @@ class RemoteSparql(Graph2):
             allegroCall(self.root.delete,
                         '/%s/statements' % self.repoName, **params)
 
+
+    def add(self, *triples, **context):
+        """takes multiple triples at once (to reduce RPC calls).
+        context arg is required"""
+        try:
+            context = context['context']
+        except KeyError:
+            raise TypeError("'context' named argument is required")
+
+        graph = Graph()
+        for s in triples:
+            graph.add(s)
+
+        allegroCall(self.root.post, '/%s/statements' % self.repoName,
+                    context=context.n3(),
+                    payload=graph.serialize(format='xml'),
+                    headers={'Content-Type' : 'application/rdf+xml'})
+        triples
+
+        self._graphModified()
+        
 
