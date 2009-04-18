@@ -4,6 +4,9 @@ import sys, os, md5, urllib, time, logging
 # from /usr/share/doc/python-xml/changelog.Debian.gz
 sys.path.append('/usr/lib/python%s/site-packages/oldxml' % sys.version[:3])
 
+# for rdflib
+sys.path.insert(0, "/my/proj/ffg/lib/rdflib/build/lib.linux-i686-2.5/")
+
 from sets import Set
 from StringIO import StringIO
 from twisted.application import internet, service
@@ -14,6 +17,8 @@ from nevow import appserver, inevow
 from nevow import loaders, rend, static, tags as T
 import Image
 from photos import Full, thumb
+import rdflib
+print "rdflib", rdflib.__version__
 from rdflib.Graph import ConjunctiveGraph
 from rdflib import Namespace, RDF, RDFS, Literal, Variable
 sys.path.append("/my/proj/ffg/sparqlhttp")
@@ -78,8 +83,8 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         if username and password:
             userMatches = self.graph.queryd(
                 """SELECT ?user WHERE { ?user pho:username ?u; pho:password ?p . }""",
-                initBindings={Variable("?u") : Literal(request.getUser()),
-                              Variable("?p") : Literal(request.getPassword())})
+                initBindings={Variable("u") : Literal(request.getUser()),
+                              Variable("p") : Literal(request.getPassword())})
             if userMatches:
                 return True
         return False

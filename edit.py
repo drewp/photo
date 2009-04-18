@@ -71,7 +71,7 @@ class Edit(rend.Page):
                  ?pic pho:inDirectory ?dirUri ;
                       pho:filename ?fn
                }""",
-            initBindings={Variable("?dirUri") : dirUri} # rdflib 2.4.0 only
+            initBindings={Variable("dirUri") : dirUri} # rdflib 2.4.0 only
             ):
             yield row['pic'], row['fn']
 

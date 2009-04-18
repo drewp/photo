@@ -36,7 +36,7 @@ class FileBrowse(rend.Page):
         q = "SELECT ?child WHERE { ?child pho:inDirectory ?node . } ORDER BY ?child"
 
         for row in self.graph.queryd(q,
-                                     initBindings={Variable('?node') : node}):
+                                     initBindings={Variable('node') : node}):
             child = row['child']
             leaf = not self.graph.contains((child, RDF.type,
                                             PHO['DiskDirectory']))

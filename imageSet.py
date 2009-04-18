@@ -32,7 +32,7 @@ class ImageSet(rend.Page):
                                    ?photo foaf:depicts ?u ;
                                           pho:viewableBy pho:friends .
                                  }""",
-                              initBindings={Variable('?u') : self.uri})
+                              initBindings={Variable('u') : self.uri})
 
         self.photos = sorted([row['photo'] for row in q])
 
