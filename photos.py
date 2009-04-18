@@ -12,8 +12,12 @@ def thumb(localURL, maxSize=100, justCache=False):
     cksum = md5.new(localURL + "?size=%s" % maxSize).hexdigest()
 
     thumbPath = "/my/pic/~thumb/%s/%s" % (cksum[:2], cksum[2:])
-    if not os.path.isdir(os.path.split(thumbPath)[0]):
+    try:
         os.makedirs(os.path.split(thumbPath)[0])
+    except OSError:
+        pass # if the dir can't be made (as opposed to exists
+             # already), we'll get an error later
+    
     try:
         f = open(thumbPath)
     except IOError:
