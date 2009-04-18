@@ -14,7 +14,7 @@ and then we can ask for 600 followed by 75.
 
 """
 
-import subprocess, random
+import subprocess, random, time
 from photos import thumb
 
 files = [f for f in subprocess.Popen(
@@ -25,11 +25,20 @@ files = [f for f in subprocess.Popen(
 # this is so i can run multiple instances of this process in parallel
 random.shuffle(files)
 
+reportStep = 100
+lastReportStart = time.time()
 for i, filename in enumerate(files):
     filename = filename.strip()
 
     for size in [75, 600]:
-        thumb("http://photo.bigasterisk.com/%s" % filename[len("/my/pic/"):],
-              maxSize=size, justCache=True)
-    if i % 50 == 0:
-        print "finished %s of %s" % (i, len(files))
+        try:
+            thumb("http://photo.bigasterisk.com/%s" % filename[len("/my/pic/"):],
+                  maxSize=size, justCache=True)
+        except IOError:
+            pass
+    if (i + 1) % reportStep == 0:
+        perFile = (time.time() - lastReportStart) / reportStep
+        lastReportStart = time.time()
+        print "finished %s of %s, est %s min left" % (
+            i, len(files),
+            round((len(files) - i) * perFile / 60))
