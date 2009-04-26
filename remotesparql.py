@@ -33,6 +33,7 @@ class RemoteSparql(Graph2):
         """
         self.root = restclient.Resource(repoUrl)
         self.repoName = repoName
+        self.initNs = initNs
         self.sparqlHeader = ''.join('PREFIX %s: <%s>\n' % (p, f)
                                     for p,f in initNs.items())
 
@@ -47,8 +48,9 @@ class RemoteSparql(Graph2):
         # initBindings keys can be Variable, but they should not
         # include the questionmark or else they'll get silently
         # ignored
-        query = self.sparqlHeader + interpolateSparql(query, initBindings)
-
+        interpolated = interpolateSparql(query, initBindings)
+        #print interpolated
+        query = self.sparqlHeader + interpolated
         xml = self.root.get('/' + self.repoName,
                             query=query, queryLn='SPARQL',
                             headers={'Accept' :
@@ -91,6 +93,8 @@ class RemoteSparql(Graph2):
             raise TypeError("'context' named argument is required")
 
         graph = Graph()
+        for p, f in self.initNs.items():
+            graph.bind(p, f)
         for s in triples:
             graph.add(s)
 
@@ -103,3 +107,5 @@ class RemoteSparql(Graph2):
         self._graphModified()
         
 
+    def commit(self):
+        pass
