@@ -76,7 +76,7 @@ class RemoteSparql(Graph2):
         """graph.get_context(context).remove(stmt)"""
         self._graphModified()
         for stmt in triples:
-            params = {'context' : context.get('context')}
+            params = {'context' : context.get('context').n3()}
             for x, param in zip(stmt, ['subj', 'pred', 'obj']):
                 if x is not None:
                     params[param] = x.n3()
