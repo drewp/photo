@@ -18,6 +18,8 @@ def allegroCall(call, *args, **kwargs):
     try:
         return call(*args, **kwargs)
     except restclient.RequestError, e:
+        if e[0] == '(7, "couldn\'t connect to host")':
+            raise
         if e[0][0][1] != 'transfer closed with outstanding read data remaining':
             raise
 
@@ -37,12 +39,19 @@ class RemoteSparql(Graph2):
         self.sparqlHeader = ''.join('PREFIX %s: <%s>\n' % (p, f)
                                     for p,f in initNs.items())
 
+        self.sendNamespaces()
         if 'openrdf-sesame' in repoUrl:
             pass
         else:
             allegroCall(self.root.post, id=self.repoName,
                         directory='/tmp/agraph-catalog',
                         **{'if-exists' : 'open'})
+
+    def sendNamespaces(self):
+        for prefix, uri in self.initNs.items():
+            allegroCall(self.root.put, '/%s/namespaces/%s' % (self.repoName, prefix),
+                        payload=str(uri),
+                        headers={'Content-Type' : 'text/plain'})
 
     def queryd(self, query, initBindings={}):
         # initBindings keys can be Variable, but they should not
