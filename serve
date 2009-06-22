@@ -148,12 +148,15 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         reload(browse)
         return browse.FileBrowse(ctx, graph)
 
-    def child_edit(self, ctx):
+    def child_edit(self, ctx, _name="Edit"):
         if not self.httpAuthorized(ctx):
             return self.needAuth(ctx)
         import edit
         reload(edit)
-        return edit.Edit(ctx, graph)
+        return getattr(edit, _name)(ctx, graph)
+
+    def child_edit2(self, ctx):
+        return self.child_edit(ctx, _name="Edit2")
 
     def child_static(self, ctx):
         return static.File(sibpath(__file__, "static"))

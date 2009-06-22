@@ -19,7 +19,7 @@ get imgs by sparql, including the POST resource to send results back to
 make copyrow widget disappear if we're at the bottom or haven't started
 click outside addColumn to make it disappear
 flickr interface- query your flickr images through the flickr gateway, tag them here
-
+flickr tags- when my tag matches stuff on flickr, preview some pics from there, e.g. 'mounthood'
 */
 
 var photo = (function() {
@@ -180,8 +180,8 @@ var photo = (function() {
     };
 })();
 
-Event.observe(window, "load", function() {
-    
+
+function start1() {
     photo.addColumn("http://photo.bigasterisk.com/0.1/friends",
 		    "public",
 		    "http://photo.bigasterisk.com/0.1/viewableBy",
@@ -214,7 +214,28 @@ Event.observe(window, "load", function() {
 
     photo.setLastRow($('tagger').getElementsBySelector('tr')[5]);
     StartFloat();
-});
+}
+
+function start2() {
+    jQuery('.tags').tagSuggest({
+	url: 'tagSuggestion?subj=foo'
+    });
+}
+
+function toggleSection(t) {
+    console.log("section at", t);
+
+    if (t.hasClassName('sectionSplitter')) {
+	t.replace($('protoSectionBreak').innerHTML);
+    } else {
+	t.replace($('protoSectionSplitter').innerHTML);
+    }
+
+//    t.toggleClassName('sectionBreak');
+//    t.toggleClassName('sectionSplitter');
+    
+}
+
 
 // lose this once the table has inner scrolling:
 

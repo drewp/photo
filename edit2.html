@@ -1,0 +1,139 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:n="http://nevow.com/ns/nevow/0.1">
+  <head>
+    <script type="text/javascript" src="../static/jquery-1.2.6.min.js"></script>
+    <script type="text/javascript">
+      jQuery.noConflict();
+    </script>
+    <script type="text/javascript" src="../static/tag.js"></script>
+    <script type="text/javascript" src="../static/prototype-1.6.js"></script>
+    <script type="text/javascript" src="../static/edit.js"></script>
+    <style type="text/css">
+        td.selected-stmts {
+          background: yellow;
+        }
+        .add-column div {
+          display: table;
+        }
+	.add-column a {
+	    text-decoration: none;
+	}
+	.add-column-button {
+	    background:#DDDDDD;
+	    border:3px outset #444444;
+	    padding:0.3em;
+	    text-align:center;
+	    cursor: pointer;
+	}
+        #add-uri {
+         width: 40em;
+        }
+	#copy-row {
+	    position: relative;
+	    top: 0px;
+	    float: left; /* or z-index:-1 (to allow clicks on table columns) */
+	}
+	span.key {
+	    background:#FFFFCC;
+	    border:1px outset black;
+	    padding:0 3px;
+	}
+
+	#largeImg {
+	    width: 400px;
+	}
+	#imagePreview {
+	    border: 2px solid black;
+	    position: absolute;
+	    right: 5px;
+	    top: 5px;
+	    display: block;
+	}
+
+	.tagMatches span {
+	    -moz-border-radius: 5px;
+	    background:#555555;
+	    color:white;
+	    margin:0 2px;
+	    padding:2px 3px;
+	}
+	input[type=text] {
+	    border: 1px inset black; 
+	    padding: 2px; 
+	    background: rgb(238, 238, 238) none repeat scroll 0% 0%; 
+	    -moz-border-radius: 5px; 
+	}
+
+	.sectionBreak { 
+	    border-top: 1px solid black; 
+	    border-left: 1px solid black; 
+	    padding: 1em;
+	}
+
+	.sectionSplitter {
+	    margin-top: -8px;
+	    margin-bottom: -8px;
+	    cursor: pointer;
+	}
+	.sectionSplitter:hover {
+	    border: 1px outset #ccc;
+	    background: #ccc;
+	}
+	table.picRow {
+	    background: #dee;
+	    padding: 0 12px;
+	}
+
+    </style>
+    <title>editing tags for ..</title>
+  </head>
+  <body>
+    <h1>foaf:depicts editor2</h1>
+
+    <div style="display: none" id="protoSectionBreak">
+
+      <div class="sectionBreak">
+	<div style="float: left" class="sectionSplitter" onclick="javascript:toggleSection(this)">
+	  <div style="margin-bottom: -6px;">&#8675;</div>
+	  <div style="margin-top: -6px;">&#8673;</div>
+	</div>
+	Section:
+	<div style="clear:left"/>
+	<div>Depicts <input type="text" class="tags"/></div>
+	<div>Comment <input type="text"/></div>
+      </div>
+
+    </div>
+
+    <div style="display: none" id="protoSectionSplitter">
+      <div class="sectionSplitter" onclick="javascript:toggleSection(this)">&#9986;</div>
+    </div>
+
+
+    <n:invisible n:render="pics"/>
+
+
+    <n:invisible n:render="chooseSet" />
+
+    <input type="submit" value="Save"
+	   onClick="javascript:photo.postStatements();"/>
+
+    <div style="clear: left"/>
+    <div>
+      Statements to add (<span style="color: blue;" onclick="javascript:photo.getStatements()">refresh this</span>):
+      <div id="statements"></div>
+    </div>
+<!--
+    <div id="imagePreview">
+      <img id="largeImg"/>
+    </div>
+-->
+
+
+    <script type="text/javascript">
+Event.observe(window, "load", start2);
+    </script>
+
+
+  </body>
+</html>

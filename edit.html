@@ -1,6 +1,11 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:n="http://nevow.com/ns/nevow/0.1">
   <head>
+    <script type="text/javascript" src="../static/jquery-1.2.6.min.js"></script>
+    <script type="text/javascript">
+      jQuery.noConflict();
+    </script>
+    <script type="text/javascript" src="../static/tag.js"></script>
     <script type="text/javascript" src="../static/prototype-1.6.js"></script>
     <script type="text/javascript" src="../static/edit.js"></script>
     <style type="text/css">
@@ -132,11 +137,59 @@ html > body tbody.scrollContent td + td + td {
 width:300px;
 }
 */
+
+.tagMatches span {
+    -moz-border-radius: 5px;
+    background:#555555;
+    color:white;
+    margin:0 2px;
+    padding:2px 3px;
+}
+input[type=text] {
+    border: 1px inset black; 
+    padding: 2px; 
+    background: rgb(238, 238, 238) none repeat scroll 0% 0%; 
+    -moz-border-radius: 5px; 
+}
     </style>
     <title>editing tags for ..</title>
   </head>
   <body>
     <h1>foaf:depicts editor</h1>
+
+    <div style="border-top: 1px solid black; border-left: 1px solid black; padding: 1em;">
+
+      Section: 
+
+      <div style="margin-bottom: -6px;">&#8675;</div>
+      <div style="margin-top: -6px;">&#8673;</div>
+
+      Depicts <input type="text" class="tags"/>
+    </div>
+
+    <table>
+      <tr>
+	<td><img onclick='javascript:photo.showLarge("/digicam/dl-2008-11-28/IMG_2522.JPG?size=large")' src="/digicam/dl-2008-11-28/IMG_2522.JPG?size=thumb"/></td>
+	<td>
+	  <div>Depicts: <input type="text" class="tags"/></div>
+	  <div>Comment: <input type="text"/></div>
+	</td>
+      </tr>
+    </table>
+
+    <div style="margin: -8px;">&#9986;</div>
+
+<table>
+  <tr>
+    <td><img onclick='javascript:photo.showLarge("/digicam/dl-2008-11-28/IMG_2522.JPG?size=large")' src="/digicam/dl-2008-11-28/IMG_2522.JPG?size=thumb"/></td>
+    <td>
+      <div>Depicts: <input type="text" class="tags"/></div>
+      <div>Comment: <input type="text"/></div>
+    </td>
+  </tr>
+</table>
+
+
 
     <n:invisible n:render="chooseSet" />
 
@@ -190,6 +243,10 @@ width:300px;
     <div id="imagePreview">
       <img id="largeImg"/>
     </div>
+
+    <script type="text/javascript">
+Event.observe(window, "load", start1);
+    </script>
 
   </body>
 </html>
