@@ -1,0 +1,111 @@
+#!/usr/bin/python2.5
+from remotesparql import RemoteSparql
+import os, logging, time, subprocess
+from rdflib import Namespace, RDFS
+from sparqlhttp.syncimport import SyncImport, IMP
+from twisted.internet import reactor
+from sparqlhttp.dictquery import contextFromFilename
+from _xmlplus.utils import iso8601
+from scanFs import ScanFs
+from scanExif import ScanExif
+from fileschanged import fileschanged, allFiles
+
+logging.basicConfig()
+log = logging.getLogger()
+log.setLevel(logging.DEBUG)
+
+PHO = Namespace("http://photo.bigasterisk.com/0.1/")
+SITE = Namespace("http://photo.bigasterisk.com/")
+FOAF = Namespace("http://xmlns.com/foaf/0.1/")
+
+class SesameSync(SyncImport):
+    def allInputFiles(self):
+        # faster to cull files more, here
+        for root, dirs, files in os.walk(self.inputDirectory):
+	    for filename in files:
+                # the dot hides emacs partial-save files, which i
+                # didn't notice anyway
+                if not filename.endswith(".n3") or filename.startswith('.'):
+                    continue
+                filename = os.path.join(root, filename)
+                yield filename
+
+    # method replaced for sesame
+    def lastImportTimeSecs(self, context):
+        """get the import time for a context, in unix seconds; or None
+        if it was never imported"""
+        time.sleep(.01) # for lower sesame cpu load
+        importTime = self.graph.value(context, IMP['lastImportTime'])
+        
+        if importTime is None:
+            log.debug("no imp:lastImportTime for %s" % context)
+            return None
+        return iso8601.parse(str(importTime))
+
+    def someChange(self, filename):
+        """this file was created, modified, or deleted"""
+        if not filename.endswith(".n3") or filename.startswith('.'):
+            return
+        
+        if not os.path.exists(filename):
+            self.fileDisappeared(filename)
+        else:
+            self.reloadContext(filename)
+
+
+
+  
+graph = RemoteSparql("http://bang:8080/openrdf-sesame/repositories", "photo",
+                     initNs=dict(foaf=FOAF,
+                                 rdfs=RDFS.RDFSNS,
+                                 pho=PHO))
+
+scanFs = ScanFs(graph, '/my/pic')
+scanExif = ScanExif(graph)
+
+syncs = {}
+subdirs = [] # root directories for fileschanged to watch underneath
+
+for picRoot, prefix in [
+    #(os.path.abspath("input/"), "http://photo.bigasterisk.com/internal/"),
+    #(os.path.abspath('webinput/'), "http://photo.bigasterisk.com/webinput/"),
+    ('/my/pic/', "http://photo.bigasterisk.com/"),
+    ]:
+    syncs[picRoot] = SesameSync(graph, inputDirectory=picRoot,
+                                contextPrefix=prefix,
+                                polling=False)
+    subdirs.append(picRoot)
+
+# don't read /my/pic/~thumb
+subdirs.remove('/my/pic/')
+subdirs.extend(['/my/pic/%s' % s
+                for s in os.listdir('/my/pic') if s != '~thumb'])
+#subdirs.append('/my/pic/flickr')
+
+
+def onChange(filename):
+    for root, sync in syncs.items():
+        if filename.startswith(root):
+            # this one reads .n3 files into sesame
+            sync.someChange(filename)
+            break
+
+    if filename.startswith('/my/pic'):
+        # this one wants to hear about image files for path/exif data
+        picUri = scanFs.fileChanged(filename)
+        if picUri is not None:
+            scanExif.addPic(picUri)
+
+# here, send a 'change' for every possible file
+
+#onChange('/my/site/photo/input/local.n3')
+#onChange('/my/pic/flickr/3716645105_27bca1ba5a_o.jpg')
+#onChange('/my/pic/phonecam/dt-2009-07-16/CIMG0074.jpg')
+#onChange('/my/pic/digicam/dl-2009-07-20/DSC_0092.JPG')
+
+print "importing all files", subdirs
+allFiles(subdirs, onChange)
+
+print "watching", subdirs
+fileschanged(subdirs, onChange)
+

@@ -31,6 +31,8 @@ PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 SITE = Namespace("http://photo.bigasterisk.com/")
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 
+myPicSubdirs = ['digicam', 'phonecam', 'home', 'wedding']
+
 class SyncImportFast(SyncImport):
     def allInputFiles(self):
         # faster to cull files more, here
@@ -96,11 +98,12 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
              or self.graph.contains((uri, PHO['viewableBy'], PHO['anyone'])))
         #if uri not in map(str.strip, open("allowed.urls").readlines()):
 
+
     def locateChild(self, ctx, segments):
         # danger, user data!
         uri = SITE['/'.join(segments)]
         log.debug("fetch uri %s", uri)
-        if segments[0] in ['digicam', 'phonecam', 'home', 'wedding']:
+        if segments[0] in myPicSubdirs:
             if self.graph.contains((uri, RDF.type, FOAF['Image'])):
                 if not self.viewable(uri, ctx):
                     return self.needAuth(ctx), []
@@ -119,7 +122,8 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
 
                 return StaticCached(jpg, "image/jpeg", mtime), ()
 
-        if segments[0] in ['2003', '2004', '2005', '2006', '2007', '2008', '2009']:
+        if segments[0] in ['2003', '2004', '2005', '2006', '2007', 
+                           '2008', '2009']:
             its = lambda o: self.graph.contains((uri, RDF.type, o))
             if (its(PHO['Event']) or
                 its(PHO['Place']) or
@@ -163,29 +167,17 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
 
 logging.basicConfig(level=logging.INFO)
 
-if 0:
-    graph = Graph2(ConjunctiveGraph(), initNs=dict(
+initNs = dict(
         foaf=FOAF,
         rdfs=RDFS.RDFSNS,
-        pho=PHO))
+        pho=PHO)
+
+if 0:
+    graph = Graph2(ConjunctiveGraph(), initNs=initNs)
 else:
     from remotesparql import RemoteSparql
-    graph = RemoteSparql("http://localhost:10001/sesame/repositories", "photo")
-
-syncs = []
-
-def setupGraphSyncs():
-    # path choices should be listed in rdf under input/
-    for picRoot, prefix in [
-        (os.path.abspath("input/"), "http://photo.bigasterisk.com/internal/"),
-        ('/my/pic',"http://photo.bigasterisk.com/"),
-        #'laptop-test',
-        ('webinput', "http://photo.bigasterisk.com/webinput/"),
-        ]:
-        syncs.append(SyncImportFast(graph, inputDirectory=picRoot,
-                                    contextPrefix=prefix,
-                                    pollSeconds=15))
-reactor.callLater(0, setupGraphSyncs)
+    graph = RemoteSparql("http://bang:8080/openrdf-sesame/repositories",
+                         "photo", initNs=initNs)
 
 application = service.Application('photo')
 webServer = internet.TCPServer(8086, appserver.NevowSite(Main(graph)))
