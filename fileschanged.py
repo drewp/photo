@@ -2,7 +2,6 @@
 wrapper for the fileschanged command
 """
 import os, subprocess, logging
-from random import random
 log = logging.getLogger('fileschanged')
 
 def fileschanged(topDirs, callback):
@@ -29,5 +28,4 @@ def allFiles(topDirs, callback):
                 if filename.startswith('.'):
                     continue
                 filename = os.path.join(root, filename)
-                if random() < .001:
-                    callback(filename)
+                callback(filename)

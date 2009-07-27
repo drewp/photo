@@ -53,6 +53,7 @@ class SesameSync(SyncImport):
             self.reloadContext(filename)
 
 
+quick = False
 
   
 graph = RemoteSparql("http://bang:8080/openrdf-sesame/repositories", "photo",
@@ -78,9 +79,11 @@ for picRoot, prefix in [
 
 # don't read /my/pic/~thumb
 subdirs.remove('/my/pic/')
-subdirs.extend(['/my/pic/%s' % s
-                for s in os.listdir('/my/pic') if s != '~thumb'])
-#subdirs.append('/my/pic/flickr')
+if quick:
+    subdirs.append('/my/pic/flickr')
+else:
+    subdirs.extend(['/my/pic/%s' % s
+                    for s in os.listdir('/my/pic') if s != '~thumb'])
 
 
 def onChange(filename):
@@ -96,16 +99,15 @@ def onChange(filename):
         if picUri is not None:
             scanExif.addPic(picUri)
 
-# here, send a 'change' for every possible file
+if quick:
+    onChange('/my/site/photo/input/local.n3')
+    onChange('/my/pic/flickr/3716645105_27bca1ba5a_o.jpg')
+    onChange('/my/pic/phonecam/dt-2009-07-16/CIMG0074.jpg')
+    onChange('/my/pic/digicam/dl-2009-07-20/DSC_0092.JPG')
 
-#onChange('/my/site/photo/input/local.n3')
-#onChange('/my/pic/flickr/3716645105_27bca1ba5a_o.jpg')
-#onChange('/my/pic/phonecam/dt-2009-07-16/CIMG0074.jpg')
-#onChange('/my/pic/digicam/dl-2009-07-20/DSC_0092.JPG')
-
-print "importing all files", subdirs
+print "importing all files in", subdirs
 allFiles(subdirs, onChange)
 
-print "watching", subdirs
+print "watching for new files in", subdirs
 fileschanged(subdirs, onChange)
 
