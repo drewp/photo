@@ -28,7 +28,7 @@ class ImageSet(rend.Page):
     docFactory = loaders.xmlfile("imageSet.html")
     def __init__(self, ctx, graph, uri):
         self.graph, self.uri = graph, uri
-        q = self.graph.queryd("""SELECT ?photo WHERE {
+        q = self.graph.queryd("""SELECT DISTINCT ?photo WHERE {
                                    ?photo foaf:depicts ?u ;
                                           pho:viewableBy pho:friends .
                                  }""",
@@ -124,6 +124,12 @@ class ImageSet(rend.Page):
         currentLocal = localSite(self.currentPhoto)
         return T.a(href=[currentLocal, "?size=full"])[T.img(src=[currentLocal, "?size=large"],
                      alt=self.graph.label(self.currentPhoto))]
+
+    def render_nextImagePreload(self, ctx, data):
+        i = self.photos.index(self.currentPhoto)
+        return T.img(class_='preload',
+                     src=[localSite(self.photos[min(len(self.photos) - 1,
+                                                    i + 1)]), "?size=large"])
 
     def render_zipUrl(self, ctx, data):
         return [self.uri, "?archive=zip"]

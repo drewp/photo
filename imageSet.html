@@ -32,8 +32,9 @@ div.imageInfo {
   margin: 1em;
   padding: 1em;
   position: relative; 
-  display:inline;
   border: 1px solid gray;
+  float:right;
+width:10em;
 }
 img {
   border: 1px solid #668;
@@ -57,6 +58,13 @@ img.current {
   border: 2px solid #ffc;
   padding: 1px;
 }
+img.preload {
+  width: 0px;
+}
+span img {
+ width: 75px;
+height: 56px;
+} 
     </style>
     <title><n:invisible n:render="title"/></title>
   </head>
@@ -119,6 +127,8 @@ img.current {
         }
       });
     </script>
+
+    <n:invisible n:render="nextImagePreload"/>
 
   </body>
 </html>
