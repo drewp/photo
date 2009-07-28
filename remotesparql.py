@@ -111,7 +111,10 @@ class RemoteSparql(Graph2):
         triples
 
         self._graphModified()
-        
+
+    def __len__(self):
+        size = allegroCall(self.root.get, '/%s/size' % self.repoName)
+        return int(size)
 
     def commit(self):
         pass
