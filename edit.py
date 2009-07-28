@@ -30,6 +30,20 @@ def picsInDirectory(graph, dirUri):
         ):
         yield row['pic'], row['fn']
 
+def writeStatements(stmts):
+    """write triples to a new file which should get read in
+    shortly. Returns message string about what file was written"""
+    # save to new file web-2008-09-13T05:15:26.nt
+
+    outFile = sibpath(__file__, "webinput/web-%s.n3" % datetime.datetime.now().isoformat())
+    g = Graph()
+    for s in stmts:
+        g.add(s)
+
+    # then ping sesameSyncImport to read this quickly
+
+    g.serialize(outFile, format='nt')
+    return "wrote %s" % outFile   
 
 class Edit(rend.Page):
     addSlash = True
@@ -41,16 +55,9 @@ class Edit(rend.Page):
         content = inevow.IRequest(ctx).content
         content.seek(0)
         stmts = json.parse(content.read())
-        # save to new file web-2008-09-13T05:15:26.nt
 
-        outFile = sibpath(__file__, "webinput/web-%s.n3" % datetime.datetime.now().isoformat())
-        g = Graph()
-        for s in statementsFromJsRdf(stmts):
-            g.add(s)
-
-        g.serialize(outFile, format='nt')
-        return "wrote %s" % outFile
-
+        return writeStatements(statementsFromJsRdf(stmts))
+    
     brickColumns = 3
 
     def render_table(self, ctx, data):
