@@ -18,7 +18,7 @@ import subprocess, random, time
 from photos import thumb
 
 files = [f for f in subprocess.Popen(
-    "/usr/bin/find /my/pic/digicam -name *.jpg -o -name *.JPG".split(),
+    "/usr/bin/find /my/pic/phonecam /my/pic/digicam -name *.jpg -o -name *.JPG".split(),
     stdout=subprocess.PIPE).communicate()[0].splitlines()
          if '.xvpics' not in f]
 
