@@ -42,7 +42,7 @@ class SesameSync(SyncImport):
             return None
         return iso8601.parse(str(importTime))
 
-    def someChange(self, filename):
+    def someChange(self, filename, doubleCheckMtime=False):
         """this file was created, modified, or deleted"""
         if not filename.endswith(".n3") or filename.startswith('.'):
             return
@@ -50,6 +50,8 @@ class SesameSync(SyncImport):
         if not os.path.exists(filename):
             self.fileDisappeared(filename)
         else:
+            if doubleCheckMtime and not self.fileIsUpdated(filename):
+                return
             self.reloadContext(filename)
 
 
@@ -90,7 +92,7 @@ def onChange(filename):
     for root, sync in syncs.items():
         if filename.startswith(root):
             # this one reads .n3 files into sesame
-            sync.someChange(filename)
+            sync.someChange(filename, doubleCheckMtime=True)
             break
 
     if filename.startswith('/my/pic'):
@@ -100,6 +102,7 @@ def onChange(filename):
             scanExif.addPic(picUri)
             # todo: freshen thumbs here too? that should be on a lower
             # priority queue than getting the exif/file data
+
 
 if quick:
     onChange('/my/site/photo/input/local.n3')
