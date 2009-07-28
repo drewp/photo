@@ -51,6 +51,13 @@ class Edit(rend.Page):
     def __init__(self, ctx, graph):
         self.graph = graph
 
+    def locateChild(self, ctx, segments):
+        request = inevow.IRequest(ctx)
+        request.prepath = ['edit']
+        request.setHost('photo.bigasterisk.com', 80)
+        return rend.Page.locateChild(self, ctx, segments)
+                    
+
     def child_saveStatements(self, ctx):
         content = inevow.IRequest(ctx).content
         content.seek(0)
