@@ -36,6 +36,7 @@ def thumb(localURL, maxSize=100, justCache=False):
     if maxSize is Full:
         if justCache:
             return
+        raise NotImplementedError("full size offline") # need to strip exif!
         return open(localPath).read(), os.path.getmtime(localPath)
 
     print "resizing %s to %s" % (localPath, thumbPath)
