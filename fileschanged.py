@@ -3,6 +3,7 @@ wrapper for the fileschanged command
 """
 import os, subprocess, logging
 log = logging.getLogger('fileschanged')
+log.setLevel(logging.DEBUG)
 
 def fileschanged(topDirs, callback):
     """watch dirs (recursively), calling the given function with the

@@ -110,6 +110,6 @@ if quick:
 print "importing all files in", subdirs
 allFiles(subdirs, onChange)
 
-print "watching for new files in", subdirs
+log.info("watching for new files in %s" % subdirs)
 fileschanged(subdirs, onChange)
 

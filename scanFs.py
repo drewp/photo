@@ -14,6 +14,7 @@ from rdflib.Graph import ConjunctiveGraph
 from rdflib import Namespace, RDF, RDFS, URIRef, Literal
 
 log = logging.getLogger('scanFs')
+log.setLevel(logging.DEBUG)
 
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 SITE = Namespace("http://photo.bigasterisk.com/")

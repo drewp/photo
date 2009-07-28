@@ -10,7 +10,7 @@ also: http://svn.foaf-project.org/foaftown/geo/photos/old/geoloc_media.pl
 """
 from __future__ import division
 from rdflib import Namespace, Literal, BNode, RDF, URIRef
-import subprocess
+import subprocess, logging
 from xml.etree import ElementTree
 
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
@@ -18,6 +18,9 @@ DC = Namespace("http://purl.org/dc/elements/1.1/")
 XS = Namespace("http://www.w3.org/2001/XMLSchema#")
 EXIF = Namespace("http://www.kanzaki.com/ns/exif#")
 WGS = Namespace("http://www.w3.org/2003/01/geo/wgs84_pos#")
+
+log = logging.getLogger('scanExif')
+log.setLevel(logging.DEBUG)
 
 class ScanExif(object):
     def __init__(self, graph):
@@ -80,6 +83,7 @@ class ScanExif(object):
                 ])
         self.graph.add(*stmts,
              **{'context' : URIRef("http://photo.bigasterisk.com/scan/exif")})
+        log.info("added exif from %s %s triples" % (filename, len(self.graph)))
 
         
 def floatFromDms(compass, dms):
