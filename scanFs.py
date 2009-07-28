@@ -61,12 +61,17 @@ class ScanFs(object):
     def addPicFile(self, filename):
         filename = os.path.abspath(filename)
         fileUri = uriOfFilename(self.rootUri, self.topDir, filename)
+
+        if self.graph.contains((fileUri, RDF.type, FOAF.Image)):
+            #log.debug("seen %s" % filename)
+            return
+        
         dirUri = self.addDir(os.path.dirname(filename))
         self.graph.add((fileUri, RDF.type, FOAF.Image),
                        (fileUri, PHO.inDirectory, dirUri),
                        (fileUri, PHO.filename, Literal(filename)),
                        context=URIRef("http://photo.bigasterisk.com/scan/fs"))
-        log.info("added pic %s" % filename)
+        log.info("added pic %s %s triples" % (filename, len(self.graph)))
         return fileUri
 
     def addDir(self, dirPath):

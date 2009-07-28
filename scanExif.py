@@ -34,6 +34,10 @@ class ScanExif(object):
         Skip this if there is already exif data for the image. Todo:
         notice if the image file -changed-, and reread in that case.
         """
+        if self.graph.contains((uri, EXIF.dateTime, None)):
+            log.debug("seen %s" % uri)
+            return
+        
         filename = self.graph.value(uri, PHO.filename)
 
         self.addByFilename(uri, filename)
@@ -51,6 +55,7 @@ class ScanExif(object):
         xml = subprocess.Popen(["exif", "-x", filename],
                                stdout=subprocess.PIPE).communicate()[0]
         if not xml:
+            # todo: no exif? we should still fake a date from the file mtime, perhaps
             return
         root = ElementTree.fromstring(xml)
         vals = {}
