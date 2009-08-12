@@ -5,7 +5,14 @@ import time, os, subprocess, logging, traceback
 log = logging.getLogger('fileschanged')
 log.setLevel(logging.DEBUG)
 
-def fileschanged(topDirs, callback):
+def runCallback(func, filename):
+    try:
+        func(filename)
+    except Exception, e:
+        log.error("Error during callback for %s" % filename)
+        traceback.print_exc()
+   
+def fileschanged_subprocess(topDirs, callback):
     """watch dirs (recursively), calling the given function with the
     name of any file created/modified/deleted. Note that there may be
     a big delay (as if we ran 'find' on all the dirs) before the
@@ -17,12 +24,8 @@ def fileschanged(topDirs, callback):
     for line in iter(proc.stdout.readline, None):
         filename = line.strip()
         log.debug("fileschanged: %s" % filename)
-        try:
-            callback(filename)
-        except Exception, e:
-            log.error("Error during callback for %s" % filename)
-            traceback.print_exc()
-
+        runCallback(callback, filename)
+        
 def fileschanged_gamin(topDirs, callback):
     """version using gamin, which does not have recursive support. I'd
     have to find subdirs, then add dynamic watches to any new dirs
@@ -39,6 +42,39 @@ def fileschanged_gamin(topDirs, callback):
         mon.handle_events()
         time.sleep(1)
     print "done"
+
+def fileschanged_pyinotify(topDirs, callback):
+    import pyinotify
+     
+    wm = pyinotify.WatchManager()
+    
+    class Identity(pyinotify.ProcessEvent):
+        def process_default(self, event):
+            if event.name.startswith('.'):
+                return
+            p = os.path.join(event.path, event.name)
+            log.debug("fileschanged: %s" % p)
+            runCallback(callback, p)
+    
+    notifier = pyinotify.Notifier(wm, default_proc_fun=Identity())
+
+    c = pyinotify.EventsCodes
+    # rsync writes to a dotfile, which we ignore, then moves to the
+    # real file, which we catch with IN_MOVED_TO
+    codes = c.IN_MODIFY | c.IN_CREATE | c.IN_DELETE | c.IN_MOVED_TO
+
+    print "finding dirs.."
+    for d in topDirs:
+        wm.add_watch(d, codes, rec=True, auto_add=True)
+    print "now watching for changes.."
+    while 1:
+        notifier.process_events()
+        if notifier.check_events():
+            notifier.read_events()
+
+        
+
+fileschanged = fileschanged_pyinotify
 
 
 def allFiles(topDirs, callback):
