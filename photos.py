@@ -1,5 +1,8 @@
+"""
+depends on exiftool program from libimage-exiftool-perl ubuntu package
+"""
 from __future__ import division
-import os, md5, time, random, string
+import os, md5, time, random, string, subprocess
 from StringIO import StringIO
 import Image
 
@@ -36,8 +39,8 @@ def thumb(localURL, maxSize=100, justCache=False):
     if maxSize is Full:
         if justCache:
             return
-        raise NotImplementedError("full size offline") # need to strip exif!
-        return open(localPath).read(), os.path.getmtime(localPath)
+
+        return jpgWithoutExif(localPath), os.path.getmtime(localPath)
 
     print "resizing %s to %s" % (localPath, thumbPath)
 
@@ -60,3 +63,17 @@ def thumb(localURL, maxSize=100, justCache=False):
     if justCache:
         return
     return jpg.getvalue(), time.time()
+
+
+def jpgWithoutExif(filename):
+    """this is meant to remove GPS data, and I'm just removing
+    everything.
+
+    But it might be cool to add an exif line that says the URI for
+    this image, in case people want to come back to try for more
+    metadata"""
+    proc = subprocess.Popen(['exiftool', '-all=', '--jfif:all', '-'],
+                            stdin=subprocess.PIPE,
+                            stdout=subprocess.PIPE)
+    out, err = proc.communicate(input=open(filename).read())
+    return out
