@@ -32,18 +32,26 @@ class index(object):
 
         return render.browse2_index(
             subdirs=graph.queryd("""
-              SELECT DISTINCT ?subdir WHERE {
+              SELECT DISTINCT ?subdir ?type WHERE {
                 ?subdir pho:inDirectory ?topDir .
-                ?subdir rdf:type ?type .
+                ?subdir rdf:type pho:DiskDirectory .
                 OPTIONAL { ?subdir exif:dateTime ?t . }
-              } ORDER BY ?type desc(?t) ?subdir""",
+              } ORDER BY desc(?t) ?subdir""",
+                                 initBindings={Variable("topDir") : topDir}),
+            contents=graph.queryd("""
+              SELECT DISTINCT ?pic ?dateTime WHERE {
+                ?pic pho:inDirectory ?topDir .
+                ?pic rdf:type ?type .
+                FILTER (?type != pho:DiskDirectory) .
+                OPTIONAL { ?pic exif:dateTime ?dateTime . }
+              } ORDER BY desc(?dateTime) ?pic""",
                                  initBindings={Variable("topDir") : topDir}),
             recent=graph.queryd("""
               SELECT DISTINCT ?pic ?dateTime WHERE {
                 ?pic a foaf:Image;
                      exif:dateTime ?dateTime .
-              }  LIMIT 10
-            """),#ORDER BY desc(?dateTime)
+              } ORDER BY desc(?dateTime) LIMIT 10
+            """),#
             parent=graph.value(topDir, PHO.inDirectory),
             viewable=lambda uri: graph.contains((uri, PHO.viewableBy,
                                                 PHO.friends)),
@@ -66,5 +74,5 @@ urls = (r'/', "index",
 app = web.application(urls, globals())
 
 if __name__ == '__main__':
-    sys.argv.append("9025")
+    sys.argv.append("9028")
     app.run()

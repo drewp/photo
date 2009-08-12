@@ -10,18 +10,22 @@
       <a href="?dir=${row['subdir']}">${str(row['subdir'])}</a>
     </div>
 
-    Most recent pics:
-    <div py:for="row in recent" about="${row['pic']}">
-      ${row['dateTime']} 
-      <a href="${row['pic']}?size=large">
-	<img height="80" src="${row['pic']}?size=small"/>
-	[link to large]
-      </a>
-      <py:choose test="viewable(row['pic'])">
-	<button py:when="False" class="makePub">Make public</button>
-	<span py:when="True">public</span>
-      </py:choose>
-    </div>
+
+    <py:for each="(title, items) in [('Contents', contents), ('Most recent pics', recent)]">
+
+      ${title}:
+      <div py:for="row in items" about="${row['pic']}">
+	${row.get('dateTime', '?')} 
+	<a href="${row['pic']}?size=large">
+	  <img height="80" src="${row['pic']}?size=small"/>
+	  [link to large]
+	</a>
+	<py:choose test="viewable(row['pic'])">
+	  <button py:when="False" class="makePub">Make public</button>
+	  <span py:when="True">public</span>
+	</py:choose>
+      </div>
+    </py:for>
       
     <script type="text/javascript" src="http://photo.bigasterisk.com/static/jquery-1.3.2.min.js"></script>
     <script type="text/javascript">
