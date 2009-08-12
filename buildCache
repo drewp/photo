@@ -30,7 +30,7 @@ lastReportStart = time.time()
 for i, filename in enumerate(files):
     filename = filename.strip()
 
-    for size in [75, 600]:
+    for size in [75, 250, 600]:
         try:
             thumb("http://photo.bigasterisk.com/%s" % filename[len("/my/pic/"):],
                   maxSize=size, justCache=True)
