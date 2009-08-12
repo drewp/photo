@@ -64,7 +64,7 @@ class ScanFs(object):
 
         if self.graph.contains((fileUri, RDF.type, FOAF.Image)):
             #log.debug("seen %s" % filename)
-            return
+            return fileUri
         
         dirUri = self.addDir(os.path.dirname(filename))
         self.graph.add((fileUri, RDF.type, FOAF.Image),

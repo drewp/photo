@@ -35,7 +35,7 @@ class ScanExif(object):
         notice if the image file -changed-, and reread in that case.
         """
         if self.graph.contains((uri, EXIF.dateTime, None)):
-            log.debug("seen %s" % uri)
+            #log.debug("seen %s" % uri)
             return
         
         filename = self.graph.value(uri, PHO.filename)
