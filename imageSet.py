@@ -5,12 +5,15 @@ from nevow import loaders, rend, tags as T, inevow
 from rdflib import Namespace, Variable, URIRef
 from zope.interface import implements
 from twisted.python.components import registerAdapter, Adapter
+from xml.utils import iso8601
 from photos import Full, thumb
 from urls import localSite, absoluteSite
 log = logging.getLogger()
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 SITE = Namespace("http://photo.bigasterisk.com/")
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
+EXIF = Namespace("http://www.kanzaki.com/ns/exif#")
+
 
 ## class StringIOView(Adapter):
 ##     implements(inevow.IResource)
@@ -59,6 +62,14 @@ class ImageSet(rend.Page):
             return self.archiveZip(ctx)
         ret = rend.Page.renderHTTP(self, ctx)
         return ret
+
+    def render_loginWidget(self, ctx, data):
+        openid = inevow.IRequest(ctx).getHeader('x-openid-proxy')
+        if openid is None:
+            return T.a(href='/login')["Login"]
+        
+        openid = URIRef(openid)
+        return "Logged in as %s" % openid
 
     def render_zipSizeWarning(self, ctx, data):
         mb = 17.3 / 9 * len(self.photos)
@@ -122,14 +133,19 @@ class ImageSet(rend.Page):
 
     def render_featured(self, ctx, data):
         currentLocal = localSite(self.currentPhoto)
-        return T.a(href=[currentLocal, "?size=full"])[T.img(src=[currentLocal, "?size=large"],
-                     alt=self.graph.label(self.currentPhoto))]
+        _, next = self.prevNext()
+        return T.a(href=['?current=', next])[
+            T.img(src=[currentLocal, "?size=large"],
+                  alt=self.graph.label(self.currentPhoto))]
+
+    def prevNext(self):
+        i = self.photos.index(self.currentPhoto)
+        return (self.photos[max(0, i - 1)],
+                self.photos[min(len(self.photos) - 1, i + 1)])
 
     def render_nextImagePreload(self, ctx, data):
-        i = self.photos.index(self.currentPhoto)
-        return T.img(class_='preload',
-                     src=[localSite(self.photos[min(len(self.photos) - 1,
-                                                    i + 1)]), "?size=large"])
+        _, next = self.prevNext()
+        return T.img(class_='preload', src=[localSite(next), "?size=large"])
 
     def render_zipUrl(self, ctx, data):
         return [self.uri, "?archive=zip"]
@@ -137,18 +153,26 @@ class ImageSet(rend.Page):
     def render_link(self, ctx, data):
         return '<img src="%s?size=large"/>' % self.currentPhoto
 
+    def render_fullSizeLink(self, ctx, data):
+        return T.a(href=[localSite(self.currentPhoto), "?size=full"])[ctx.tag]
+
     def render_prevNextJs(self, ctx, data):
-        i = self.photos.index(self.currentPhoto)
+        prev, next = self.prevNext()
         
         return ctx.tag['var arrowPages = {prev : "%s", next : "%s"}' %
-                       (self.photos[max(0, i - 1)],
-                        self.photos[min(len(self.photos) - 1, i + 1)])]
+                       (prev, next)]
 
     def render_facts(self, ctx, data):
-        if self.graph.contains((self.currentPhoto, FOAF['depicts'], URIRef("http://photo.bigasterisk.com/2008/person/apollo"))):
-            birth = datetime.date(2008, 7, 22)
-            photoDate = datetime.date.today()
-            return "Apollo is about %s months old" % ((photoDate - birth).days / 30)
+        try:
+            if self.graph.contains((self.currentPhoto, FOAF['depicts'],
+                   URIRef("http://photo.bigasterisk.com/2008/person/apollo"))):
+                birth = "2008-07-22"
+                photoDate = self.graph.value(self.currentPhoto, EXIF.dateTime)
+                diff = iso8601.parse(str(photoDate)) - iso8601.parse(birth)
+                return "Apollo is %.2f months old" % (
+                    (photoDate - birth) / 86400 / 30)
+        except Exception, e:
+            log.error("facts failed: %s" % e)
         return ''
     
     def photoRss(self, ctx):

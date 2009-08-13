@@ -20,7 +20,7 @@ from photos import Full, thumb
 import rdflib
 print "rdflib", rdflib.__version__
 from rdflib.Graph import ConjunctiveGraph
-from rdflib import Namespace, RDF, RDFS, Literal, Variable
+from rdflib import Namespace, RDF, RDFS, Literal, Variable, URIRef
 sys.path.append("/my/proj/ffg/sparqlhttp")
 from sparqlhttp.syncimport import SyncImport
 from sparqlhttp.dictquery import Graph2
@@ -92,21 +92,36 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         return False
 
     def viewable(self, uri,  ctx):
-        if self.httpAuthorized(ctx):
+
+        request = inevow.IRequest(ctx)
+
+        openid = URIRef(request.getHeader('x-openid-proxy'))
+        print "pxy", openid
+
+        # not final; just matching the old logic
+        if openid in [URIRef('http://bigasterisk.com/'),
+                      URIRef('http://bigasterisk.com/kelsi/'),
+                      ]:
             return True
+        
+#        if self.httpAuthorized(ctx):
+#            return True
+
         return (self.graph.contains((uri, PHO['viewableBy'], PHO['friends']))
              or self.graph.contains((uri, PHO['viewableBy'], PHO['anyone'])))
-        #if uri not in map(str.strip, open("allowed.urls").readlines()):
 
 
     def locateChild(self, ctx, segments):
+        request = inevow.IRequest(ctx)
         # danger, user data!
         uri = SITE['/'.join(segments)]
         log.debug("fetch uri %s", uri)
         if segments[0] in myPicSubdirs:
             if self.graph.contains((uri, RDF.type, FOAF['Image'])):
                 if not self.viewable(uri, ctx):
-                    return self.needAuth(ctx), []
+                    #return self.needAuth(ctx), [] # for http auth
+                    request.setResponseCode(http.FORBIDDEN)
+                    return 'openid login required', []
 
                 if ctx.arg('page'):
                     return ImagePage(graph, uri), ()

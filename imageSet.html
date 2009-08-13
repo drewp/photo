@@ -69,6 +69,8 @@ height: 56px;
     <title><n:invisible n:render="title"/></title>
   </head>
   <body>
+    <div><n:invisible n:render="loginWidget"/></div>
+
     <h1>Pictures of <span class="tag"><n:invisible n:render="setLabel"/></span></h1>
 
     <div>
@@ -91,6 +93,8 @@ height: 56px;
       </div>
     </div>
 
+    <div>Click image for next</div>
+    <div><n:invisible n:render="fullSizeLink">See this pic at full size</n:invisible></div>
     <div><span class="imageLink">Link to this image: <n:invisible n:render="link"/></span></div>
 
     <div>
