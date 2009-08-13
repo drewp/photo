@@ -96,7 +96,6 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         request = inevow.IRequest(ctx)
 
         openid = URIRef(request.getHeader('x-openid-proxy'))
-        print "pxy", openid
 
         # not final; just matching the old logic
         if openid in [URIRef('http://bigasterisk.com/'),
@@ -121,6 +120,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
                 if not self.viewable(uri, ctx):
                     #return self.needAuth(ctx), [] # for http auth
                     request.setResponseCode(http.FORBIDDEN)
+                    # if it was an image, we should return a legal image here
                     return 'openid login required', []
 
                 if ctx.arg('page'):
