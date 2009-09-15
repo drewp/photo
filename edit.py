@@ -68,9 +68,13 @@ class Edit(rend.Page):
     brickColumns = 3
 
     def render_table(self, ctx, data):
-        rows = []
+        if not ctx.arg('dir'):
+            return []
+        
         d = URIRef(ctx.arg('dir')) # "http://photo.bigasterisk.com/digicam/dl-2008-09-25")
-        for i, (pic, filename) in enumerate(sorted(picsInDirectory(self.graph, d))[:]):
+        rows = []
+        for i, (pic, filename) in enumerate(sorted(
+            picsInDirectory(self.graph, d))[:]):
             img = T.img(src=[localSite(pic), '?size=thumb'],
                         onclick='javascript:photo.showLarge("%s")' %
                         (localSite(pic) + "?size=large"))

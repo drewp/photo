@@ -31,7 +31,7 @@ PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 SITE = Namespace("http://photo.bigasterisk.com/")
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 
-myPicSubdirs = ['digicam', 'phonecam', 'home', 'wedding']
+myPicSubdirs = ['digicam', 'phonecam', 'home', 'wedding', 'flickr', 'scans', 'email']
 
 class SyncImportFast(SyncImport):
     def allInputFiles(self):
@@ -100,6 +100,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         # not final; just matching the old logic
         if openid in [URIRef('http://bigasterisk.com/'),
                       URIRef('http://bigasterisk.com/kelsi/'),
+	              URIRef('https://www.google.com/accounts/o8/id?id=AItOawkP1fvEVpIoggbDHDTj07Z9x1CfEOlWIwQ'), # kelsi
                       ]:
             return True
         
@@ -117,6 +118,15 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         log.debug("fetch uri %s", uri)
         if segments[0] in myPicSubdirs:
             if self.graph.contains((uri, RDF.type, FOAF['Image'])):
+
+                """
+                proxy openid; now compare that header to the allowed viewers. if header is missing or empty, that becomes the 'anonymous' user. other openids are just URIRefs in the graph, and you have to be able to get from the viewableBy link to that URIRef (via any number of groups)
+
+                make an imageset that shows one directory (or more) of photos.
+
+                in the url, take a tag to show. Display a checkbutton of whether the current image has that tag. Take key input to toggle the button. Post button changes as graph edits. click on the tag to go to an imageset of that tag.
+"""
+                
                 if not self.viewable(uri, ctx):
                     #return self.needAuth(ctx), [] # for http auth
                     request.setResponseCode(http.FORBIDDEN)
@@ -137,6 +147,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
 
                 return StaticCached(jpg, "image/jpeg", mtime), ()
 
+        print "finding imageset", repr(uri)
         if segments[0] in ['2003', '2004', '2005', '2006', '2007', 
                            '2008', '2009']:
             its = lambda o: self.graph.contains((uri, RDF.type, o))

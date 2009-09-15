@@ -151,7 +151,8 @@ class ImageSet(rend.Page):
         return [self.uri, "?archive=zip"]
 
     def render_link(self, ctx, data):
-        return '<img src="%s?size=large"/>' % self.currentPhoto
+        src = [self.currentPhoto, '?size=large']
+        return '<img src="', T.a(href=src)[src], '"/>'
 
     def render_fullSizeLink(self, ctx, data):
         return T.a(href=[localSite(self.currentPhoto), "?size=full"])[ctx.tag]

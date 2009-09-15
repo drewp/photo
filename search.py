@@ -33,11 +33,11 @@ class Events(rend.Page):
         for row in self.graph.queryd("""
         SELECT DISTINCT ?set ?label WHERE {
           ?img pho:saveSet ?set .
-          #OPTIONAL { ?set rdfs:label ?label }
+          OPTIONAL { ?set rdfs:label ?label }
         }"""):
             yield T.div[
                 T.a(href="/edit?saveSet=%s" %
                     urllib.quote(row['set'], safe=''))[
-                        row['label'] or row['set']]
+                        row.get('label') or row['set']]
                 ]
             
