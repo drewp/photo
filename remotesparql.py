@@ -1,7 +1,7 @@
 from rdflib.Graph import Graph
 
 import sys
-import restclient
+import restkit
 
 sys.path.append("/home/drewp/projects/ffg/sparqlhttp")
 sys.path.append("/my/proj/ffg/sparqlhttp")
@@ -14,7 +14,7 @@ def allegroCall(call, *args, **kwargs):
     """allegro POST requests finish with an error I don't understand"""
     try:
         return call(*args, **kwargs)
-    except restclient.RequestError, e:
+    except restkit.RequestError, e:
         if e[0] == '(7, "couldn\'t connect to host")':
             raise
         if e[0][0][1] != 'transfer closed with outstanding read data remaining':
@@ -30,7 +30,7 @@ class RemoteSparql(Graph2):
         repoName is the repo to create/use
         initNs = dict of namespace prefixes to use on all queries
         """
-        self.root = restclient.Resource(repoUrl)
+        self.root = restkit.Resource(repoUrl)
         self.repoName = repoName
         self.initNs = initNs
         self.sparqlHeader = ''.join('PREFIX %s: <%s>\n' % (p, f)
