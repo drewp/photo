@@ -27,7 +27,6 @@ SITE = Namespace("http://photo.bigasterisk.com/")
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 SIOC = Namespace("http://rdfs.org/sioc/ns#")
 
-myPicSubdirs = ['digicam', 'phonecam', 'home', 'wedding', 'flickr', 'scans', 'email']
 
 myPicSubdirs = ['digicam', 'phonecam', 'home', 'wedding', 'flickr', 'scans', 'email']
 
