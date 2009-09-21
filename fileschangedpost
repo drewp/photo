@@ -1,9 +1,25 @@
 #!/usr/bin/python
+"""
+run this on any machine that could notice files (images or rdf data)
+getting written to the pic areas. It would be nice to run this only on
+the nfs server, but that's solaris and doesn't have any FAM system
+that I'm aware of. So instead I run this on every linux box that might
+write to the pic dirs.
+"""
 
 from fileschanged import fileschanged
 from restkit import Resource
+from picdirs import picSubDirs
+import logging
+logging.basicConfig()
+log = logging.getLogger()
+log.setLevel(logging.DEBUG)
 
-imp = Resource("http://localhost:9034/")
+imp = Resource("http://slash:9034/") # should be a PSHB hub
 
-imp.post('', file='/my/pic/digicam/foo')
-#fileschanged(topDirs, post)
+def post(f):
+    imp.post(payload=dict(file=f),
+             headers={'Content-Type' : 'application/x-www-form-urlencoded'})
+
+topDirs = picSubDirs()
+fileschanged(topDirs, post)

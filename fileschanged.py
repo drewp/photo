@@ -63,10 +63,10 @@ def fileschanged_pyinotify(topDirs, callback):
     # real file, which we catch with IN_MOVED_TO
     codes = c.IN_MODIFY | c.IN_CREATE | c.IN_DELETE | c.IN_MOVED_TO
 
-    print "finding dirs.."
+    log.info("finding dirs..")
     for d in topDirs:
         wm.add_watch(d, codes, rec=True, auto_add=True)
-    print "now watching for changes.."
+    log.info("now watching for changes..")
     while 1:
         notifier.process_events()
         if notifier.check_events():
