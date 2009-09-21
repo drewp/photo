@@ -1,4 +1,4 @@
-#!/usr/bin/python2.5
+#!/usr/bin/python2.6
 from remotesparql import RemoteSparql
 import os, logging, time, subprocess
 from rdflib import Namespace, RDFS
@@ -9,6 +9,9 @@ from _xmlplus.utils import iso8601
 from scanFs import ScanFs
 from scanExif import ScanExif
 from fileschanged import fileschanged, allFiles
+
+from mulib import mu
+from eventlet import api, httpd
 
 logging.basicConfig()
 log = logging.getLogger()
@@ -109,13 +112,30 @@ if quick:
     onChange('/my/pic/flickr/3716645105_27bca1ba5a_o.jpg')
     onChange('/my/pic/phonecam/dt-2009-07-16/CIMG0074.jpg')
     onChange('/my/pic/digicam/dl-2009-07-20/DSC_0092.JPG')
-
-log.info("importing all files in %s" % subdirs)
-t1 = time.time()
-# bug: these didn't all *change*; we should still use their mtimes
-allFiles(subdirs, onChange)
-log.info("initial scan took %s min" % ((time.time() - t1) / 60))
-
-log.info("watching for new files in %s" % subdirs)
-fileschanged(subdirs, onChange)
-log.info("exiting.")
+ 
+class FileChanged(mu.Resource):
+    def handle_get(self, req):
+        req.write('''<html><body>
+        <form method="post" action="">Report a changed file: <input name="file"/> <input type="submit"/></form>
+        <form method="post" action="all"><input type="submit" value="rescan all files (slow)"/></form>
+        </body></html>
+        ''')
+        
+    def handle_post(self, req):
+        onChange(req.get_arg('file'))
+        req.write("ok\n")
+        
+class AllChanged(mu.Resource):
+    def handle_post(self, req):
+        allFiles(subdirs, onChange)
+        req.write("ok\n")
+ 
+if __name__ == "__main__":
+    root = {'': FileChanged(),
+            'all': AllChanged(),
+            }
+ 
+    httpd.server(api.tcp_listener(('0.0.0.0', 9034)), mu.SiteMap(root))
+#fix this;
+#make filescanner that pings here
+#cmdline client that pings here (with mnewer files?)
