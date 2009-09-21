@@ -1,0 +1,9 @@
+#!/usr/bin/python
+
+from fileschanged import fileschanged
+from restkit import Resource
+
+imp = Resource("http://localhost:9034/")
+
+imp.post('', file='/my/pic/digicam/foo')
+#fileschanged(topDirs, post)
