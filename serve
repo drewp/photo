@@ -171,7 +171,14 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
     def child_set(self, ctx):
         import imageSet
         reload(imageSet)
-        return imageSet.ImageSet(ctx, graph, URIRef(ctx.arg('dir')))
+
+        if ctx.arg('dir'):
+            topic = URIRef(ctx.arg('dir'))
+        elif ctx.arg('tag'):
+            topic = URIRef('http://photo.bigasterisk.com/tag/%s' % ctx.arg('tag'))
+        else:
+            raise ValueError("no topic")
+        return imageSet.ImageSet(ctx, graph, topic)
 
     def child_events(self, ctx):
         import search

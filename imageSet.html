@@ -65,23 +65,52 @@ span img {
  width: 75px;
 height: 56px;
 } 
+
+
 div#comments {
   background: #005;
   padding: 2px;
+  width: 300px;
 }
+#comments textarea {
+ width: 250px;
+}
+#comments li { 
+list-style: square;
+border-top: 1px solid #00a;
+}
+
+
+
+div.tagging {
+width: 350px;
+background: #031;
+padding: 2px;
+}
+
+#tags, #desc {
+border:1px outset gray;
+padding:5px;
+}
+
+#tags {
+width:260px;
+}
+#desc {
+ vertical-align: baseline;
+}
+#t1 td {
+ vertical-align: top;
+}
+#saveStatus {
+color: #555;
+}
+
     </style>
     <title><n:invisible n:render="title"/></title>
   </head>
   <body>
     <div><n:invisible n:render="loginWidget"/></div>
-
-
-    <div>
-      <div>Tags: <input type="text" id="tags"/> </div>
-      <div>Description: <textarea id="desc"></textarea></div>
-      <div><button id="saveMeta">save</button></div>
-    </div>
-
 
     <h1>Pictures of <span class="tag"><n:invisible n:render="setLabel"/></span></h1>
 
@@ -105,12 +134,29 @@ div#comments {
       </div>
     </div>
 
-    <div id="comments"></div>
+	  <div>Click image for next</div>
+	  <div><n:invisible n:render="fullSizeLink">See this pic at full size</n:invisible></div>
+	  <div><span class="imageLink">Link to this image: <n:invisible n:render="link"/></span></div>
+	  <div><a><n:attr name="href">http://plus:8080/openrdf-workbench/repositories/photo/explore?resource=&lt;<n:invisible n:render="currentPhotoUri"/>&gt;</n:attr>rdf workbench</a></div>
 
-    <div>Click image for next</div>
-    <div><n:invisible n:render="fullSizeLink">See this pic at full size</n:invisible></div>
-    <div><span class="imageLink">Link to this image: <n:invisible n:render="link"/></span></div>
+    <table id="t1">
+      <tr>
+	<td>
 
+	  <div class="tagging">
+	    <div>Tags: <input type="text" id="tags"/> </div>
+	    <div>Description: <textarea id="desc"></textarea></div>
+	    <div><button id="saveMeta">save</button> <span id="saveStatus"/></div>
+	  </div>
+	  <div>Other images with tag:</div>
+	  <div id="otherWithTag"/>
+	</td>
+	<td>
+
+	  <div id="comments"></div>
+	</td>
+      </tr>
+    </table>
     <div>
       <h2>All photos in set:</h2>
       <div>
@@ -136,7 +182,13 @@ div#comments {
     <script type="text/javascript" src="/static/jquery-1.3.2.min.js"></script>
     <script type="text/javascript" src="/static/jquery.form.js"></script>
     <script type="text/javascript" n:render="prevNextJs"/>
+    
     <script type="text/javascript">
+      var currentPhotoUri = "<n:invisible n:render="currentPhotoUri"/>";
+    </script>
+
+    <script type="text/javascript">
+      // <![CDATA[
 
 $(function () {
     $(window).keydown(function (e) {
@@ -149,28 +201,38 @@ $(function () {
     });
 
     $.get("/comments", 
-          {post: "<n:invisible n:render="currentPhotoUri"/>"}, 
+          {post: currentPhotoUri}, 
           function (result) { $("#comments").html(result); }, "html");
 
     $("#saveMeta").click(function () {
+    $("#saveStatus").text("");
     $.post("/tagging", {
-      img: "<n:invisible n:render="currentPhotoUri"/>",
+      img: currentPhotoUri,
       tags: $("#tags").val(),
       desc: $("#desc").val()}, 
       function(data) { 
-        $("#tags").val(data.tags);
-	$("#desc").val(data.desc);
+      $("#saveStatus").text("ok");
+      refreshTags(data);
       },
       "json");
     });
 
-    $.getJSON("/tagging", {img: "<n:invisible n:render="currentPhotoUri"/>"},
-    function (data) { 
-      $("#tags").val(data.tags);
-      $("#desc").val(data.desc);
-    });
+    function refreshTags(data) {
+       $("#tags").val(data.tagString);
+       $("#desc").val(data.desc);
 
-});
+       $("#otherWithTag").empty();
+       $.each(data.tags, function (i, tag) {
+         $("#otherWithTag").append("<div><a href=\"/set?tag="+tag+"\">"+tag+"</a></div>");
+       });
+    }
+
+    $.getJSON("/tagging", 
+              {img: currentPhotoUri},
+	      refreshTags);
+
+    });
+    // ]]>
     </script>
 
     <n:invisible n:render="nextImagePreload"/>

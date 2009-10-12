@@ -2,7 +2,7 @@ from __future__ import division
 import logging, zipfile, datetime
 from StringIO import StringIO
 from nevow import loaders, rend, tags as T, inevow, url
-from rdflib import Namespace, Variable, URIRef
+from rdflib import Namespace, Variable, URIRef, RDF
 from zope.interface import implements
 from twisted.python.components import registerAdapter, Adapter
 from xml.utils import iso8601
@@ -32,8 +32,14 @@ class ImageSet(rend.Page):
     def __init__(self, ctx, graph, uri):
         self.graph, self.uri = graph, uri
         q = self.graph.queryd("""SELECT DISTINCT ?photo WHERE {
-                                   ?photo foaf:depicts ?u ;
-                                          pho:viewableBy pho:friends .
+                                   {
+                                     ?photo foaf:depicts ?u .
+                                   } UNION {
+                                     ?photo pho:inDirectory ?u .
+                                   } UNION {
+                                     ?photo pho:tag ?u .
+                                   }
+                                  # ?photo pho:viewableBy pho:friends .
                                  }""",
                               initBindings={Variable('u') : self.uri})
 
@@ -109,6 +115,10 @@ class ImageSet(rend.Page):
             return ''
     
     def render_setLabel(self, ctx, data):
+
+        if self.graph.contains((self.uri, RDF.type, PHO.DiskDirectory)):
+            return ["directory ", self.graph.value(self.uri, PHO.filename)]
+        
         return self.graph.label(self.uri)
 
     def render_currentLabel(self, ctx, data):
@@ -136,8 +146,9 @@ class ImageSet(rend.Page):
 
     def otherImageHref(self, ctx, img):
         href = url.here.add("current", img)
-        if ctx.arg('dir'):
-            href = href.add("dir", ctx.arg("dir"))
+        for topicKey in ['dir', 'tag']:
+            if ctx.arg(topicKey):
+                href = href.add(topicKey, ctx.arg(topicKey))
         return href
 
     def render_featured(self, ctx, data):
@@ -175,17 +186,40 @@ class ImageSet(rend.Page):
 
 
     def render_facts(self, ctx, data):
-        try:
-            if self.graph.contains((self.currentPhoto, FOAF['depicts'],
-                   URIRef("http://photo.bigasterisk.com/2008/person/apollo"))):
-                birth = "2008-07-22"
-                photoDate = self.graph.value(self.currentPhoto, EXIF.dateTime)
-                diff = iso8601.parse(str(photoDate)) - iso8601.parse(birth)
-                return "Apollo is %.2f months old" % (
-                    (photoDate - birth) / 86400 / 30)
-        except Exception, e:
-            log.error("facts failed: %s" % e)
-        return ''
+        img = self.currentPhoto
+
+        lines = []
+
+        for who, tag, birthday in [
+            (URIRef("http://photo.bigasterisk.com/2008/person/apollo"),
+            'apollo',
+             '2008-07-22'),
+            (URIRef("http://bigasterisk.com/foaf.rdf#drewp"),
+             'drew', '1900-01-01'),
+            ]:
+            try:
+                if (self.graph.contains((img, FOAF['depicts'], who)) or
+                    self.graph.contains((img, PHO.tag,
+                         URIRef('http://photo.bigasterisk.com/tag/%s' % tag)))):
+                    birth = iso8601.parse(birthday)
+                    photoDate = self.graph.value(img, EXIF.dateTime)
+                    try:
+                        sec = iso8601.parse(str(photoDate))
+                    except Exception:
+                        sec = iso8601.parse(str(photoDate) + '-0700')
+                    diff = sec - birth
+                    days = (sec - birth) / 86400
+                    if days / 30 < 15:
+                        msg = "%.2f months" % (days / 30)
+                    else:
+                        msg = "%.2f years" % (days / 365)
+                    name = self.graph.value(
+                        who, FOAF.name, default=self.graph.label(
+                            who, default=tag))
+                    lines.append("%s is %s old. " % (name, msg))
+            except Exception, e:
+                log.error("%s birthday failed: %s" % (who, e))
+        return lines
     
     def photoRss(self, ctx):
         request = inevow.IRequest(ctx)

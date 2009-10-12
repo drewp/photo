@@ -12,3 +12,4 @@ pers:matthew a foaf:Person;
 place:home a :Place;
  rdfs:label "home" .
 
+<http://bigasterisk.com/foaf.rdf#drewp> foaf:name "Drew Perttula" .

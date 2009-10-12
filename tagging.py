@@ -25,6 +25,7 @@ def saveTags(graph, foafUser, img, tagString, desc):
         ])
     tagDefs = set()
     for w in tagString.split():
+        # need to trim bad url chars and whatever else we're not going to allow
         tag = URIRef('http://photo.bigasterisk.com/tag/%s' % w)
         stmts.add((img, PHO.tag, tag))
         tagDefs.add((tag, RDFS.label, Literal(w)))
@@ -46,6 +47,9 @@ def getTags(graph, foafUser, img):
     # check user read perms
 
     return dict(
-        tags=graph.value(img, PHO.tagString, default=''),
+        tagString=graph.value(img, PHO.tagString, default=''),
+        tags=[r['tag'] for r in graph.queryd(
+            "SELECT ?tag WHERE { ?img pho:tag [ rdfs:label ?tag ] }",
+            initBindings={Variable("img") : img})],
         desc=graph.value(img, RDFS.comment, default=''),
         )
