@@ -20,6 +20,8 @@ import rdflib
 print "rdflib", rdflib.__version__
 from rdflib.Graph import ConjunctiveGraph
 from rdflib import Namespace, RDF, RDFS, Literal, Variable, URIRef
+sys.path.append("/home/drewp/projects/ffg/sparqlhttp")
+sys.path.append("/my/proj/ffg/sparqlhttp")
 from sparqlhttp.dictquery import Graph2
 from tagging import saveTags, getTags
 
@@ -200,16 +202,16 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
     def child_tagging(self, ctx):
         img = URIRef(ctx.arg('img'))
         req = inevow.IRequest(ctx)
+        user = URIRef(inevow.IRequest(ctx).getHeader('x-foaf-agent'))
         if req.method == 'POST':
-            user = URIRef(inevow.IRequest(ctx).getHeader('x-foaf-agent'))
             saveTags(graph,
                      foafUser=user,
                      img=img,
-                     tagString=ctx.arg('tags'),
-                     desc=ctx.arg('desc'))
+                     tagString=ctx.arg('tags') or '',
+                     desc=ctx.arg('desc') or '')
         
         inevow.IRequest(ctx).setHeader("Content-Type", "text/json")
-        return jsonlib.dumps(getTags(graph, img))
+        return jsonlib.dumps(getTags(graph, user, img))
         
 logging.basicConfig(level=logging.DEBUG)
 

@@ -11,6 +11,9 @@ DCTERMS = Namespace("http://purl.org/dc/terms/")
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 
 def saveTags(graph, foafUser, img, tagString, desc):
+
+    # check user write perms here
+    
     subgraph = URIRef('http://photo.bigasterisk.com/update/%f' %
                       time.time())
     stmts = set([
@@ -38,7 +41,10 @@ def saveTags(graph, foafUser, img, tagString, desc):
     for c in prevContexts:
         graph.remove((None, None, None), context=c)
 
-def getTags(graph, img):
+def getTags(graph, foafUser, img):
+
+    # check user read perms
+
     return dict(
         tags=graph.value(img, PHO.tagString, default=''),
         desc=graph.value(img, RDFS.comment, default=''),
