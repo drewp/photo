@@ -1,7 +1,7 @@
 from __future__ import division
 import logging, zipfile, datetime
 from StringIO import StringIO
-from nevow import loaders, rend, tags as T, inevow
+from nevow import loaders, rend, tags as T, inevow, url
 from rdflib import Namespace, Variable, URIRef
 from zope.interface import implements
 from twisted.python.components import registerAdapter, Adapter
@@ -45,6 +45,9 @@ class ImageSet(rend.Page):
         self.currentPhoto = URIRef(ctx.arg('current'))
         if self.currentPhoto not in self.photos:
             self.currentPhoto = self.photos[0]
+
+    def render_currentPhotoUri(self, ctx, data):
+        return self.currentPhoto
 
     def renderHTTP(self, ctx):
         if ctx.arg('rss'):
@@ -128,13 +131,19 @@ class ImageSet(rend.Page):
                 ]
 
         return T.span(style="position: relative")[
-            T.a(href=["?current=", data])[
+            T.a(href=self.otherImageHref(ctx, data))[
             T.img(class_=cls, src=[thisThumbSrc, "?size=thumb"])]]
+
+    def otherImageHref(self, ctx, img):
+        href = url.here.add("current", img)
+        if ctx.arg('dir'):
+            href = href.add("dir", ctx.arg("dir"))
+        return href
 
     def render_featured(self, ctx, data):
         currentLocal = localSite(self.currentPhoto)
         _, next = self.prevNext()
-        return T.a(href=['?current=', next])[
+        return T.a(href=self.otherImageHref(ctx, next))[
             T.img(src=[currentLocal, "?size=large"],
                   alt=self.graph.label(self.currentPhoto))]
 
@@ -160,8 +169,10 @@ class ImageSet(rend.Page):
     def render_prevNextJs(self, ctx, data):
         prev, next = self.prevNext()
         
-        return ctx.tag['var arrowPages = {prev : "%s", next : "%s"}' %
-                       (prev, next)]
+        return ctx.tag['var arrowPages = {prev : "',
+                       self.otherImageHref(ctx, prev),'", next : "',
+                       self.otherImageHref(ctx, next),'"}']
+
 
     def render_facts(self, ctx, data):
         try:
@@ -208,3 +219,4 @@ class ImageSet(rend.Page):
             </channel>
         </rss>
         """
+          

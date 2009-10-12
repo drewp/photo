@@ -39,6 +39,9 @@ class ScanExif(object):
             return
         
         filename = self.graph.value(uri, PHO.filename)
+        if filename is None:
+            log.warn("addPic on %r has no pho:filename" % uri)
+            return
 
         self.addByFilename(uri, filename)
 

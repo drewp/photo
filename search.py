@@ -1,7 +1,7 @@
-import urllib
+import urllib, os
 from nevow import rend, loaders, tags as T
-from rdflib import Namespace
-from urls import localSite
+from rdflib import Namespace, URIRef
+from urls import localSite, SITE
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 
 class Events(rend.Page):
@@ -41,3 +41,30 @@ class Events(rend.Page):
                         row.get('label') or row['set']]
                 ]
             
+    def render_random(self, ctx, data):
+        for row in self.graph.queryd("""
+            SELECT ?pic ?filename WHERE {
+              ?pic a foaf:Image;
+                   pho:filename ?filename
+            } LIMIT 10
+            """):
+            yield T.div[T.a(href=localSite(row['pic']))[row['filename']]]
+
+    def render_newestDirs(self, ctx, data):
+        # todo- should use rdf and work over all dirs
+        top = '/my/pic/digicam'
+        times = []
+        for fn in os.listdir(top):
+            fn = os.path.join(top, fn) + '/'
+            if not os.path.isdir(fn):
+                continue
+            times.append((os.path.getmtime(fn), fn))
+        times.sort(reverse=True)
+        for t, dirname in times[:10]:
+            # todo: escaping
+            yield T.div[T.a(href=[localSite('/set?dir='), uriFromDir(dirname)])[dirname]]
+
+
+def uriFromDir(dirname):
+    assert dirname.startswith('/my/pic/')
+    return URIRef(SITE + dirname[len('/my/pic/'):])

@@ -62,7 +62,8 @@ class ScanFs(object):
         filename = os.path.abspath(filename)
         fileUri = uriOfFilename(self.rootUri, self.topDir, filename)
 
-        if self.graph.contains((fileUri, RDF.type, FOAF.Image)):
+        if (self.graph.contains((fileUri, RDF.type, FOAF.Image)) and
+            self.graph.contains((fileUri, PHO.filename))):
             #log.debug("seen %s" % filename)
             return fileUri
         

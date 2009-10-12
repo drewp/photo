@@ -65,11 +65,23 @@ span img {
  width: 75px;
 height: 56px;
 } 
+div#comments {
+  background: #005;
+  padding: 2px;
+}
     </style>
     <title><n:invisible n:render="title"/></title>
   </head>
   <body>
     <div><n:invisible n:render="loginWidget"/></div>
+
+
+    <div>
+      <div>Tags: <input type="text" id="tags"/> </div>
+      <div>Description: <textarea id="desc"></textarea></div>
+      <div><button id="saveMeta">save</button></div>
+    </div>
+
 
     <h1>Pictures of <span class="tag"><n:invisible n:render="setLabel"/></span></h1>
 
@@ -92,6 +104,8 @@ height: 56px;
 
       </div>
     </div>
+
+    <div id="comments"></div>
 
     <div>Click image for next</div>
     <div><n:invisible n:render="fullSizeLink">See this pic at full size</n:invisible></div>
@@ -119,17 +133,44 @@ height: 56px;
 	 
 	 </div>-->
 
-    <script type="text/javascript" src="/static/prototype-1.6.js"></script>
+    <script type="text/javascript" src="/static/jquery-1.3.2.min.js"></script>
+    <script type="text/javascript" src="/static/jquery.form.js"></script>
     <script type="text/javascript" n:render="prevNextJs"/>
     <script type="text/javascript">
-      Event.observe(window, 'keypress', function(event) { 
-        var k = event.keyCode;
-        if (k == Event.KEY_LEFT) {
-          document.location = "?current=" + arrowPages.prev;
-        } else if (k == Event.KEY_RIGHT) {
-          document.location = "?current=" + arrowPages.next;
-        }
-      });
+
+$(function () {
+    $(window).keydown(function (e) {
+	if (e.which == 37) { 
+	    document.location = arrowPages.prev;
+	} else if (e.which == 39) {
+	    document.location = arrowPages.next;
+	}
+
+    });
+
+    $.get("/comments", 
+          {post: "<n:invisible n:render="currentPhotoUri"/>"}, 
+          function (result) { $("#comments").html(result); }, "html");
+
+    $("#saveMeta").click(function () {
+    $.post("/tagging", {
+      img: "<n:invisible n:render="currentPhotoUri"/>",
+      tags: $("#tags").val(),
+      desc: $("#desc").val()}, 
+      function(data) { 
+        $("#tags").val(data.tags);
+	$("#desc").val(data.desc);
+      },
+      "json");
+    });
+
+    $.getJSON("/tagging", {img: "<n:invisible n:render="currentPhotoUri"/>"},
+    function (data) { 
+      $("#tags").val(data.tags);
+      $("#desc").val(data.desc);
+    });
+
+});
     </script>
 
     <n:invisible n:render="nextImagePreload"/>
