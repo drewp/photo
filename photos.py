@@ -2,7 +2,7 @@
 depends on exiftool program from libimage-exiftool-perl ubuntu package
 """
 from __future__ import division
-import os, md5, time, random, string, subprocess
+import os, md5, time, random, string, subprocess, urllib
 from StringIO import StringIO
 import Image
 
@@ -34,7 +34,7 @@ def thumb(localURL, maxSize=100, justCache=False):
     # localURL like http://photo.bigasterisk.com/digicam/housewarm/00023.jpg
     #         means /my/pic/digicam/housewarm/00023.jpg
     assert localURL.startswith("http://photo.bigasterisk.com/")
-    localPath = "/my/pic/" + localURL[len("http://photo.bigasterisk.com/"):]
+    localPath = "/my/pic/" + urllib.unquote(localURL[len("http://photo.bigasterisk.com/"):])
 
     if maxSize is Full:
         if justCache:

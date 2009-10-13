@@ -5,10 +5,11 @@ service. Maybe tag+desc will go there too someday)
 
 import time, logging
 from xml.utils import iso8601
-from rdflib import URIRef, Literal, RDFS, Namespace, Variable
+from rdflib import URIRef, Literal, RDFS, Namespace, Variable, RDF
 log = logging.getLogger()
 DCTERMS = Namespace("http://purl.org/dc/terms/")
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
+SCOT = Namespace("http://scot-project.org/scot/ns#")
 
 def saveTags(graph, foafUser, img, tagString, desc):
 
@@ -27,8 +28,10 @@ def saveTags(graph, foafUser, img, tagString, desc):
     for w in tagString.split():
         # need to trim bad url chars and whatever else we're not going to allow
         tag = URIRef('http://photo.bigasterisk.com/tag/%s' % w)
-        stmts.add((img, PHO.tag, tag))
+        stmts.add((img, SCOT.hasTag, tag))
         tagDefs.add((tag, RDFS.label, Literal(w)))
+        tagDefs.add((tag, RDF.type, SCOT.Tag))
+        tagDefs.add((tag, SCOT.usedBy, foafUser)) # derivable from the subgraph
 
     prevContexts = [row['g'] for row in graph.queryd(
         "SELECT ?g WHERE { GRAPH ?g { ?img pho:tagString ?any } }",
@@ -49,7 +52,13 @@ def getTags(graph, foafUser, img):
     return dict(
         tagString=graph.value(img, PHO.tagString, default=''),
         tags=[r['tag'] for r in graph.queryd(
-            "SELECT ?tag WHERE { ?img pho:tag [ rdfs:label ?tag ] }",
+            "SELECT ?tag WHERE { ?img scot:hasTag [ rdfs:label ?tag ] }",
             initBindings={Variable("img") : img})],
         desc=graph.value(img, RDFS.comment, default=''),
         )
+
+def getTagsWithFreqs(graph):
+    freq = {}
+    for row in graph.queryd("SELECT ?tag WHERE { ?pic scot:hasTag [ rdfs:label ?tag ] }"):
+        freq[row['tag']] = freq.get(row['tag'], 0) + 1
+    return freq

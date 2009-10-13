@@ -2,6 +2,7 @@ import urllib, os
 from nevow import rend, loaders, tags as T
 from rdflib import Namespace, URIRef
 from urls import localSite, SITE
+from tagging import getTagsWithFreqs
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 
 class Events(rend.Page):
@@ -63,6 +64,12 @@ class Events(rend.Page):
         for t, dirname in times[:10]:
             # todo: escaping
             yield T.div[T.a(href=[localSite('/set?dir='), uriFromDir(dirname)])[dirname]]
+
+    def render_tags(self, ctx, data):
+        freqs = getTagsWithFreqs(self.graph)
+        freqs = sorted(freqs.items(), key=lambda (t, n): (-n, t))
+        return T.ul[[T.li[t, " (", n, ")"] for t, n in freqs]]
+                    
 
 
 def uriFromDir(dirname):

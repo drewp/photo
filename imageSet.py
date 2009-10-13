@@ -1,5 +1,5 @@
 from __future__ import division
-import logging, zipfile, datetime
+import logging, zipfile, datetime, time
 from StringIO import StringIO
 from nevow import loaders, rend, tags as T, inevow, url
 from rdflib import Namespace, Variable, URIRef, RDF
@@ -37,7 +37,9 @@ class ImageSet(rend.Page):
                                    } UNION {
                                      ?photo pho:inDirectory ?u .
                                    } UNION {
-                                     ?photo pho:tag ?u .
+                                     ?photo pho:tag ?u . # retire this line
+                                   } UNION {
+                                     ?photo scot:hasTag ?u .
                                    }
                                   # ?photo pho:viewableBy pho:friends .
                                  }""",
@@ -188,7 +190,17 @@ class ImageSet(rend.Page):
     def render_facts(self, ctx, data):
         img = self.currentPhoto
 
+        now = time.time()
         lines = []
+
+        photoDate = self.graph.value(img, EXIF.dateTime)
+        try:
+            sec = iso8601.parse(str(photoDate))
+        except Exception:
+            sec = iso8601.parse(str(photoDate) + '-0700')
+
+        lines.append("Picture taken %s; %s days ago" %
+                     (photoDate.replace('T', ' '), int((now - sec) / 86400)))
 
         for who, tag, birthday in [
             (URIRef("http://photo.bigasterisk.com/2008/person/apollo"),
@@ -202,11 +214,6 @@ class ImageSet(rend.Page):
                     self.graph.contains((img, PHO.tag,
                          URIRef('http://photo.bigasterisk.com/tag/%s' % tag)))):
                     birth = iso8601.parse(birthday)
-                    photoDate = self.graph.value(img, EXIF.dateTime)
-                    try:
-                        sec = iso8601.parse(str(photoDate))
-                    except Exception:
-                        sec = iso8601.parse(str(photoDate) + '-0700')
                     diff = sec - birth
                     days = (sec - birth) / 86400
                     if days / 30 < 15:
@@ -219,7 +226,7 @@ class ImageSet(rend.Page):
                     lines.append("%s is %s old. " % (name, msg))
             except Exception, e:
                 log.error("%s birthday failed: %s" % (who, e))
-        return lines
+        return T.ul[[T.li[x] for x in lines]]
     
     def photoRss(self, ctx):
         request = inevow.IRequest(ctx)
