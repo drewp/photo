@@ -193,12 +193,15 @@ class ImageSet(rend.Page):
         now = time.time()
         lines = []
 
-        photoDate = self.graph.value(img, EXIF.dateTime)
         try:
-            sec = iso8601.parse(str(photoDate))
-        except Exception:
-            sec = iso8601.parse(str(photoDate) + '-0700')
-
+            photoDate = self.graph.value(img, EXIF.dateTime)
+            try:
+                sec = iso8601.parse(str(photoDate))
+            except Exception:
+                sec = iso8601.parse(str(photoDate) + '-0700')
+        except ValueError:
+            return ''
+        
         lines.append("Picture taken %s; %s days ago" %
                      (photoDate.replace('T', ' '), int((now - sec) / 86400)))
 
@@ -226,6 +229,10 @@ class ImageSet(rend.Page):
                     lines.append("%s is %s old. " % (name, msg))
             except Exception, e:
                 log.error("%s birthday failed: %s" % (who, e))
+
+
+        # 'used in this blog entry'
+                
         return T.ul[[T.li[x] for x in lines]]
     
     def photoRss(self, ctx):
