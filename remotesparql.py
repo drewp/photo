@@ -1,3 +1,5 @@
+import warnings
+warnings.warn("RemoteSparl has moved to sparqlhttp package", DeprecationWarning, 2)
 from rdflib.Graph import Graph
 
 import sys
