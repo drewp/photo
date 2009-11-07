@@ -141,6 +141,7 @@ color: #555;
 	  <div>Click image for next</div>
 	  <div><n:invisible n:render="fullSizeLink">See this pic at full size</n:invisible></div>
 	  <div><span class="imageLink">Link to this image: <n:invisible n:render="link"/></span></div>
+	  <n:invisible n:render="uploadButton"/>
 	  <div><a><n:attr name="href">http://plus:8080/openrdf-workbench/repositories/photo/explore?resource=&lt;<n:invisible n:render="currentPhotoUri"/>&gt;</n:attr>rdf workbench</a></div>
 
     <table id="t1">
@@ -194,49 +195,58 @@ color: #555;
     <script type="text/javascript">
       // <![CDATA[
 
-$(function () {
-    $(window).keydown(function (e) {
-	if (e.which == 37) { 
-	    document.location = arrowPages.prev;
-	} else if (e.which == 39) {
-	    document.location = arrowPages.next;
-	}
+      $(function () {
+	  $(window).keydown(function (e) {
+	      if (e.which == 37) { 
+		  document.location = arrowPages.prev;
+	      } else if (e.which == 39) {
+		  document.location = arrowPages.next;
+	      }
 
-    });
+	  });
 
-    $.get("/comments", 
-          {post: currentPhotoUri}, 
-          function (result) { $("#comments").html(result); }, "html");
+	  $.get("/comments", 
+		{post: currentPhotoUri}, 
+		function (result) { $("#comments").html(result); }, "html");
 
-    $("#saveMeta").click(function () {
-    $("#saveStatus").text("");
-    $.post("/tagging", {
-      img: currentPhotoUri,
-      tags: $("#tags").val(),
-      desc: $("#desc").val()}, 
-      function(data) { 
-      $("#saveStatus").text("ok");
-      refreshTags(data);
-      },
-      "json");
-    });
+	  $("#saveMeta").click(function () {
+	      $("#saveStatus").text("");
+	      $.post("/tagging", {
+		  img: currentPhotoUri,
+		  tags: $("#tags").val(),
+		  desc: $("#desc").val()}, 
+		     function(data) { 
+			 $("#saveStatus").text("ok");
+			 refreshTags(data);
+		     },
+		     "json");
+	  });
 
-    function refreshTags(data) {
-       $("#tags").val(data.tagString);
-       $("#desc").val(data.desc);
+	  function refreshTags(data) {
+	      $("#tags").val(data.tagString);
+	      $("#desc").val(data.desc);
 
-       $("#otherWithTag").empty();
-       $.each(data.tags, function (i, tag) {
-         $("#otherWithTag").append("<div><a href=\"/set?tag="+tag+"\">"+tag+"</a></div>");
-       });
-    }
+	      $("#otherWithTag").empty();
+	      $.each(data.tags, function (i, tag) {
+		  $("#otherWithTag").append("<div><a href=\"/set?tag="+tag+"\">"+tag+"</a></div>");
+	      });
+	  }
 
-    $.getJSON("/tagging", 
-              {img: currentPhotoUri},
-	      refreshTags);
+	  $.getJSON("/tagging", 
+		    {img: currentPhotoUri},
+		    refreshTags);
 
-    });
-    // ]]>
+      });
+
+      function flickrUpload() {
+	  var st = $("#flickrUploadStatus");
+	  st.text("Uploading...");
+	  $.post("http://photo.bigasterisk.com/flickrUpload", {img: currentPhotoUri, test: 'yes'}, function (data) {
+	      st.html("Done: <a href=\""+data.flickrUrl+"\">image page</a>");
+	  }, "json");
+      }
+
+      // ]]>
     </script>
 
     <n:invisible n:render="nextImagePreload"/>

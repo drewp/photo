@@ -8,6 +8,7 @@ from twisted.python.components import registerAdapter, Adapter
 from xml.utils import iso8601
 from photos import Full, thumb
 from urls import localSite, absoluteSite
+import auth
 log = logging.getLogger()
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 SITE = Namespace("http://photo.bigasterisk.com/")
@@ -186,6 +187,13 @@ class ImageSet(rend.Page):
                        self.otherImageHref(ctx, prev),'", next : "',
                        self.otherImageHref(ctx, next),'"}']
 
+
+    def render_uploadButton(self, ctx, data):
+         openid = inevow.IRequest(ctx).getHeader('x-openid-proxy')
+         if openid is not None and URIRef(openid) in auth.superusers:
+             return [T.button(onclick="flickrUpload()")['Upload to flickr / do not use this yet'],
+                     T.span(id="flickrUploadStatus")]
+         return ''
 
     def render_facts(self, ctx, data):
         img = self.currentPhoto

@@ -1,0 +1,8 @@
+#!/usr/bin/python
+"""
+read an email message on stdin; write any image attachments to the
+photo library.
+
+associate metadata about the email with the images
+"""
+

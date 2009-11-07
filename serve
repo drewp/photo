@@ -24,6 +24,7 @@ sys.path.append("/home/drewp/projects/ffg/sparqlhttp")
 sys.path.append("/my/proj/ffg/sparqlhttp")
 from sparqlhttp.dictquery import Graph2
 from tagging import saveTags, getTags
+import auth
 
 log = logging.getLogger()
 
@@ -89,11 +90,12 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         openid = URIRef(request.getHeader('x-openid-proxy'))
 
         # not final; just matching the old logic
-        if openid in [URIRef('http://bigasterisk.com/'),
-                      URIRef('http://bigasterisk.com/kelsi/'),
-	              URIRef('https://www.google.com/accounts/o8/id?id=AItOawkP1fvEVpIoggbDHDTj07Z9x1CfEOlWIwQ'), # kelsi
-                      ]:
+        if openid in auth.superusers:
             return True
+
+        # somehow allow local clients who could get to the filesystem
+        # anyway. maybe with a cookie file in the fs, or just ip
+        # screening
         
 #        if self.httpAuthorized(ctx):
 #            return True
@@ -166,7 +168,6 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
 
                 return StaticCached(jpg, "image/jpeg", mtime), ()
 
-        print "finding imageset", repr(uri)
         if segments[0] in ['2003', '2004', '2005', '2006', '2007', 
                            '2008', '2009']:
             its = lambda o: self.graph.contains((uri, RDF.type, o))
@@ -238,6 +239,12 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         
         inevow.IRequest(ctx).setHeader("Content-Type", "text/json")
         return jsonlib.dumps(getTags(graph, user, img))
+
+    def child_flickrUpload(self, ctx):
+        # just for cross-site calling :(
+        return ReverseProxyResource("localhost", 9023, "/flickrUpload")
+
+        # this is hanging, not sure why. does it call the next server?
         
 logging.basicConfig(level=logging.DEBUG)
 
