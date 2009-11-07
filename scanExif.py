@@ -66,6 +66,8 @@ class ScanExif(object):
             vals[child.tag] = child.text
             
         stmts = [
+            # no timezone in exif? i think the best guess is *whatever
+            # california was doing around then*
             (uri, EXIF.dateTime, Literal(fixTime(vals['Date_and_Time']),
                                          datatype=XS.dateTime)),
             # this is for easier searches on date
