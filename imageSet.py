@@ -8,6 +8,7 @@ from twisted.python.components import registerAdapter, Adapter
 from xml.utils import iso8601
 from photos import Full, thumb
 from urls import localSite, absoluteSite
+from public import isPublic
 import auth
 log = logging.getLogger()
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
@@ -219,7 +220,10 @@ class ImageSet(rend.Page):
          return ''
 
     def render_public(self, ctx, data):
-        return ''
+        if isPublic(self.graph, self.currentPhoto):
+            return 'image is public'
+        
+        return T.button(class_="makePub")["Make public"]
 
     def render_facts(self, ctx, data):
         # todo: if user doesnt have perms to see the photo, he
@@ -285,7 +289,7 @@ class ImageSet(rend.Page):
         request.setHeader("Content-Type", "text/xml; charset=utf-8")
 
         items = [T.Tag('title')["bigasterisk %s photos" % self.graph.label(self.uri)]]
-        for pic in self.photos:
+        for pic in self.photos[-20:]: # no plan yet for the range. use paging i guess
             items.append(T.Tag('item')[
                 T.Tag('title')[self.graph.label(pic, default=pic.split('/')[-1])],
                 T.Tag('link')[absoluteSite(pic) + '?size=screen'],

@@ -30,11 +30,10 @@ div {
 }
 div.imageInfo {
   margin: 1em;
-  padding: 1em;
   position: relative; 
   border: 1px solid gray;
   float:right;
-width:10em;
+  width:10em;
 }
 img {
   border: 1px solid #668;
@@ -150,8 +149,8 @@ color: #555;
 	  <div>Click image for next</div>
 	  <div><n:invisible n:render="fullSizeLink">See this pic at full size</n:invisible></div>
 	  <div><span class="imageLink">Link to this image: <n:invisible n:render="link"/></span></div>
-	  <n:invisible n:render="uploadButton"/>
-          <n:invisible n:render="public"/>
+	  <div><n:invisible n:render="uploadButton"/></div>
+	  <div><n:invisible n:render="public"/></div>
 	  <div><a><n:attr name="href">http://bang:8080/openrdf-workbench/repositories/photo/explore?resource=&lt;<n:invisible n:render="currentPhotoUri"/>&gt;</n:attr>rdf workbench</a></div>
 
     <table id="t1">
@@ -251,6 +250,15 @@ color: #555;
 	      $(this).append("<p>Ajax error: "+xhr.responseText+"</p>");
 	  });
 
+          $(".makePub").click(function() {
+	      var button = $(this);
+	      $.post('makePublic', {uri: currentPhotoUri},
+		  function(data, textStatus) {
+		    button.replaceWith(data);
+	      });
+	  });
+
+		  
       });
 
       function flickrUpload() {

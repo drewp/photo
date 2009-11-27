@@ -24,6 +24,7 @@ sys.path.append("/home/drewp/projects/ffg/sparqlhttp")
 sys.path.append("/my/proj/ffg/sparqlhttp")
 from sparqlhttp.dictquery import Graph2
 from tagging import saveTags, getTags
+from public import makePublic
 import auth
 
 log = logging.getLogger()
@@ -235,6 +236,20 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         
         inevow.IRequest(ctx).setHeader("Content-Type", "text/json")
         return jsonlib.dumps(getTags(graph, user, img))
+
+
+    def child_makePublic(self, ctx):
+        req = inevow.IRequest(ctx)
+        if req.method != 'POST':
+            raise ValueError("invalid method")
+
+        openid = URIRef(req.getHeader('x-openid-proxy'))
+
+        # not final; just matching the old logic
+        if openid in auth.superusers:
+            makePublic(URIRef(ctx.arg('uri')))
+            return "public"
+        raise ValueError("forbidden")
 
 logging.basicConfig(level=logging.DEBUG)
 

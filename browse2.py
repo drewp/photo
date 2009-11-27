@@ -10,6 +10,7 @@ from web.contrib.template import render_genshi
 from rdflib import Namespace, RDFS, Variable, URIRef, RDF
 from remotesparql import RemoteSparql
 from edit import writeStatements
+from public import isPublic, makePublic
 
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 SITE = Namespace("http://photo.bigasterisk.com/")
@@ -53,17 +54,14 @@ class index(object):
               } ORDER BY desc(?dateTime) LIMIT 10
             """),#
             parent=graph.value(topDir, PHO.inDirectory),
-            viewable=lambda uri: graph.contains((uri, PHO.viewableBy,
-                                                PHO.friends)),
+            viewable=lambda uri: isPublic(graph, uri),
             )
 
 class makePublic(object):
     def POST(self):
         i = web.input()
         uri = URIRef(i['uri'])
-        print writeStatements([
-            (uri, PHO.viewableBy, PHO.friends)
-            ])
+        makePublic(uri)
         return "public"
                
 
