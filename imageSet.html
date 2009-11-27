@@ -64,7 +64,12 @@ img.preload {
 span img {
  width: 75px;
 height: 56px;
-} 
+}
+img.spinner {
+  border: 0;
+  width: 16px;
+  height: 16px;
+}
 
 
 div#comments {
@@ -109,13 +114,17 @@ width:260px;
 #saveStatus {
 color: #555;
 }
+#ajaxError {
+  border: 2px solid red;
+  background: #600;
+} 
 
     </style>
     <title><n:invisible n:render="title"/></title>
   </head>
   <body>
     <div><n:invisible n:render="loginWidget"/></div>
-
+	    <div id="ajaxError" style="display:none"/>
     <h1>Pictures of <span class="tag"><n:invisible n:render="setLabel"/></span></h1>
 
     <div>
@@ -142,7 +151,8 @@ color: #555;
 	  <div><n:invisible n:render="fullSizeLink">See this pic at full size</n:invisible></div>
 	  <div><span class="imageLink">Link to this image: <n:invisible n:render="link"/></span></div>
 	  <n:invisible n:render="uploadButton"/>
-	  <div><a><n:attr name="href">http://plus:8080/openrdf-workbench/repositories/photo/explore?resource=&lt;<n:invisible n:render="currentPhotoUri"/>&gt;</n:attr>rdf workbench</a></div>
+          <n:invisible n:render="public"/>
+	  <div><a><n:attr name="href">http://bang:8080/openrdf-workbench/repositories/photo/explore?resource=&lt;<n:invisible n:render="currentPhotoUri"/>&gt;</n:attr>rdf workbench</a></div>
 
     <table id="t1">
       <tr>
@@ -236,15 +246,31 @@ color: #555;
 		    {img: currentPhotoUri},
 		    refreshTags);
 
+	  $("#ajaxError").ajaxError(function (event, xhr, ajaxOptions) {
+	      $(this).show();
+	      $(this).append("<p>Ajax error: "+xhr.responseText+"</p>");
+	  });
+
       });
 
       function flickrUpload() {
-	  var st = $("#flickrUploadStatus");
-	  st.text("Uploading...");
-	  $.post("http://photo.bigasterisk.com/flickrUpload", {img: currentPhotoUri, test: 'yes'}, function (data) {
-	      st.html("Done: <a href=\""+data.flickrUrl+"\">image page</a>");
-	  }, "json");
+	  var st = $("#flickrUpload");
+
+          var sz = $("#flickrUpload input[name=size]:checked").val();
+	  st.html('Uploading... ' +
+		  '<img class="spinner" src="static/snake-spinner.gif"/>');
+		  
+	  $.post("http://photo.bigasterisk.com/flickrUpload/",
+		 {img: currentPhotoUri,
+		  size: sz,
+		  test: ''}, 
+		 function (data) {
+		     st.html("Done: " +
+			     "<a href=\""+data.flickrUrl+"\">flickr copy</a>");
+		 }, "json");
       }
+
+      
 
       // ]]>
     </script>

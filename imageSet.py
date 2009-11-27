@@ -14,6 +14,7 @@ PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 SITE = Namespace("http://photo.bigasterisk.com/")
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 EXIF = Namespace("http://www.kanzaki.com/ns/exif#")
+SCOT = Namespace("http://scot-project.org/scot/ns#")
 
 
 ## class StringIOView(Adapter):
@@ -48,13 +49,12 @@ class ImageSet(rend.Page):
 
         self.photos = sorted([row['photo'] for row in q])
 
-        if not self.photos:
-            raise ValueError("No photos found for %s" % uri)
-
-        self.currentPhoto = URIRef(ctx.arg('current'))
-        if self.currentPhoto not in self.photos:
+        self.currentPhoto = None
+        if ctx.arg('current') is not None:
+            self.currentPhoto = URIRef(ctx.arg('current'))
+        if self.photos and self.currentPhoto not in self.photos:
             self.currentPhoto = self.photos[0]
-
+                
     def render_currentPhotoUri(self, ctx, data):
         return self.currentPhoto
 
@@ -125,6 +125,8 @@ class ImageSet(rend.Page):
         return self.graph.label(self.uri)
 
     def render_currentLabel(self, ctx, data):
+        if self.currentPhoto is None:
+            return ''
         return self.graph.label(self.currentPhoto,
                                 # keep the title line taking up space
                                 # so the image doesn't bounce around
@@ -155,6 +157,8 @@ class ImageSet(rend.Page):
         return href
 
     def render_featured(self, ctx, data):
+        if self.currentPhoto is None:
+            return ''
         currentLocal = localSite(self.currentPhoto)
         _, next = self.prevNext()
         return T.a(href=self.otherImageHref(ctx, next))[
@@ -162,13 +166,18 @@ class ImageSet(rend.Page):
                   alt=self.graph.label(self.currentPhoto))]
 
     def prevNext(self):
+        if self.currentPhoto is None:
+            return None, None
         i = self.photos.index(self.currentPhoto)
         return (self.photos[max(0, i - 1)],
                 self.photos[min(len(self.photos) - 1, i + 1)])
 
     def render_nextImagePreload(self, ctx, data):
-        _, next = self.prevNext()
-        return T.img(class_='preload', src=[localSite(next), "?size=large"])
+        # this should run after the sub-page javascript stuff!
+        _, nextImg = self.prevNext()
+        if nextImg is None:
+            return ''
+        return T.img(class_='preload', src=[localSite(nextImg), "?size=large"])
 
     def render_zipUrl(self, ctx, data):
         return [self.uri, "?archive=zip"]
@@ -178,6 +187,8 @@ class ImageSet(rend.Page):
         return '<img src="', T.a(href=src)[src], '"/>'
 
     def render_fullSizeLink(self, ctx, data):
+        if self.currentPhoto is None:
+            return ''
         return T.a(href=[localSite(self.currentPhoto), "?size=full"])[ctx.tag]
 
     def render_prevNextJs(self, ctx, data):
@@ -190,13 +201,33 @@ class ImageSet(rend.Page):
 
     def render_uploadButton(self, ctx, data):
          openid = inevow.IRequest(ctx).getHeader('x-openid-proxy')
+         copy = self.graph.value(self.currentPhoto, PHO.flickrCopy)
+         if copy is not None:
+             # this html is a port of the same thing in imageSet.html
+             return T.span(id="flickrUpload")[T.a(href=copy)["flickr copy"]]
+
          if openid is not None and URIRef(openid) in auth.superusers:
-             return [T.button(onclick="flickrUpload()")['Upload to flickr / do not use this yet'],
-                     T.span(id="flickrUploadStatus")]
+             return T.span(id="flickrUpload")[
+                 T.button(onclick="flickrUpload()")['Upload to flickr'],
+                 T.input(type="radio", name="size", value="large", id="ful",
+                         checked="checked"),
+                 T.label(for_="ful")["large (fast)"],
+                 T.input(type="radio", name="size", value="full", id="fuf"),
+                 T.label(for_="fuf")["full (2+ min) ",
+            T.a(href="http://www.flickr.com/help/photos/#89")["do not use"]]]
+         
          return ''
 
+    def render_public(self, ctx, data):
+        return ''
+
     def render_facts(self, ctx, data):
+        # todo: if user doesnt have perms to see the photo, he
+        # shouldnt be able to see facts or tags either
+        
         img = self.currentPhoto
+        if img is None:
+            return ''
 
         now = time.time()
         lines = []
@@ -221,9 +252,10 @@ class ImageSet(rend.Page):
              'drew', '1900-01-01'),
             ]:
             try:
+                tag = URIRef('http://photo.bigasterisk.com/tag/%s' % tag)
                 if (self.graph.contains((img, FOAF['depicts'], who)) or
-                    self.graph.contains((img, PHO.tag,
-                         URIRef('http://photo.bigasterisk.com/tag/%s' % tag)))):
+                    self.graph.contains((img, SCOT.hasTag, tag)) or
+                    self.graph.contains((img, PHO.tag, tag))):
                     birth = iso8601.parse(birthday)
                     diff = sec - birth
                     days = (sec - birth) / 86400

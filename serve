@@ -15,7 +15,7 @@ from nevow import appserver, inevow, url
 from nevow import loaders, rend, static, tags as T
 from xml.utils import iso8601
 import Image
-from photos import Full, thumb
+from photos import Full, thumb, sizes
 import rdflib
 print "rdflib", rdflib.__version__
 from rdflib.Graph import ConjunctiveGraph
@@ -158,11 +158,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
                     return ImagePage(graph, uri), ()
 
                 reqSize = ctx.arg('size')
-                size = {'thumb' : 75,
-                        'medium' : 250,
-                        'large' : 600,
-                        'screen' : 1000,
-                        'full' : Full}.get(reqSize, 250)
+                size = sizes.get(reqSize, 250)
 
                 jpg, mtime = thumb(uri, size)
 

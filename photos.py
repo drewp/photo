@@ -8,6 +8,12 @@ import Image
 
 class Full(object): pass
 
+sizes = {'thumb' : 75,
+        'medium' : 250,
+        'large' : 600,
+        'screen' : 1000,
+        'full' : Full}
+
 tmpSuffix = ".tmp" + ''.join([random.choice(string.letters) for c in range(5)])
 
 def thumb(localURL, maxSize=100, justCache=False):
