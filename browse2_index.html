@@ -18,7 +18,9 @@
 	${row.get('dateTime', '?')} 
 	<a href="${row['pic']}?size=large">
 	  <img height="80" src="${row['pic']}?size=small"/>
-	  [link to large]
+        </a>
+	<a href="${row['pic']}?size=full">
+	  [link to full]
 	</a>
 	<py:choose test="viewable(row['pic'])">
 	  <button py:when="False" class="makePub">Make public</button>
