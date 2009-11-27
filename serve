@@ -240,12 +240,6 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         inevow.IRequest(ctx).setHeader("Content-Type", "text/json")
         return jsonlib.dumps(getTags(graph, user, img))
 
-    def child_flickrUpload(self, ctx):
-        # just for cross-site calling :(
-        return ReverseProxyResource("localhost", 9023, "/flickrUpload")
-
-        # this is hanging, not sure why. does it call the next server?
-        
 logging.basicConfig(level=logging.DEBUG)
 
 initNs = dict(

@@ -15,7 +15,7 @@ logging.basicConfig()
 log = logging.getLogger()
 log.setLevel(logging.DEBUG)
 
-syncImportEndpoint = Resource("http://slash:9034/") # should be a PSHB hub
+syncImportEndpoint = Resource("http://bang:9042/") # should be a PSHB hub
 
 def post(f):
     syncImportEndpoint.post(

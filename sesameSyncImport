@@ -117,7 +117,7 @@ if __name__ == "__main__":
             'all': AllChanged(),
             }
  
-    httpd.server(api.tcp_listener(('0.0.0.0', 9034)), mu.SiteMap(root))
+    httpd.server(api.tcp_listener(('0.0.0.0', 9042)), mu.SiteMap(root))
 #fix this;
 #make filescanner that pings here
 #cmdline client that pings here (with mnewer files?)
