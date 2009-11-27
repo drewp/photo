@@ -4,121 +4,10 @@
     <link rel="alternate" href="?rss=1" 
 	  type="application/rss+xml" title="" id="gallery" />
     <script type="text/javascript" 
-          src="http://lite.piclens.com/current/piclens.js" />
+          src="http://lite.piclens.com/current/piclens.js" ></script>
 
     <!-- if we're on a phone screen, things should shrink accordingly -->
-    <style type="text/css">
-* {
-font-family: sans-serif;
-
-}
-body {
-  background: black;
-  color: white;
-}
-h1 {
-  font-size: 110%;
-}
-h2 {
-  font-size: 105%;
-}
-a {
-  color: #ccf;
-} 
-div {
-  margin-left: 2em;
-}
-div.imageInfo {
-  margin: 1em;
-  position: relative; 
-  border: 1px solid gray;
-  float:right;
-  width:10em;
-}
-img {
-  border: 1px solid #668;
-}  
-div.intro {
-  border: 1px solid gray;
-  padding-left: 1em;
-  margin-right: 10%;
-  background: #502000;
-}
-span.imageLink {
-  color: #666;
-}
-div.featured {
-  margin-bottom: 1em;
-}
-img.not-current {
-  margin: 2px;
-} 
-img.current {
-  border: 2px solid #ffc;
-  padding: 1px;
-}
-img.preload {
-  width: 0px;
-}
-span img {
- width: 75px;
-height: 56px;
-}
-img.spinner {
-  border: 0;
-  width: 16px;
-  height: 16px;
-}
-
-
-div#comments {
-  background: #005;
-  padding: 2px;
-  width: 300px;
-}
-#comments textarea {
- width: 250px;
-}
-#comments li { 
-list-style: square;
-border-top: 1px solid #00a;
-}
-#comments .headercomment {
- font-size:80%;
-}
-
-
-div.tagging {
-width: 350px;
-background: #031;
-padding: 2px;
-}
-
-#tags, #desc {
-border:1px outset gray;
-padding:5px;
-}
-
-#tags {
-width:260px;
-}
-#desc {
- vertical-align: baseline;
- width:308px;
- height:87px;
-}
-#t1 td {
- vertical-align: top;
-}
-#saveStatus {
-color: #555;
-}
-#ajaxError {
-  border: 2px solid red;
-  background: #600;
-} 
-
-    </style>
+   <link rel="Stylesheet" type="text/css" href="static/styles.css" media="all" />
     <title><n:invisible n:render="title"/></title>
   </head>
   <body>
@@ -126,37 +15,47 @@ color: #555;
 	    <div id="ajaxError" style="display:none"/>
     <h1>Pictures of <span class="tag"><n:invisible n:render="setLabel"/></span></h1>
 
-    <div>
-      <a href="javascript:PicLensLite.start();">View as slideshow 
-      <img src="http://lite.piclens.com/images/PicLensButton.png" 
-	   alt="PicLens" width="16" height="12" border="0" 
-	   align="absmiddle" /></a>
-    </div>
-
     <div class="intro" n:render="intro"></div>
 
     <div class="featured">
       <h2><n:invisible n:render="currentLabel">Mark and Stephanie play Magic [1 of 16]</n:invisible></h2>
-      <div>
-	<img width="500" height="300" alt="Mark and Stephanie" n:render="featured"/>
-	<div class="imageInfo">
-          <n:invisible n:render="facts"/>
+      
+      <div style="width:1000px">
+	<div style="float: left; width: 600px">
+	  <div><img width="500" height="300" alt="Mark and Stephanie" n:render="featured"/></div>
+	  <n:invisible n:render="stepButtons"/>
 	</div>
+	<div style="float: left; width: 400px">
+	  <div class="actions">
+	    <h2>Actions</h2>
+	    <div class="ac"><n:invisible n:render="public"/></div>
+	    <div class="ac"><n:invisible n:render="uploadButton"/></div>
+	    <div class="ac" style="opacity: .4">Email</div>
+	    <div class="ac" style="opacity: .4">Post to blog</div>
+	    <div class="ac"><a><n:attr name="href">http://bang:8080/openrdf-workbench/repositories/photo/explore?resource=&lt;<n:invisible n:render="currentPhotoUri"/>&gt;</n:attr>Debug rdf</a></div>
 
+	    <h2>Other versions</h2>
+	    <div class="ac"><n:invisible n:render="fullSizeLink">Full size</n:invisible></div>
+	    <div class="ac">
+	      <div>Link to this image: </div>
+	      <div style="font-size: 60%"><n:invisible n:render="link"/></div>
+	    </div>
+
+	  </div>
+	</div>
+	<div style="clear: both"/>
       </div>
     </div>
-
-	  <div>Click image for next</div>
-	  <div><n:invisible n:render="fullSizeLink">See this pic at full size</n:invisible></div>
-	  <div><span class="imageLink">Link to this image: <n:invisible n:render="link"/></span></div>
-	  <div><n:invisible n:render="uploadButton"/></div>
-	  <div><n:invisible n:render="public"/></div>
-	  <div><a><n:attr name="href">http://bang:8080/openrdf-workbench/repositories/photo/explore?resource=&lt;<n:invisible n:render="currentPhotoUri"/>&gt;</n:attr>rdf workbench</a></div>
 
     <table id="t1">
       <tr>
 	<td>
+	  <div class="imageInfo">
+	    <n:invisible n:render="facts"/>
+	  </div>
+	</td>
 
+	<td>
 	  <div class="tagging">
 	    <div>Tags: <input type="text" id="tags"/> </div>
 	    <div>Description: <textarea id="desc"></textarea></div>
@@ -166,17 +65,22 @@ color: #555;
 	  <div id="otherWithTag"/>
 	</td>
 	<td>
-
-	  <div id="comments"></div>
+	  <div id="comments" style="height:165px"></div>
 	</td>
       </tr>
     </table>
     <div>
       <h2>All photos in set:</h2>
       <div>
+        <a href="javascript:PicLensLite.start();">View as slideshow 
+        <img src="http://lite.piclens.com/images/PicLensButton.png" 
+	     alt="PicLens" width="16" height="12" border="0" 
+	     align="absmiddle" /></a>
+      </div>
+      <div class="photosInSet">
 	<n:invisible n:render="sequence" n:data="photosInSet">
 	  <n:invisible n:pattern="item">
-	    <span><n:invisible n:render="thumb"/></span>
+	    <n:invisible n:render="thumb"/>
 	  </n:invisible>
 	  <img width="70" height="50"/>
 	  <img width="70" height="50"/>
@@ -199,12 +103,18 @@ color: #555;
     
     <script type="text/javascript">
       var currentPhotoUri = "<n:invisible n:render="currentPhotoUri"/>";
+      var preloadImg = "<n:invisible n:render="nextImagePreload"/>";
     </script>
 
     <script type="text/javascript">
       // <![CDATA[
 
       $(function () {
+
+	  function startNextImgPreload() {
+	      $("#preload").attr('src', preloadImg);
+	  }
+
 	  $(window).keydown(function (e) {
 	      if (e.which == 37) { 
 		  document.location = arrowPages.prev;
@@ -216,7 +126,10 @@ color: #555;
 
 	  $.get("/comments", 
 		{post: currentPhotoUri}, 
-		function (result) { $("#comments").html(result); }, "html");
+		function (result) { 
+		    $("#comments").html(result); 
+		    $("#comments").removeAttr("style");
+		}, "html");
 
 	  $("#saveMeta").click(function () {
 	      $("#saveStatus").text("");
@@ -239,6 +152,8 @@ color: #555;
 	      $.each(data.tags, function (i, tag) {
 		  $("#otherWithTag").append("<div><a href=\"/set?tag="+tag+"\">"+tag+"</a></div>");
 	      });
+		    startNextImgPreload(); // try to do this after other work
+
 	  }
 
 	  $.getJSON("/tagging", 
@@ -257,7 +172,6 @@ color: #555;
 		    button.replaceWith(data);
 	      });
 	  });
-
 		  
       });
 
@@ -283,7 +197,7 @@ color: #555;
       // ]]>
     </script>
 
-    <n:invisible n:render="nextImagePreload"/>
-
+    <img id="preload" src=""/>
+highlight selection, tag all its images with an event. link to just view that event, from any pic go view its directory, email whole event to someone from access.n3 list
   </body>
 </html>

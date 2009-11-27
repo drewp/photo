@@ -1,0 +1,124 @@
+* {
+    font-family: sans-serif;
+
+}
+body {
+    background: black;
+    color: white;
+}
+h1 {
+    font-size: 110%;
+}
+h2 {
+    font-size: 105%;
+}
+a {
+    color: #ccf;
+} 
+div.imageInfo {
+    border: 1px solid gray;
+}
+img {
+    border: 1px solid #668;
+}  
+div.intro {
+    border: 1px solid gray;
+    padding-left: 1em;
+    margin-right: 10%;
+    background: #502000;
+}
+div.featured {
+    margin-bottom: 1em;
+}
+img.not-current {
+    margin: 2px;
+} 
+img.current {
+    border: 2px solid #ffc;
+    padding: 1px;
+}
+img#preload {
+    width: 0px;
+    border: 0;
+}
+span img {
+    width: 75px;
+    height: 56px;
+}
+img.spinner {
+    border: 0;
+    width: 16px;
+    height: 16px;
+}
+
+
+div#comments {
+    background: #005;
+    padding: 2px;
+    width: 300px;
+}
+#comments textarea {
+    width: 250px;
+}
+#comments li { 
+    list-style: square;
+    border-top: 1px solid #00a;
+}
+#comments .headercomment {
+    font-size:80%;
+}
+
+
+div.tagging {
+    width: 350px;
+    background: #031;
+    padding: 2px;
+}
+
+#tags, #desc {
+    border:1px outset gray;
+    padding:5px;
+}
+
+#tags {
+    width:260px;
+}
+#desc {
+    vertical-align: baseline;
+    width:308px;
+    height:87px;
+}
+#t1 td {
+    vertical-align: top;
+}
+#saveStatus {
+    color: #555;
+}
+#ajaxError {
+    border: 2px solid red;
+    background: #600;
+} 
+.actions {
+    padding-left: 10px;
+}
+.actions h2 {
+   margin: 0;
+   padding: 0;
+   color: #ccc;
+}
+.ac {
+    background: #123;
+    margin: 4px;
+    padding: 3px;
+    color: #aaa;
+}
+.steps { 
+    text-align: center;
+}
+.steps a {
+    font-size: 30px;
+    text-decoration: none;
+}
+.photosInSet span {
+    position: relative;
+}

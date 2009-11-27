@@ -142,11 +142,11 @@ class ImageSet(rend.Page):
         thisThumbSrc = localSite(data)
         if data == self.currentPhoto:
             cls = "current"
-            return T.span(style="position: relative")[
+            return T.span[
                 T.img(class_=cls, src=[thisThumbSrc, "?size=thumb"]),
                 ]
 
-        return T.span(style="position: relative")[
+        return T.span[
             T.a(href=self.otherImageHref(ctx, data))[
             T.img(class_=cls, src=[thisThumbSrc, "?size=thumb"])]]
 
@@ -166,6 +166,16 @@ class ImageSet(rend.Page):
             T.img(src=[currentLocal, "?size=large"],
                   alt=self.graph.label(self.currentPhoto))]
 
+    def render_stepButtons(self, ctx, data):
+        p, n = self.prevNext()
+        return T.div(class_="steps")[
+            T.a(href=self.otherImageHref(ctx, p),
+                title="Previous image (left arrow key)")[T.raw('&#11013;')], ' ', 
+            T.a(href=self.otherImageHref(ctx, n),
+                title="Next image (click in the image, or press right arrow key)")[
+                T.raw('&#10145;')],
+            ]
+
     def prevNext(self):
         if self.currentPhoto is None:
             return None, None
@@ -174,11 +184,10 @@ class ImageSet(rend.Page):
                 self.photos[min(len(self.photos) - 1, i + 1)])
 
     def render_nextImagePreload(self, ctx, data):
-        # this should run after the sub-page javascript stuff!
         _, nextImg = self.prevNext()
         if nextImg is None:
             return ''
-        return T.img(class_='preload', src=[localSite(nextImg), "?size=large"])
+        return [localSite(nextImg), "?size=large"]
 
     def render_zipUrl(self, ctx, data):
         return [self.uri, "?archive=zip"]
@@ -208,14 +217,15 @@ class ImageSet(rend.Page):
              return T.span(id="flickrUpload")[T.a(href=copy)["flickr copy"]]
 
          if openid is not None and URIRef(openid) in auth.superusers:
-             return T.span(id="flickrUpload")[
-                 T.button(onclick="flickrUpload()")['Upload to flickr'],
-                 T.input(type="radio", name="size", value="large", id="ful",
+             return T.div(id="flickrUpload")[
+                 T.div[T.button(onclick="flickrUpload()")['Upload to flickr']],
+                 T.div[T.input(type="radio", name="size", value="large", id="ful",
                          checked="checked"),
-                 T.label(for_="ful")["large (fast)"],
-                 T.input(type="radio", name="size", value="full", id="fuf"),
+                 T.label(for_="ful")["large (fast)"]],
+                 T.div(style="opacity: .5")[
+                 T.input(type="radio", name="size", value="full size", id="fuf"),
                  T.label(for_="fuf")["full (2+ min) ",
-            T.a(href="http://www.flickr.com/help/photos/#89")["do not use"]]]
+            T.a(href="http://www.flickr.com/help/photos/#89", style="font-size: 60%")["do not use full; flickr won't give you access to your own pic"]]]]
          
          return ''
 
