@@ -1,14 +1,16 @@
 from __future__ import division
-import logging, zipfile, datetime, time
+import logging, zipfile, datetime, time, jsonlib, cgi, urllib
 from StringIO import StringIO
 from nevow import loaders, rend, tags as T, inevow, url
-from rdflib import Namespace, Variable, URIRef, RDF
+from rdflib import Namespace, Variable, URIRef, RDF, RDFS, Literal
 from zope.interface import implements
 from twisted.python.components import registerAdapter, Adapter
 from xml.utils import iso8601
-from photos import Full, thumb
+from photos import Full, thumb, sizes
 from urls import localSite, absoluteSite
 from public import isPublic
+from edit import writeStatements
+import tagging
 import auth
 log = logging.getLogger()
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
@@ -16,6 +18,7 @@ SITE = Namespace("http://photo.bigasterisk.com/")
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 EXIF = Namespace("http://www.kanzaki.com/ns/exif#")
 SCOT = Namespace("http://scot-project.org/scot/ns#")
+DC = Namespace("http://purl.org/dc/elements/1.1/")
 
 
 ## class StringIOView(Adapter):
@@ -40,9 +43,9 @@ class ImageSet(rend.Page):
                                    } UNION {
                                      ?photo pho:inDirectory ?u .
                                    } UNION {
-                                     ?photo pho:tag ?u . # retire this line
-                                   } UNION {
                                      ?photo scot:hasTag ?u .
+                                   } UNION {
+                                     ?photo dc:date ?u .
                                    }
                                   # ?photo pho:viewableBy pho:friends .
                                  }""",
@@ -60,6 +63,11 @@ class ImageSet(rend.Page):
         return self.currentPhoto
 
     def renderHTTP(self, ctx):
+        req = inevow.IRequest(ctx)
+        if req.method == 'POST':
+            if ctx.arg('tagRange'):
+                return self.postTagRange(ctx)
+            raise ValueError("unknown action")
         if ctx.arg('rss'):
             # can't use a /rss child, since we're not receiving
             # segments anymore here. That's probably going to be a
@@ -75,6 +83,26 @@ class ImageSet(rend.Page):
             return self.archiveZip(ctx)
         ret = rend.Page.renderHTTP(self, ctx)
         return ret
+
+    def postTagRange(self, ctx):
+
+        i1 = self.photos.index(URIRef(ctx.arg('start')))
+        i2 = self.photos.index(URIRef(ctx.arg('end')))
+
+        newUri = URIRef(ctx.arg('uri'))
+
+        imgStatements = [(img, FOAF.depicts, newUri)
+                         for img in self.photos[i1:i2+1]]
+
+        writeStatements([
+            (newUri, RDF.type, URIRef(ctx.arg('rdfClass'))),
+            (newUri, RDFS.label, Literal(ctx.arg('label'))),
+            ] + imgStatements)
+
+        return jsonlib.dumps({
+            "msg": "tagged %s images: <a href=\"%s\">view your new set</a>" %
+            (len(imgStatements), newUri)
+            })
 
     def render_loginWidget(self, ctx, data):
         openid = inevow.IRequest(ctx).getHeader('x-openid-proxy')
@@ -133,6 +161,44 @@ class ImageSet(rend.Page):
                                 # so the image doesn't bounce around
                                 # when there's no title
                                 default=T.raw("&nbsp;"))
+
+    def data_related(self, ctx, data):
+        if self.currentPhoto is None:
+            return
+
+
+        def relQuery(rel):
+            rows = self.graph.queryd("""
+               SELECT ?d ?label WHERE {
+                 ?img ?rel ?d .
+                 OPTIONAL { ?d rdfs:label ?label }
+               }""", initBindings={Variable("rel") : rel,
+                                   Variable("img") : self.currentPhoto})
+            for r in rows:
+                if 'label' not in r:
+                    r['label'] = r['d']
+                yield r
+
+        def setUrl(**params):
+            params['current'] = self.currentPhoto
+            return ('http://photo.bigasterisk.com/set?' +
+                    urllib.urlencode(params))
+
+        for row in relQuery(FOAF.depicts):
+            yield ('depicting', row['d'], row['label'])
+
+        for row in relQuery(PHO.inDirectory):
+            yield ('in directory', setUrl(dir=row['d']),
+                   row['d'].split('/')[-2])
+
+        for row in relQuery(DC.date):
+            yield ('taken on', setUrl(date=row['d']), row['d'])
+
+        for row in relQuery(SCOT.hasTag):
+            yield ('with tag', setUrl(tag=row['label']), row['label'])
+
+        # taken near xxxxx
+
     
     def data_photosInSet(self, ctx, data):
         return self.photos
@@ -152,7 +218,7 @@ class ImageSet(rend.Page):
 
     def otherImageHref(self, ctx, img):
         href = url.here.add("current", img)
-        for topicKey in ['dir', 'tag']:
+        for topicKey in ['dir', 'tag', 'date']:
             if ctx.arg(topicKey):
                 href = href.add(topicKey, ctx.arg(topicKey))
         return href
@@ -196,10 +262,13 @@ class ImageSet(rend.Page):
         src = [self.currentPhoto, '?size=large']
         return '<img src="', T.a(href=src)[src], '"/>'
 
-    def render_fullSizeLink(self, ctx, data):
+    def render_otherSizeLinks(self, ctx, data):
         if self.currentPhoto is None:
             return ''
-        return T.a(href=[localSite(self.currentPhoto), "?size=full"])[ctx.tag]
+        
+        return [[T.a(href=[localSite(self.currentPhoto), "?size=", s])[
+            str(sizes[s]) if sizes[s] != Full else "Original"], " "]
+                for s in 'medium', 'large', 'screen', 'full']
 
     def render_prevNextJs(self, ctx, data):
         prev, next = self.prevNext()
@@ -208,26 +277,40 @@ class ImageSet(rend.Page):
                        self.otherImageHref(ctx, prev),'", next : "',
                        self.otherImageHref(ctx, next),'"}']
 
+    def render_actionsAllowed(self, ctx, data):
+        """should the actions section be displayed"""
+        openid = inevow.IRequest(ctx).getHeader('x-openid-proxy')
+        if openid is not None and URIRef(openid) in auth.superusers:
+            return ctx.tag
+        return ''
+
+    def render_allowedToWriteMeta(self, ctx, data):
+        agent = inevow.IRequest(ctx).getHeader('x-foaf-agent')
+        if agent is not None and tagging.allowedToWrite(self.graph, URIRef(agent)):
+            return ctx.tag
+        return ''
 
     def render_uploadButton(self, ctx, data):
-         openid = inevow.IRequest(ctx).getHeader('x-openid-proxy')
-         copy = self.graph.value(self.currentPhoto, PHO.flickrCopy)
-         if copy is not None:
-             # this html is a port of the same thing in imageSet.html
-             return T.span(id="flickrUpload")[T.a(href=copy)["flickr copy"]]
+        if self.currentPhoto is None:
+            return ''
+        openid = inevow.IRequest(ctx).getHeader('x-openid-proxy')
+        copy = self.graph.value(self.currentPhoto, PHO.flickrCopy)
+        if copy is not None:
+            # this html is a port of the same thing in imageSet.html
+            return T.span(id="flickrUpload")[T.a(href=copy)["flickr copy"]]
 
-         if openid is not None and URIRef(openid) in auth.superusers:
-             return T.div(id="flickrUpload")[
-                 T.div[T.button(onclick="flickrUpload()")['Upload to flickr']],
-                 T.div[T.input(type="radio", name="size", value="large", id="ful",
-                         checked="checked"),
-                 T.label(for_="ful")["large (fast)"]],
-                 T.div(style="opacity: .5")[
-                 T.input(type="radio", name="size", value="full size", id="fuf"),
-                 T.label(for_="fuf")["full (2+ min) ",
-            T.a(href="http://www.flickr.com/help/photos/#89", style="font-size: 60%")["do not use full; flickr won't give you access to your own pic"]]]]
-         
-         return ''
+        if openid is not None and URIRef(openid) in auth.superusers:
+            return T.div(id="flickrUpload")[
+                T.div[T.button(onclick="flickrUpload()")['Upload to flickr']],
+                T.div[T.input(type="radio", name="size", value="large", id="ful",
+                        checked="checked"),
+                T.label(for_="ful")["large (fast)"]],
+                T.div(style="opacity: .5")[
+                T.input(type="radio", name="size", value="full size", id="fuf"),
+                T.label(for_="fuf")["full (2+ min) ",
+           T.a(href="http://www.flickr.com/help/photos/#89", style="font-size: 60%")["do not use full; flickr won't give you access to your own pic"]]]]
+        
+        return ''
 
     def render_public(self, ctx, data):
         if isPublic(self.graph, self.currentPhoto):
@@ -268,12 +351,11 @@ class ImageSet(rend.Page):
             try:
                 tag = URIRef('http://photo.bigasterisk.com/tag/%s' % tag)
                 if (self.graph.contains((img, FOAF['depicts'], who)) or
-                    self.graph.contains((img, SCOT.hasTag, tag)) or
-                    self.graph.contains((img, PHO.tag, tag))):
+                    self.graph.contains((img, SCOT.hasTag, tag))):
                     birth = iso8601.parse(birthday)
                     diff = sec - birth
                     days = (sec - birth) / 86400
-                    if days / 30 < 15:
+                    if days / 30 < 12:
                         msg = "%.2f months" % (days / 30)
                     else:
                         msg = "%.2f years" % (days / 365)

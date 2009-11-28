@@ -30,6 +30,9 @@ div.intro {
 div.featured {
     margin-bottom: 1em;
 }
+img.not-current, img.current {
+vertical-align: middle;
+}
 img.not-current {
     margin: 2px;
 } 
@@ -111,6 +114,9 @@ div.tagging {
     margin: 4px;
     padding: 3px;
     color: #aaa;
+}
+.expand {
+cursor: pointer;
 }
 .steps { 
     text-align: center;

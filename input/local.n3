@@ -13,3 +13,4 @@ place:home a :Place;
  rdfs:label "home" .
 
 <http://bigasterisk.com/foaf.rdf#drewp> foaf:name "Drew Perttula" .
+<http://bigasterisk.com/kelsi/foaf.rdf#kelsi> foaf:name "Kelsi Perttula" .

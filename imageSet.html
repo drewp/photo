@@ -7,7 +7,7 @@
           src="http://lite.piclens.com/current/piclens.js" ></script>
 
     <!-- if we're on a phone screen, things should shrink accordingly -->
-   <link rel="Stylesheet" type="text/css" href="static/styles.css" media="all" />
+   <link rel="Stylesheet" type="text/css" href="/static/styles.css" media="all" />
     <title><n:invisible n:render="title"/></title>
   </head>
   <body>
@@ -26,7 +26,7 @@
 	  <n:invisible n:render="stepButtons"/>
 	</div>
 	<div style="float: left; width: 400px">
-	  <div class="actions">
+	  <div class="actions" n:render="actionsAllowed">
 	    <h2>Actions</h2>
 	    <div class="ac"><n:invisible n:render="public"/></div>
 	    <div class="ac"><n:invisible n:render="uploadButton"/></div>
@@ -34,8 +34,19 @@
 	    <div class="ac" style="opacity: .4">Post to blog</div>
 	    <div class="ac"><a><n:attr name="href">http://bang:8080/openrdf-workbench/repositories/photo/explore?resource=&lt;<n:invisible n:render="currentPhotoUri"/>&gt;</n:attr>Debug rdf</a></div>
 
-	    <h2>Other versions</h2>
-	    <div class="ac"><n:invisible n:render="fullSizeLink">Full size</n:invisible></div>
+	  </div>
+	  <div class="actions">
+	    <h2>Links</h2>
+	    <div class="ac">
+	      More images:
+	      <ul n:render="sequence" n:data="related">
+		<li n:pattern="item">
+		  <n:invisible n:render="string" n:data="0"/> 
+		  <a><n:attr name="href"><n:invisible n:render="string" n:data="1"/></n:attr><n:invisible n:render="string" n:data="2"/></a>
+		</li>
+	      </ul>
+	    </div>
+	    <div class="ac">Sizes: <n:invisible n:render="otherSizeLinks"/></div>
 	    <div class="ac">
 	      <div>Link to this image: </div>
 	      <div style="font-size: 60%"><n:invisible n:render="link"/></div>
@@ -59,10 +70,8 @@
 	  <div class="tagging">
 	    <div>Tags: <input type="text" id="tags"/> </div>
 	    <div>Description: <textarea id="desc"></textarea></div>
-	    <div><button id="saveMeta">save</button> <span id="saveStatus"/></div>
+	    <div n:render="allowedToWriteMeta"><button id="saveMeta">save</button> <span id="saveStatus"/></div>
 	  </div>
-	  <div>Other images with tag:</div>
-	  <div id="otherWithTag"/>
 	</td>
 	<td>
 	  <div id="comments" style="height:165px"></div>
@@ -71,9 +80,47 @@
     </table>
     <div>
       <h2>All photos in set:</h2>
+
+      <div class="ac">
+	<div class="expand">&#8853; tag range</div>
+	<div class="tagRange">
+	  <div id="rangeState"></div>
+	  <div id="rangeStart">
+	    1. <button>Pick range start</button>: 
+	    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR42mP4//8/AAX+Av4zEpUUAAAAAElFTkSuQmCC"/>
+	    <span class="pick"/>
+	  </div>
+	  <div id="rangeEnd">
+	    2. <button>Pick range end</button>: 
+	    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR42mP4//8/AAX+Av4zEpUUAAAAAElFTkSuQmCC"/>
+	    <span class="pick"/>
+	  </div>
+	  <div id="addForm">
+	    <div>
+	      3. These pictures depict: <input name="label" id="addColumnLabel" type="text"/>
+	    </div>
+	    <div class="uriControl">
+	      <div style="float:left; padding-left: 10px;">
+		Class:
+		<select name="class" style="vertical-align: top" size="3"> <!-- should be radios-->
+		  <option value="http://xmlns.com/foaf/0.1/Person">Person</option>
+		  <option value="http://photo.bigasterisk.com/0.1/Place">Place</option>
+		  <option value="http://photo.bigasterisk.com/0.1/Event" selected="selected">Event</option>
+		</select>
+	      </div>
+	      <div style="float:left; padding-left: 10px;">
+		URI: <input id="add-uri" name="uri" type="text" size="50"/>
+	      </div>
+	      <div style="clear:both"></div>
+	    </div>
+	    <div>4. <button id="submitRange">Add tag</button></div>
+	  </div>
+	</div>
+      </div>
+
       <div>
-        <a href="javascript:PicLensLite.start();">View as slideshow 
-        <img src="http://lite.piclens.com/images/PicLensButton.png" 
+	<a href="javascript:PicLensLite.start();">View as slideshow 
+	<img src="http://lite.piclens.com/images/PicLensButton.png" 
 	     alt="PicLens" width="16" height="12" border="0" 
 	     align="absmiddle" /></a>
       </div>
@@ -110,6 +157,81 @@
       // <![CDATA[
 
       $(function () {
+	  function slug(s) {
+	      s = s.replace(/^\s*/, "").replace(/\s*$/, "");
+	      s = s.replace(/[^a-zA-Z0-9\-_\s]/g, "");
+	      s = s.toLowerCase();
+	      s = s.replace(/[-_\s]+([a-z0-9])/ig, 
+				    function(z,b) { return b.toUpperCase();} );
+	      return s;
+	  }
+
+	  $(".expand").click(function () { 
+	      $(this).next().toggle('fast');
+	      return false;
+	  }).next().hide();
+
+	  function startImagePick(msg, cb) {
+	      $("#rangeState").text("Click an image to pick " + msg);
+	      $("body,img").css("cursor", "crosshair");
+	      $("img").bind("click", function () {
+		  stopImagePick();
+		  cb(this);
+		  return false;
+	      });
+	  }
+	  function stopImagePick() {
+	      $("img").unbind("click");
+	      $("body,img").css("cursor", "");
+	      $("#rangeState").text("");
+	  }
+
+	  function uriFromImg(el) {
+	      return 'http://photo.bigasterisk.com' + $(el).attr('src').replace(/\?.*/, "");
+	  }
+
+	  $("#rangeStart button").click(function() {
+	      startImagePick("range start", function(picked) {
+		  $("#rangeStart .pick").text(uriFromImg(picked));
+		  $("#rangeStart img").attr("src", $(picked).attr("src"));
+	      });
+	  });
+
+	  $("#rangeEnd button").click(function() {
+	      startImagePick("range end", function(picked) {
+		  $("#rangeEnd .pick").text(uriFromImg(picked));
+		  $("#rangeEnd img").attr("src", $(picked).attr("src"));
+	      });
+	  });
+
+	  function updateTagUrl() {
+	      var cls = $('#addForm select[name=class]').val();
+	      var clsWord = /\/([^\/]+)$/.exec(cls)[1].toLowerCase();
+	      var label = $('#addForm input[name=label]').val();
+	      
+	      var newUri = ("http://photo.bigasterisk.com/" + 
+			    (new Date()).getFullYear() + "/" + 
+			    clsWord + "/" + 
+			    encodeURIComponent(slug(label)));
+	      $('#add-uri').val(newUri);
+	  }
+	  $("#addForm select[name=class], #addForm input[name=label]"
+	   ).bind("keyup change", updateTagUrl);
+	  
+	  $("#submitRange").click(function () {
+	      $("#rangeState").text("saving...");
+	      $.post(document.location + "&tagRange=1", 
+		     {start: $("#rangeStart .pick").text(), 
+		      end: $("#rangeEnd .pick").text(), 
+		      rdfClass: $('#addForm select[name=class]').val(),
+		      label: $("#addForm input[name=label]").val(), 
+		      uri: $("#addForm input[name=uri]").val()},
+		     function (data, textStatus) {
+			 $("#rangeState").html(data.msg);
+		     }, "json");
+	  });
+
+
 
 	  function startNextImgPreload() {
 	      $("#preload").attr('src', preloadImg);
@@ -198,6 +320,5 @@
     </script>
 
     <img id="preload" src=""/>
-highlight selection, tag all its images with an event. link to just view that event, from any pic go view its directory, email whole event to someone from access.n3 list
   </body>
 </html>

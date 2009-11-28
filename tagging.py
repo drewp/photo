@@ -11,9 +11,15 @@ DCTERMS = Namespace("http://purl.org/dc/terms/")
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 SCOT = Namespace("http://scot-project.org/scot/ns#")
 
-def saveTags(graph, foafUser, img, tagString, desc):
+def allowedToWrite(graph, foafUser):
+    return foafUser in [
+        URIRef("http://bigasterisk.com/foaf.rdf#drewp"),
+        URIRef("http://bigasterisk.com/kelsi/foaf.rdf#kelsi"),
+        ]
 
-    # check user write perms here
+def saveTags(graph, foafUser, img, tagString, desc):
+    if not allowedToWrite(graph, foafUser):
+        raise ValueError("not allowed")
     
     subgraph = URIRef('http://photo.bigasterisk.com/update/%f' %
                       time.time())

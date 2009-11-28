@@ -53,3 +53,4 @@ http://www.digitalblasphemy.com/fshow.shtml?i=verdure&w=1152&h=864&y=2006&n=Verd
 make all photos viewable:
 cwm webinput/web-2008-09-28T19:32:14.558701.n3 --ntriples | sort -u  | perl -lpe 'split; $_="$_[0] <http://photo.bigasterisk.com/0.1/viewableBy> <http://photo.bigasterisk.com/0.1/friends> ."'
 (then cleanup some lines)
+

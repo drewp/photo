@@ -33,8 +33,11 @@ PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 SITE = Namespace("http://photo.bigasterisk.com/")
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 SIOC = Namespace("http://rdfs.org/sioc/ns#")
+DC = Namespace("http://purl.org/dc/elements/1.1/")
 DCTERMS = Namespace("http://purl.org/dc/terms/")
 SCOT = Namespace("http://scot-project.org/scot/ns#")
+XS = Namespace("http://www.w3.org/2001/XMLSchema#")
+
 
 
 myPicSubdirs = ['digicam', 'phonecam', 'upload', 'home', 'wedding', 'flickr', 'scans', 'email']
@@ -193,6 +196,8 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
             topic = URIRef(ctx.arg('dir'))
         elif ctx.arg('tag'):
             topic = URIRef('http://photo.bigasterisk.com/tag/%s' % ctx.arg('tag'))
+        elif ctx.arg('date'):
+            topic = Literal(ctx.arg('date'), datatype=XS.date)
         else:
             raise ValueError("no topic")
         return imageSet.ImageSet(ctx, graph, topic)
@@ -208,8 +213,11 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         return browse.FileBrowse(ctx, graph)
 
     def child_edit(self, ctx, _name="Edit"):
-        if not self.httpAuthorized(ctx):
-            return self.needAuth(ctx)
+        req = inevow.IRequest(ctx)
+        user = URIRef(req.getHeader('x-openid-proxy'))
+        if user not in auth.superusers:
+            raise ValueError("forbidden")
+        
         import edit
         reload(edit)
         return getattr(edit, _name)(ctx, graph)
@@ -251,6 +259,8 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
             return "public"
         raise ValueError("forbidden")
 
+setattr(Main, "child_favicon.ico", static.File("static/favicon.ico"))
+
 logging.basicConfig(level=logging.DEBUG)
 
 initNs = dict(
@@ -259,6 +269,7 @@ initNs = dict(
         sioc=SIOC,
         pho=PHO,
         scot=SCOT,
+        dc=DC,
     )
 
 if 0:
