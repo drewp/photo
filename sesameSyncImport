@@ -95,7 +95,7 @@ if quick:
 class FileChanged(mu.Resource):
     def handle_get(self, req):
         req.write('''<html><body>
-        <form method="post" action="">Report a changed file: <input name="file"/> <input type="submit"/></form>
+        <form method="post" action="">Report a changed file: <input name="file" size="100"/> <input type="submit"/></form>
         <form method="post" action="all"><input type="submit" value="rescan all files (slow)"/></form>
         </body></html>
         ''')

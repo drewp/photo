@@ -289,7 +289,7 @@
 
           $(".makePub").click(function() {
 	      var button = $(this);
-	      $.post('makePublic', {uri: currentPhotoUri},
+	      $.post('/makePublic', {uri: currentPhotoUri},
 		  function(data, textStatus) {
 		    button.replaceWith(data);
 	      });

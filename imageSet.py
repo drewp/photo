@@ -1,3 +1,16 @@
+"""
+todo:
+fix rss paging
+fix rss on /set pages
+split server into per-set and per-image services
+separate all security checks into their own module
+next/prev day pickers
+calendar view
+similarity grouping
+email pic or set
+download from flickr
+ocr and search, like http://norman.walsh.name/2009/11/01/evernote
+"""
 from __future__ import division
 import logging, zipfile, datetime, time, jsonlib, cgi, urllib
 from StringIO import StringIO
@@ -85,7 +98,8 @@ class ImageSet(rend.Page):
         return ret
 
     def postTagRange(self, ctx):
-
+        # security?
+        
         i1 = self.photos.index(URIRef(ctx.arg('start')))
         i2 = self.photos.index(URIRef(ctx.arg('end')))
 
@@ -313,6 +327,8 @@ class ImageSet(rend.Page):
         return ''
 
     def render_public(self, ctx, data):
+        # becomes a call to oneimage/viewPerm\
+        
         if isPublic(self.graph, self.currentPhoto):
             return 'image is public'
         
