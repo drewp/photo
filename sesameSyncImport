@@ -70,6 +70,16 @@ scanExif = ScanExif(graph)
 syncs = {}
 subdirs = picSubDirs(syncs, SesameSync, graph, quick) # root directories for fileschanged to watch underneath
 
+def fixSftpPerms():
+    """files put in upload/ sometimes have the wrong perms, and
+    they're owned by user picuploader. There's a setuid program in
+    that dir that has picloader chmod a+r on the files
+
+    http://www.tuxation.com/setuid-on-shell-scripts.html
+    """
+    os.system("/my/pic/upload/fixperms")
+
+
 def onChange(filename):
     for root, sync in syncs.items():
         if filename.startswith(root):
@@ -79,6 +89,8 @@ def onChange(filename):
 
     if filename.startswith('/my/pic'):
         # this one wants to hear about image files for path/exif data
+        if filename.startswith('/my/pic/upload'):
+            fixSftpPerms()
         picUri = scanFs.fileChanged(filename)
         if picUri is not None:
             scanExif.addPic(picUri)
