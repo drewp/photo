@@ -35,7 +35,7 @@ def goodDirNames(names):
     return ret
 
 def filenameIsImage(filename):
-    for ext in ['.jpg', '.gif']:
+    for ext in ['.jpg', '.gif', '.jpeg']:
         if filename.lower().endswith(ext):
             return True
     return False
