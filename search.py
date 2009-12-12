@@ -58,20 +58,30 @@ class Events(rend.Page):
                 continue
             pick = random.choice(allPicsThatDay)
             current = pick['pic']
+            bindings = {Variable("pic") : current}
             tags = [[T.a(href=['http://photo.bigasterisk.com/set?tag=',
                                row['tag']])[row['tag']], ' ']
                     for row in self.graph.queryd(
                         """SELECT DISTINCT ?tag WHERE {
                              ?pic scot:hasTag [
                                rdfs:label ?tag ]
-                           }""", initBindings={Variable("pic") : current})]
+                           }""", initBindings=bindings)]
+            depicts = [[T.a(href=row['uri'])[row['label']], ' ']
+                       for row in self.graph.queryd("""
+                         SELECT DISTINCT ?uri ?label WHERE {
+                           ?pic foaf:depicts ?uri .
+                           ?uri rdfs:label ?label .
+                         }""", initBindings=bindings)]
+            # todo: description and tags would be good too, and some
+            # other service should be rendering this whole section
             yield T.div(class_="randPick")[
                 T.a(href=['http://photo.bigasterisk.com/set?',
                           urllib.urlencode(dict(date=d, current=current))])[
                     T.img(src=[current, '?size=medium']),
-                    T.div[tags],
-                    T.div[pick['filename']],
-                    ]
+                    ],
+                T.div[tags],
+                T.div[depicts],
+                T.div[pick['filename'].replace('/my/pic/','')],
                 ]
 
     def render_newestDirs(self, ctx, data):
