@@ -33,6 +33,7 @@ FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 EXIF = Namespace("http://www.kanzaki.com/ns/exif#")
 SCOT = Namespace("http://scot-project.org/scot/ns#")
 DC = Namespace("http://purl.org/dc/elements/1.1/")
+XS = Namespace("http://www.w3.org/2001/XMLSchema#")
 
 
 ## class StringIOView(Adapter):
@@ -111,6 +112,7 @@ class ImageSet(rend.Page):
 
         writeStatements([
             (newUri, RDF.type, URIRef(ctx.arg('rdfClass'))),
+            #(newUri, DC.created, Literal now
             (newUri, RDFS.label, Literal(ctx.arg('label'))),
             ] + imgStatements)
 
@@ -184,7 +186,7 @@ class ImageSet(rend.Page):
 
         def relQuery(rel):
             rows = self.graph.queryd("""
-               SELECT ?d ?label WHERE {
+               SELECT DISTINCT ?d ?label WHERE {
                  ?img ?rel ?d .
                  OPTIONAL { ?d rdfs:label ?label }
                }""", initBindings={Variable("rel") : rel,
@@ -261,16 +263,22 @@ class ImageSet(rend.Page):
 
 
     def render_prevNextDateButtons(self, ctx, data):
-        rows = self.graph.queryd("""
-               SELECT ?d ?label WHERE {
-                 ?img dc:date ?d .
-               }""", initBindings={Variable("img") : self.currentPhoto})
-        if not rows:
-            return ''
+        showingDate = ctx.arg('date')
+        if showingDate is None:
+            if self.currentPhoto is None:
+                return ''
+                
+            rows = self.graph.queryd("""
+                   SELECT ?d ?label WHERE {
+                     ?img dc:date ?d .
+                   }""", initBindings={Variable("img") : self.currentPhoto})
+            if not rows:
+                return ''
+            showingDate = rows[0]['d']
         
-        dtd = parse_date(rows[0]['d'])
-        prevDate = date_isoformat(dtd - datetime.timedelta(days=1))
-        nextDate = date_isoformat(dtd + datetime.timedelta(days=1))
+        dtd = parse_date(showingDate)
+        prevDate = date_isoformat(self.nextDateWithPics(dtd, -datetime.timedelta(days=1)))
+        nextDate = date_isoformat(self.nextDateWithPics(dtd, datetime.timedelta(days=1)))
         # possibly these should walk until the next date with any
         # photos, since it's useless to step to a date with nothing
 
@@ -281,6 +289,23 @@ class ImageSet(rend.Page):
             T.a(href='http://photo.bigasterisk.com/set?date=%s' % nextDate)[
                 T.raw('&#8674; '), nextDate]]
 
+    def nextDateWithPics(self, start, offset):
+        tries = 100
+        x = start + offset
+        while not self.dateHasPics(x) and tries:
+            x = x + offset
+            tries -= 1
+        if not tries:
+            raise ValueError("traveled too far")
+        return x
+
+    def dateHasPics(self, date):
+        dlit = Literal(date_isoformat(date), datatype=XS.date)
+        rows = self.graph.queryd("""
+                   SELECT ?img WHERE {
+                     ?img a foaf:Image; dc:date ?d .
+                   }""", initBindings={Variable("d") : dlit})
+        return bool(list(rows))
 
     def prevNext(self):
         if self.currentPhoto is None:
@@ -379,9 +404,13 @@ class ImageSet(rend.Page):
                 sec = iso8601.parse(str(photoDate) + '-0700')
         except ValueError:
             return ''
-        
-        lines.append("Picture taken %s; %s days ago" %
-                     (photoDate.replace('T', ' '), int((now - sec) / 86400)))
+
+        ago = int((now - sec) / 86400)
+        if ago < 365:
+            ago = '; %s days ago' % ago
+        else:
+            ago = ''
+        lines.append("Picture taken %s%s" % (photoDate.replace('T', ' '), ago))
 
         for who, tag, birthday in [
             (URIRef("http://photo.bigasterisk.com/2008/person/apollo"),

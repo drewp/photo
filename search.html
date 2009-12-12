@@ -3,49 +3,68 @@
     <!-- if we're on a phone screen, things should shrink accordingly -->
     <style type="text/css">
       body {
-      background: black;
-      color: white;
+	  background: black;
+	  color: white;
       }
       h1 {
-        font-size: 110%;
+          font-size: 110%;
       }
       h2 {
-        font-size: 105%;
+          font-size: 105%;
       }
-a {
-  color: #ccf;
+      a {
+	  color: #ccf;
+	  text-decoration: none;
+      } 
+      div.imageInfo {
+	  margin: 1em;
+	  padding: 1em;
+	  position: relative; 
+	  display:inline;
+	  border: 1px solid gray;
+      }
+      img {
+	  border: 1px solid #668;
+      }  
+      .randPick {
+	  float: left;
+	  width: 270px;
+      }
+      .co {
+	  float: left;
+	  width: 270px;
+      }
+      .co.newest {
+ font-size: 90%;
+width: 236px;
 } 
-div {
-  margin-left: 2em;
+.co.topics {
+font-size: 85%;
 }
-div.imageInfo {
-  margin: 1em;
-  padding: 1em;
-position: relative; 
-display:inline;
-  border: 1px solid gray;
+.co.tags {
+  width: 400px;
+-moz-column-width: 140px;
 }
-img {
-  border: 1px solid #668;
-}  
     </style>
     <title>Search</title>
   </head>
   <body>
-    <h1>Search</h1>
-
-    <h1>Newest digicam dirs</h1>
-    <n:invisible n:render="newestDirs"/>
-
-    <n:invisible n:render="topics"/>
-
+    <h1>Random images</h1>
+    <n:invisible n:render="random"/>
+    <div style="clear: both"/>
+    <div class="co newest">
+      <h1>Newest digicam dirs</h1>
+      <n:invisible n:render="newestDirs"/>
+    </div>
+    <div class="co topics">
+      <n:invisible n:render="topics"/>
+    </div>
+    <div class="co tags">
+      <h1>Tags</h1>
+      <n:invisible n:render="tags"/>
+    </div>
+    <div style="clear: both"/>
     <h1>Save sets</h1>
     <n:invisible n:render="saveSets"/>
-
-    <h1>Tags</h1>
-    <n:invisible n:render="tags"/>
-
-    <h1>Some random images</h1>
-    <n:invisible n:render="random"/>
   </body>
 </html>

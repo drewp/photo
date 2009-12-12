@@ -1,6 +1,6 @@
-import urllib, os
+import urllib, os, random, time
 from nevow import rend, loaders, tags as T
-from rdflib import Namespace, URIRef
+from rdflib import Namespace, URIRef, Variable
 from urls import localSite, SITE
 from tagging import getTagsWithFreqs
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
@@ -43,13 +43,36 @@ class Events(rend.Page):
                 ]
             
     def render_random(self, ctx, data):
-        for row in self.graph.queryd("""
-            SELECT ?pic ?filename WHERE {
-              ?pic a foaf:Image;
-                   pho:filename ?filename
-            } LIMIT 10
-            """):
-            yield T.div[T.a(href=localSite(row['pic']))[row['filename']]]
+        dates = random.sample(self.graph.queryd("""
+              SELECT DISTINCT ?d WHERE { ?pic dc:date ?d }
+           """), 3)
+        for row in dates:
+            d = row['d']
+            allPicsThatDay = self.graph.queryd("""
+                SELECT DISTINCT ?pic ?filename WHERE {
+                  ?pic dc:date ?d .
+                  ?pic a foaf:Image;
+                       pho:filename ?filename
+                }""", initBindings={Variable('d') : d})
+            if not allPicsThatDay:
+                continue
+            pick = random.choice(allPicsThatDay)
+            current = pick['pic']
+            tags = [[T.a(href=['http://photo.bigasterisk.com/set?tag=',
+                               row['tag']])[row['tag']], ' ']
+                    for row in self.graph.queryd(
+                        """SELECT DISTINCT ?tag WHERE {
+                             ?pic scot:hasTag [
+                               rdfs:label ?tag ]
+                           }""", initBindings={Variable("pic") : current})]
+            yield T.div(class_="randPick")[
+                T.a(href=['http://photo.bigasterisk.com/set?',
+                          urllib.urlencode(dict(date=d, current=current))])[
+                    T.img(src=[current, '?size=medium']),
+                    T.div[tags],
+                    T.div[pick['filename']],
+                    ]
+                ]
 
     def render_newestDirs(self, ctx, data):
         # todo- should use rdf and work over all dirs
@@ -68,7 +91,7 @@ class Events(rend.Page):
     def render_tags(self, ctx, data):
         freqs = getTagsWithFreqs(self.graph)
         freqs = sorted(freqs.items(), key=lambda (t, n): (-n, t))
-        return T.ul[[T.li[t, " (", n, ")"] for t, n in freqs]]
+        return T.ul[[T.li[T.a(href=["set?tag=", t])[t, " (", n, ")"]] for t, n in freqs]]
                     
 
 
