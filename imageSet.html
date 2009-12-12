@@ -80,43 +80,7 @@
     </table>
     <div>
       <h2>All photos in set:</h2>
-
-      <div class="ac">
-	<div class="expand">&#8853; tag range</div>
-	<div class="tagRange">
-	  <div id="rangeState"></div>
-	  <div id="rangeStart">
-	    1. <button>Pick range start</button>: 
-	    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR42mP4//8/AAX+Av4zEpUUAAAAAElFTkSuQmCC"/>
-	    <span class="pick"/>
-	  </div>
-	  <div id="rangeEnd">
-	    2. <button>Pick range end</button>: 
-	    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR42mP4//8/AAX+Av4zEpUUAAAAAElFTkSuQmCC"/>
-	    <span class="pick"/>
-	  </div>
-	  <div id="addForm">
-	    <div>
-	      3. These pictures depict: <input name="label" id="addColumnLabel" type="text"/>
-	    </div>
-	    <div class="uriControl">
-	      <div style="float:left; padding-left: 10px;">
-		Class:
-		<select name="class" style="vertical-align: top" size="3"> <!-- should be radios-->
-		  <option value="http://xmlns.com/foaf/0.1/Person">Person</option>
-		  <option value="http://photo.bigasterisk.com/0.1/Place">Place</option>
-		  <option value="http://photo.bigasterisk.com/0.1/Event" selected="selected">Event</option>
-		</select>
-	      </div>
-	      <div style="float:left; padding-left: 10px;">
-		URI: <input id="add-uri" name="uri" type="text" size="50"/>
-	      </div>
-	      <div style="clear:both"></div>
-	    </div>
-	    <div>4. <button id="submitRange">Add tag</button></div>
-	  </div>
-	</div>
-      </div>
+      <n:invisible n:render="prevNextDateButtons"/>
 
       <div>
 	<a href="javascript:PicLensLite.start();">View as slideshow 
@@ -134,6 +98,44 @@
 	</n:invisible>
       </div>
     </div>
+
+    <div class="ac">
+      <div class="expand">&#8853; tag range</div>
+      <div class="tagRange">
+	<div id="rangeState"></div>
+	<div id="rangeStart">
+	  1. <button>Pick range start</button>: 
+	  <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR42mP4//8/AAX+Av4zEpUUAAAAAElFTkSuQmCC"/>
+	  <span class="pick"/>
+	</div>
+	<div id="rangeEnd">
+	  2. <button>Pick range end</button>: 
+	  <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR42mP4//8/AAX+Av4zEpUUAAAAAElFTkSuQmCC"/>
+	  <span class="pick"/>
+	</div>
+	<div id="addForm">
+	  <div>
+	    3. These pictures depict: <input name="label" id="addColumnLabel" type="text"/>
+	  </div>
+	  <div class="uriControl">
+	    <div style="float:left; padding-left: 10px;">
+	      Class:
+	      <select name="class" style="vertical-align: top" size="3"> <!-- should be radios-->
+		<option value="http://xmlns.com/foaf/0.1/Person">Person</option>
+		<option value="http://photo.bigasterisk.com/0.1/Place">Place</option>
+		<option value="http://photo.bigasterisk.com/0.1/Event" selected="selected">Event</option>
+	      </select>
+	    </div>
+	    <div style="float:left; padding-left: 10px;">
+	      URI: <input id="add-uri" name="uri" type="text" size="50"/>
+	    </div>
+	    <div style="clear:both"></div>
+	  </div>
+	  <div>4. <button id="submitRange">Add tag</button></div>
+	</div>
+      </div>
+    </div>
+
     <div>
       Download a <a rel="nofollow"><n:attr name="href"><n:invisible n:render="zipUrl"/></n:attr>.zip file of the full size images on this page</a> <n:invisible n:render="zipSizeWarning"/>
     </div>

@@ -128,3 +128,11 @@ cursor: pointer;
 .photosInSet span {
     position: relative;
 }
+.dateChange {
+    font-size: 80%;
+    color: #777;
+}
+.dateChange a {
+    color: #77a;
+    text-decoration: none;
+}

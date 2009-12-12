@@ -19,6 +19,7 @@ from rdflib import Namespace, Variable, URIRef, RDF, RDFS, Literal
 from zope.interface import implements
 from twisted.python.components import registerAdapter, Adapter
 from xml.utils import iso8601
+from isodate.isodates import parse_date, date_isoformat
 from photos import Full, thumb, sizes
 from urls import localSite, absoluteSite
 from public import isPublic
@@ -206,6 +207,7 @@ class ImageSet(rend.Page):
                    row['d'].split('/')[-2])
 
         for row in relQuery(DC.date):
+           
             yield ('taken on', setUrl(date=row['d']), row['d'])
 
         for row in relQuery(SCOT.hasTag):
@@ -248,6 +250,7 @@ class ImageSet(rend.Page):
 
     def render_stepButtons(self, ctx, data):
         p, n = self.prevNext()
+        
         return T.div(class_="steps")[
             T.a(href=self.otherImageHref(ctx, p),
                 title="Previous image (left arrow key)")[T.raw('&#11013;')], ' ', 
@@ -255,6 +258,29 @@ class ImageSet(rend.Page):
                 title="Next image (click in the image, or press right arrow key)")[
                 T.raw('&#10145;')],
             ]
+
+
+    def render_prevNextDateButtons(self, ctx, data):
+        rows = self.graph.queryd("""
+               SELECT ?d ?label WHERE {
+                 ?img dc:date ?d .
+               }""", initBindings={Variable("img") : self.currentPhoto})
+        if not rows:
+            return ''
+        
+        dtd = parse_date(rows[0]['d'])
+        prevDate = date_isoformat(dtd - datetime.timedelta(days=1))
+        nextDate = date_isoformat(dtd + datetime.timedelta(days=1))
+        # possibly these should walk until the next date with any
+        # photos, since it's useless to step to a date with nothing
+
+        return T.div(class_="dateChange")[
+            T.a(href='http://photo.bigasterisk.com/set?date=%s' % prevDate)[
+                prevDate, T.raw(' &#8672;')],
+            ' change date ',
+            T.a(href='http://photo.bigasterisk.com/set?date=%s' % nextDate)[
+                T.raw('&#8674; '), nextDate]]
+
 
     def prevNext(self):
         if self.currentPhoto is None:
