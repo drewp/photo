@@ -58,10 +58,10 @@ def fileschanged_pyinotify(topDirs, callback):
     
     notifier = pyinotify.Notifier(wm, default_proc_fun=Identity())
 
-    c = pyinotify.EventsCodes
+    c = pyinotify.EventsCodes.FLAG_COLLECTIONS['OP_FLAGS']
     # rsync writes to a dotfile, which we ignore, then moves to the
     # real file, which we catch with IN_MOVED_TO
-    codes = c.IN_MODIFY | c.IN_CREATE | c.IN_DELETE | c.IN_MOVED_TO
+    codes = c['IN_MODIFY'] | c['IN_CREATE'] | c['IN_DELETE'] | c['IN_MOVED_TO']
 
     log.info("finding dirs..")
     for d in topDirs:
