@@ -47,6 +47,12 @@ class ImagePage(rend.Page):
     def __init__(self, graph, uri):
         self.graph, self.uri = graph, uri
 
+    def renderHTTP(self, ctx):
+        # i don't have this page made up yet; just use imageset.py
+        req = inevow.IRequest(ctx)
+        req.redirect('http://photo.bigasterisk.com/set?current='+urllib.quote(self.uri, safe=''))
+        return ''
+
     def render_large(self, ctx, data):
         return T.img(src=self.uri.replace('file:/my/pic','') + '?size=large')
     
@@ -105,6 +111,10 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
 #        if self.httpAuthorized(ctx):
 #            return True
 
+        if (self.graph.contains((uri, PHO['viewableBy'], PHO['friends']))
+            or self.graph.contains((uri, PHO['viewableBy'], PHO['anyone']))):
+            return True
+
         if self.graph.queryd("""
             SELECT ?post WHERE {
               <http://bigasterisk.com/ari/> sioc:container_of ?post .
@@ -113,9 +123,19 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
             # this should also be limiting to readers of the blog!
             print "%s ok because it's on the blog" % uri
             return True
+        
+        # this capability doesn't appear in the make-public button
+        topicViewableBy = set(r['vb'] for r in self.graph.queryd("""
+        SELECT ?vb WHERE {
+          ?uri foaf:depicts ?d .
+          ?d pho:viewableBy ?vb .
+          }
+        """, initBindings={Variable("uri") : uri}))
+        if (PHO['friends'] in topicViewableBy or
+            PHO['anyone'] in topicViewableBy):
+            return True
 
-        return (self.graph.contains((uri, PHO['viewableBy'], PHO['friends']))
-             or self.graph.contains((uri, PHO['viewableBy'], PHO['anyone'])))
+        return False
 
 
     def locateChild(self, ctx, segments):
@@ -176,6 +196,12 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
                 its(PHO['Place']) or
                 its(PHO['Person']) or # oops
                 its(FOAF['Person'])):
+
+                if ctx.arg('random'):
+                    import imageSet
+                    reload(imageSet)
+                    return imageSet.RandomImage(graph, uri, ctx), ()
+                
                 import imageSet
                 reload(imageSet)
                 return imageSet.ImageSet(ctx, graph, uri), ()
@@ -199,6 +225,8 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
             topic = URIRef('http://photo.bigasterisk.com/tag/%s' % ctx.arg('tag'))
         elif ctx.arg('date'):
             topic = Literal(ctx.arg('date'), datatype=XS.date)
+        elif ctx.arg('current'):
+            topic = URIRef(ctx.arg('current'))
         else:
             raise ValueError("no topic")
         return imageSet.ImageSet(ctx, graph, topic)
@@ -232,6 +260,9 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
     def child_comments(self, ctx):
         return ReverseProxyResource("localhost", 9031, "/comments")
 
+    def child_oneImage(self, ctx):
+        return ReverseProxyResource("localhost", 9043, "")
+
     def child_tagging(self, ctx):
         img = URIRef(ctx.arg('img'))
         req = inevow.IRequest(ctx)
@@ -251,14 +282,12 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         req = inevow.IRequest(ctx)
         if req.method != 'POST':
             raise ValueError("invalid method")
+        return getPage('http://localhost:9043/viewPerm',
+                       postdata=urllib.urlencode({'img' : ctx.arg('uri')}),
+                       method='POST',
+                       headers={'X-Foaf-Agent' :
+                                inevow.IRequest(ctx).getHeader('x-foaf-agent')})
 
-        openid = URIRef(req.getHeader('x-openid-proxy'))
-
-        # not final; just matching the old logic
-        if openid in auth.superusers:
-            makePublic(URIRef(ctx.arg('uri')))
-            return "public"
-        raise ValueError("forbidden")
 
 setattr(Main, "child_favicon.ico", static.File("static/favicon.ico"))
 

@@ -12,7 +12,7 @@ download from flickr
 ocr and search, like http://norman.walsh.name/2009/11/01/evernote
 """
 from __future__ import division
-import logging, zipfile, datetime, time, jsonlib, cgi, urllib
+import logging, zipfile, datetime, time, jsonlib, cgi, urllib, random
 from StringIO import StringIO
 from nevow import loaders, rend, tags as T, inevow, url
 from rdflib import Namespace, Variable, URIRef, RDF, RDFS, Literal
@@ -24,6 +24,7 @@ from photos import Full, thumb, sizes
 from urls import localSite, absoluteSite
 from public import isPublic
 from edit import writeStatements
+from oneimage import personAgeString
 import tagging
 import auth
 log = logging.getLogger()
@@ -45,6 +46,26 @@ XS = Namespace("http://www.w3.org/2001/XMLSchema#")
 ## try: registerAdapter(StringIOView, StringIO, inevow.IResource)
 ## except ValueError: pass
 
+
+def photosWithTopic(graph, uri):
+    """photos can be related to uri in a variety of ways: foaf:depicts,
+    dc:date, etc"""
+    q = graph.queryd("""SELECT DISTINCT ?photo WHERE {
+                               {
+                                 ?photo foaf:depicts ?u .
+                               } UNION {
+                                 ?photo pho:inDirectory ?u .
+                               } UNION {
+                                 ?photo scot:hasTag ?u .
+                               } UNION {
+                                 ?photo dc:date ?u .
+                               }
+                              # ?photo pho:viewableBy pho:friends .
+                             }""",
+                          initBindings={Variable('u') : uri})
+
+    return sorted([row['photo'] for row in q])    
+
 class ImageSet(rend.Page):
     """
     multiple images, with one currently-featured one. Used for search results
@@ -52,25 +73,15 @@ class ImageSet(rend.Page):
     docFactory = loaders.xmlfile("imageSet.html")
     def __init__(self, ctx, graph, uri):
         self.graph, self.uri = graph, uri
-        q = self.graph.queryd("""SELECT DISTINCT ?photo WHERE {
-                                   {
-                                     ?photo foaf:depicts ?u .
-                                   } UNION {
-                                     ?photo pho:inDirectory ?u .
-                                   } UNION {
-                                     ?photo scot:hasTag ?u .
-                                   } UNION {
-                                     ?photo dc:date ?u .
-                                   }
-                                  # ?photo pho:viewableBy pho:friends .
-                                 }""",
-                              initBindings={Variable('u') : self.uri})
-
-        self.photos = sorted([row['photo'] for row in q])
-
+        self.photos = photosWithTopic(self.graph, self.uri)
         self.currentPhoto = None
         if ctx.arg('current') is not None:
             self.currentPhoto = URIRef(ctx.arg('current'))
+
+        if not self.photos and self.currentPhoto:
+            print "featuring one pic"
+            self.photos = [self.currentPhoto]
+
         if self.photos and self.currentPhoto not in self.photos:
             self.currentPhoto = self.photos[0]
                 
@@ -277,17 +288,24 @@ class ImageSet(rend.Page):
             showingDate = rows[0]['d']
         
         dtd = parse_date(showingDate)
-        prevDate = date_isoformat(self.nextDateWithPics(dtd, -datetime.timedelta(days=1)))
-        nextDate = date_isoformat(self.nextDateWithPics(dtd, datetime.timedelta(days=1)))
-        # possibly these should walk until the next date with any
-        # photos, since it's useless to step to a date with nothing
+        try:
+            prevDate = date_isoformat(self.nextDateWithPics(dtd, -datetime.timedelta(days=1)))
+            prev = T.a(href='http://photo.bigasterisk.com/set?date=%s' % prevDate)[
+                prevDate, T.raw(' &#8672;')]
+        except ValueError:
+            prev = ""
 
+        try:
+            nextDate = date_isoformat(self.nextDateWithPics(dtd, datetime.timedelta(days=1)))
+            next = T.a(href='http://photo.bigasterisk.com/set?date=%s' % nextDate)[
+                T.raw('&#8674; '), nextDate]
+        except ValueError:
+            next = ""
+            
         return T.div(class_="dateChange")[
-            T.a(href='http://photo.bigasterisk.com/set?date=%s' % prevDate)[
-                prevDate, T.raw(' &#8672;')],
+            prev,
             ' change date ',
-            T.a(href='http://photo.bigasterisk.com/set?date=%s' % nextDate)[
-                T.raw('&#8674; '), nextDate]]
+            next]
 
     def nextDateWithPics(self, start, offset):
         tries = 100
@@ -423,17 +441,12 @@ class ImageSet(rend.Page):
                 tag = URIRef('http://photo.bigasterisk.com/tag/%s' % tag)
                 if (self.graph.contains((img, FOAF['depicts'], who)) or
                     self.graph.contains((img, SCOT.hasTag, tag))):
-                    birth = iso8601.parse(birthday)
-                    diff = sec - birth
-                    days = (sec - birth) / 86400
-                    if days / 30 < 12:
-                        msg = "%.2f months" % (days / 30)
-                    else:
-                        msg = "%.2f years" % (days / 365)
                     name = self.graph.value(
                         who, FOAF.name, default=self.graph.label(
                             who, default=tag))
-                    lines.append("%s is %s old. " % (name, msg))
+                        
+                    lines.append("%s is %s old. " % (
+                        name, personAgeString(birthday, photoDate)))
             except Exception, e:
                 log.error("%s birthday failed: %s" % (who, e))
 
@@ -475,3 +488,31 @@ class ImageSet(rend.Page):
         </rss>
         """
           
+class RandomImage(rend.Page):
+    """redirect to any image with this topic.
+
+    If you are making am XHR, we give you a {'Location' : 'http:...'}
+    payload instead, so you can know what the image url turns out to
+    be. But you have to put that location into the <img> tag yourself."""
+    def __init__(self, graph, uri, ctx):
+        self.graph, self.uri, self.ctx = graph, uri, ctx
+        
+    def renderHTTP(self, ctx):
+        photos = photosWithTopic(self.graph, self.uri)
+
+        newUrl = url.URL.fromString(str(random.choice(photos)))
+
+        # todo: this should carry all args (except 'random')
+        if ctx.arg('size'):
+            newUrl = newUrl.add('size', ctx.arg('size'))
+
+        req = inevow.IRequest(ctx)
+        # XHR requests can't get the location; the redirect happens
+        # automatically. So give them a payload and no location
+        # header.
+        if req.getHeader('X-Requested-With') == 'XMLHttpRequest':
+            req.setHeader('content-type', 'application/json')
+            return jsonlib.dumps({'Location' : str(newUrl)})
+        
+        req.redirect(newUrl)
+        return ''
