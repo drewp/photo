@@ -17,9 +17,13 @@ and then we can ask for 600 followed by 75.
 import subprocess, random, time
 from photos import thumb
 
-files = [f for f in subprocess.Popen(
-    "/usr/bin/find /my/pic/phonecam /my/pic/digicam -name *.jpg -o -name *.JPG -o -name *.jpeg -o -name *.JPEG".split(),
-    stdout=subprocess.PIPE).communicate()[0].splitlines()
+cmd = ["/usr/bin/find"]
+# todo: all subdirs
+cmd += ["/my/pic/phonecam", "/my/pic/digicam", "/my/pic/wedding"]
+cmd += "-name *.jpg -o -name *.JPG -o -name *.jpeg -o -name *.JPEG".split()
+
+files = [f for f in subprocess.Popen(cmd,
+                  stdout=subprocess.PIPE).communicate()[0].splitlines()
          if '.xvpics' not in f]
 
 # this is so i can run multiple instances of this process in parallel
