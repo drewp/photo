@@ -35,8 +35,7 @@ SCOT = Namespace("http://scot-project.org/scot/ns#")
 XS = Namespace("http://www.w3.org/2001/XMLSchema#")
 
 
-
-myPicSubdirs = ['digicam', 'phonecam', 'upload', 'home', 'wedding', 'flickr', 'scans', 'email']
+myPicSubdirs = [d for d in os.listdir("/my/pic") if d != "~thumb"]
 
 class ImagePage(rend.Page):
     def __init__(self, graph, uri):
