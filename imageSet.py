@@ -18,6 +18,7 @@ from nevow import loaders, rend, tags as T, inevow, url
 from rdflib import Namespace, Variable, URIRef, RDF, RDFS, Literal
 from zope.interface import implements
 from twisted.python.components import registerAdapter, Adapter
+from twisted.web.client import getPage
 from xml.utils import iso8601
 from isodate.isodates import parse_date, date_isoformat
 from photos import Full, thumb, sizes
@@ -133,13 +134,10 @@ class ImageSet(rend.Page):
             })
 
     def render_loginWidget(self, ctx, data):
-        openid = inevow.IRequest(ctx).getHeader('x-openid-proxy')
-        if openid is None:
-            return T.a(href='/login')["Login"]
+        return getPage("http://bang:9023/_loginBar", headers={
+            "Cookie" : inevow.IRequest(ctx).getHeader("cookie")}
+                       ).addCallback(T.raw)
         
-        openid = URIRef(openid)
-        return "Logged in as %s" % openid
-
     def render_zipSizeWarning(self, ctx, data):
         mb = 17.3 / 9 * len(self.photos)
         secs = mb * 1024 / 40 
