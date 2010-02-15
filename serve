@@ -1,21 +1,17 @@
 from __future__ import division
-import sys, os, md5, urllib, time, logging, jsonlib
+import sys, os, urllib, logging, jsonlib
 
 # for rdflib
 sys.path.insert(0, "/my/proj/ffg/lib/rdflib/build/lib.linux-i686-2.5/")
 
-from sets import Set
-from StringIO import StringIO
 from twisted.application import internet, service
 from twisted.python.util import sibpath
-from twisted.internet import reactor
 from twisted.web import http
 from twisted.web.proxy import ReverseProxyResource
 from twisted.web.client import getPage
 from nevow import appserver, inevow, url
 from nevow import loaders, rend, static, tags as T
 from xml.utils import iso8601
-import Image
 from photos import Full, thumb, sizes
 import rdflib
 print "rdflib", rdflib.__version__
@@ -25,7 +21,6 @@ sys.path.append("/home/drewp/projects/ffg/sparqlhttp")
 sys.path.append("/my/proj/ffg/sparqlhttp")
 from sparqlhttp.dictquery import Graph2
 from tagging import saveTags, getTags
-from public import makePublic
 import auth
 
 log = logging.getLogger()
@@ -137,6 +132,41 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
 
         return False
 
+    def comments(self, uri, ctx, request):
+        """take uri with /comments tail and proxy to the comment server"""
+        assert uri.endswith('/comments')
+        imgUri = URIRef(uri[:-len('/comments')])
+        if not (
+            (self.graph.contains((imgUri, RDF.type, FOAF['Image'])) and
+            self.viewable(imgUri, ctx))):
+            raise ValueError("%r is not a viewable image" % imgUri)
+
+        request.uri = str(
+            url.URL.fromString(request.uri).
+            add('post', imgUri)#.
+            #add('content', ctx.arg('content'))
+            )
+        #request.content = StringIO("")
+        print "new req", request.uri
+
+        return ReverseProxyResource("localhost", 9031, "/comments")
+
+    def imageResource(self, uri, ctx):
+        reqSize = ctx.arg('size')
+        size = sizes.get(reqSize, 250)
+
+        print "need thumb for", repr(uri)
+        jpg, mtime = thumb(uri, size)
+
+        return StaticCached(jpg, "image/jpeg", mtime)
+
+    def nonViewable(self, request):
+        #return self.needAuth(ctx), [] # for http auth
+        request.setResponseCode(http.FORBIDDEN)
+        # if it was an image, we should return a legal image here
+          # this should pass our own url in a redirect
+          # parameter to openid_proxy
+        return '<a href="/login">openid login required</a>', []
 
     def locateChild(self, ctx, segments):
         request = inevow.IRequest(ctx)
@@ -148,20 +178,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         if segments[0] in myPicSubdirs:
 
             if uri.endswith('/comments'):
-                imgUri = URIRef(uri[:-len('/comments')])
-                if (self.graph.contains((imgUri, RDF.type, FOAF['Image'])) and
-                    self.viewable(imgUri, ctx)):
-
-                    from StringIO import StringIO
-                    request.uri = str(
-                        url.URL.fromString(request.uri).
-                        add('post', imgUri)#.
-                        #add('content', ctx.arg('content'))
-                        )
-                    #request.content = StringIO("")
-                    print "new req", request.uri
-                    
-                    return ReverseProxyResource("localhost", 9031, "/comments"), []
+                return self.comments(uri, ctx, request), []
             
             if self.graph.contains((uri, RDF.type, FOAF['Image'])):
 
@@ -172,22 +189,13 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
 """
                 
                 if not self.viewable(uri, ctx):
-                    #return self.needAuth(ctx), [] # for http auth
-                    request.setResponseCode(http.FORBIDDEN)
-                    # if it was an image, we should return a legal image here
-		      # this should pass our own url in a redirect
-		      # parameter to openid_proxy
-                    return '<a href="/login">openid login required</a>', []
-
+                    return self.nonViewable(request)
+                
                 if ctx.arg('page'):
                     return ImagePage(graph, uri), ()
 
-                reqSize = ctx.arg('size')
-                size = sizes.get(reqSize, 250)
+                return self.imageResource(uri, ctx), ()
 
-                jpg, mtime = thumb(uri, size)
-
-                return StaticCached(jpg, "image/jpeg", mtime), ()
 
         if segments[0] in ['2003', '2004', '2005', '2006', '2007', 
                            '2008', '2009']:
