@@ -306,7 +306,7 @@
 	  st.html('Uploading... ' +
 		  '<img class="spinner" src="static/snake-spinner.gif"/>');
 		  
-	  $.post("http://photo.bigasterisk.com/flickrUpload/",
+	  $.post("/flickrUpload/",
 		 {img: currentPhotoUri,
 		  size: sz,
 		  test: ''}, 

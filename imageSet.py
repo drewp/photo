@@ -135,7 +135,7 @@ class ImageSet(rend.Page):
 
     def render_loginWidget(self, ctx, data):
         return getPage("http://bang:9023/_loginBar", headers={
-            "Cookie" : inevow.IRequest(ctx).getHeader("cookie")}
+            "Cookie" : inevow.IRequest(ctx).getHeader("cookie") or ''}
                        ).addCallback(T.raw)
         
     def render_zipSizeWarning(self, ctx, data):

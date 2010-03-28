@@ -59,14 +59,13 @@ class Events(rend.Page):
             pick = random.choice(allPicsThatDay)
             current = pick['pic']
             bindings = {Variable("pic") : current}
-            tags = [[T.a(href=['http://photo.bigasterisk.com/set?tag=',
-                               row['tag']])[row['tag']], ' ']
+            tags = [[T.a(href=['/set?tag=', row['tag']])[row['tag']], ' ']
                     for row in self.graph.queryd(
                         """SELECT DISTINCT ?tag WHERE {
                              ?pic scot:hasTag [
                                rdfs:label ?tag ]
                            }""", initBindings=bindings)]
-            depicts = [[T.a(href=row['uri'])[row['label']], ' ']
+            depicts = [[T.a(href=localSite(row['uri']))[row['label']], ' ']
                        for row in self.graph.queryd("""
                          SELECT DISTINCT ?uri ?label WHERE {
                            ?pic foaf:depicts ?uri .
@@ -75,7 +74,7 @@ class Events(rend.Page):
             # todo: description and tags would be good too, and some
             # other service should be rendering this whole section
             yield T.div(class_="randPick")[
-                T.a(href=['http://photo.bigasterisk.com/set?',
+                T.a(href=['/set?',
                           urllib.urlencode(dict(date=d, current=current))])[
                     T.img(src=[current, '?size=medium']),
                     ],

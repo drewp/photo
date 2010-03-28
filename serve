@@ -148,7 +148,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         #request.content = StringIO("")
         print "new req", request.uri
 
-        return ReverseProxyResource("localhost", 9031, "/comments")
+        return ReverseProxyResource("bang", 9031, "/comments")
 
     def imageResource(self, uri, ctx):
         reqSize = ctx.arg('size')
@@ -265,7 +265,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         return static.File(sibpath(__file__, "static"))
 
     def child_comments(self, ctx):
-        return ReverseProxyResource("localhost", 9031, "/comments")
+        return ReverseProxyResource("bang", 9031, "/comments")
 
     def child_oneImage(self, ctx):
         return ReverseProxyResource("localhost", 9043, "")
