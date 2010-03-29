@@ -1,9 +1,12 @@
-import urllib, os, random, time
+import urllib, os, random, time, datetime
 from nevow import rend, loaders, tags as T
-from rdflib import Namespace, URIRef, Variable
+from rdflib import Namespace, URIRef, Variable, Literal
 from urls import localSite, SITE
 from tagging import getTagsWithFreqs
+from isodate.isodates import parse_date, date_isoformat
+
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
+XS = Namespace("http://www.w3.org/2001/XMLSchema#")
 
 def randomDates(graph, n=3, rand=random):
     dates = rand.sample(graph.queryd("""
@@ -45,6 +48,30 @@ def randomSet(graph, n=3, seed=None):
                     'filename' : pick['filename'],
                     'date' : d})
     return ret
+
+def nextDateWithPics(graph, start, offset):
+    """
+    takes datetime and timedelta
+    """
+    tries = 100
+    x = start + offset
+    while not dateHasPics(graph, x) and tries:
+        x = x + offset
+        tries -= 1
+    if not tries:
+        raise ValueError("traveled too far")
+    return x
+
+def dateHasPics(graph, date):
+    """
+    takes datetime
+    """
+    dlit = Literal(date_isoformat(date), datatype=XS.date)
+    rows = graph.queryd("""
+               SELECT ?img WHERE {
+                 ?img a foaf:Image; dc:date ?d .
+               }""", initBindings={Variable("d") : dlit})
+    return bool(list(rows))
 
 class Events(rend.Page):
     docFactory = loaders.xmlfile("search.html")
@@ -128,6 +155,16 @@ class Events(rend.Page):
         for t, dirname in times[:10]:
             # todo: escaping
             yield T.div[T.a(href=[localSite('/set?dir='), uriFromDir(dirname)])[dirname]]
+
+    def render_newestDates(self, ctx, data, n=5):
+        dates = []
+        d = datetime.datetime.now() + datetime.timedelta(days=1)
+        while len(dates) < n:
+            d = nextDateWithPics(self.graph, d,
+                                 -datetime.timedelta(days=1))
+            dates.append(T.li[T.a(href=["set?date=", date_isoformat(d)])[
+                date_isoformat(d)]])
+        return T.ul[dates]
 
     def render_tags(self, ctx, data):
         freqs = getTagsWithFreqs(self.graph)

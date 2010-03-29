@@ -26,7 +26,7 @@ from urls import localSite, absoluteSite
 from public import isPublic
 from edit import writeStatements
 from oneimage import personAgeString
-from search import randomSet
+from search import randomSet, nextDateWithPics
 import tagging
 import auth
 log = logging.getLogger()
@@ -301,14 +301,16 @@ class ImageSet(rend.Page):
         
         dtd = parse_date(showingDate)
         try:
-            prevDate = date_isoformat(self.nextDateWithPics(dtd, -datetime.timedelta(days=1)))
+            prevDate = date_isoformat(nextDateWithPics(
+                self.graph, dtd, -datetime.timedelta(days=1)))
             prev = T.a(href='/set?date=%s' % prevDate)[
                 prevDate, T.raw(' &#8672;')]
         except ValueError:
             prev = ""
 
         try:
-            nextDate = date_isoformat(self.nextDateWithPics(dtd, datetime.timedelta(days=1)))
+            nextDate = date_isoformat(nextDateWithPics(
+                self.graph, dtd, datetime.timedelta(days=1)))
             next = T.a(href='/set?date=%s' % nextDate)[
                 T.raw('&#8674; '), nextDate]
         except ValueError:
@@ -318,24 +320,6 @@ class ImageSet(rend.Page):
             prev,
             ' change date ',
             next]
-
-    def nextDateWithPics(self, start, offset):
-        tries = 100
-        x = start + offset
-        while not self.dateHasPics(x) and tries:
-            x = x + offset
-            tries -= 1
-        if not tries:
-            raise ValueError("traveled too far")
-        return x
-
-    def dateHasPics(self, date):
-        dlit = Literal(date_isoformat(date), datatype=XS.date)
-        rows = self.graph.queryd("""
-                   SELECT ?img WHERE {
-                     ?img a foaf:Image; dc:date ?d .
-                   }""", initBindings={Variable("d") : dlit})
-        return bool(list(rows))
 
     def prevNext(self):
         if self.currentPhoto is None:
