@@ -47,6 +47,15 @@
 		</li>
 	      </ul>
 	    </div>
+
+	    <div class="ac">
+	      <a href="javascript:PicLensLite.start();">View set as slideshow 
+	      <img src="http://lite.piclens.com/images/PicLensButton.png" 
+		   alt="PicLens" width="16" height="12" border="0" 
+		   align="absmiddle" /></a>
+	    </div>
+
+
 	    <div class="ac">Sizes: <n:invisible n:render="otherSizeLinks"/></div>
 	    <div class="ac">
 	      <div>Link to this image: </div>
@@ -79,24 +88,14 @@
 	</td>
       </tr>
     </table>
-    <div>
-      <h2>All photos in set:</h2>
-
-      <div>
-	<a href="javascript:PicLensLite.start();">View as slideshow 
-	<img src="http://lite.piclens.com/images/PicLensButton.png" 
-	     alt="PicLens" width="16" height="12" border="0" 
-	     align="absmiddle" /></a>
-      </div>
-      <div class="photosInSet">
-	<n:invisible n:render="sequence" n:data="photosInSet">
-	  <n:invisible n:pattern="item">
-	    <n:invisible n:render="thumb"/>
-	  </n:invisible>
-	  <img width="70" height="50"/>
-	  <img width="70" height="50"/>
+    <div class="photosInSet">
+      <n:invisible n:render="sequence" n:data="photosInSet">
+	<n:invisible n:pattern="item">
+	  <n:invisible n:render="thumb"/>
 	</n:invisible>
-      </div>
+	<img width="70" height="50"/>
+	<img width="70" height="50"/>
+      </n:invisible>
     </div>
 
     <div class="ac">
