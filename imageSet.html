@@ -11,11 +11,8 @@
     <title><n:invisible n:render="title"/></title>
   </head>
   <body>
-    <div><n:invisible n:render="loginWidget"/></div>
-	    <div id="ajaxError" style="display:none"/>
-
-    <h1>Pictures of <span class="tag"><n:invisible n:render="setLabel"/></span></h1>
-
+    <div id="ajaxError" style="display:none"/>
+    <div><a href="/events">Home</a> | Pictures of <span class="tag"><n:invisible n:render="setLabel"/></span></div>
     <div class="intro" n:render="intro"></div>
 
     <div class="featured">
@@ -23,10 +20,13 @@
       
       <div style="width:1000px">
 	<div style="float: left; width: 600px">
-	  <div><img width="500" height="300" alt="Mark and Stephanie" n:render="featured"/></div>
+	  <n:invisible n:render="prevNextDateButtons"/>
 	  <n:invisible n:render="stepButtons"/>
+	  <div><img width="500" height="300" alt="Mark and Stephanie" n:render="featured"/></div>
 	</div>
 	<div style="float: left; width: 400px">
+	  <div class="loginRow"><n:invisible n:render="loginWidget"/></div>
+
 	  <div class="actions" n:render="actionsAllowed">
 	    <h2>Actions</h2>
 	    <div class="ac"><n:invisible n:render="public"/></div>
@@ -81,7 +81,6 @@
     </table>
     <div>
       <h2>All photos in set:</h2>
-      <n:invisible n:render="prevNextDateButtons"/>
 
       <div>
 	<a href="javascript:PicLensLite.start();">View as slideshow 

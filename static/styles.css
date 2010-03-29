@@ -124,10 +124,13 @@ cursor: pointer;
 }
 .steps { 
     text-align: center;
+    font-size: 80%;
 }
 .steps a {
     font-size: 30px;
+    line-height: 14px;
     text-decoration: none;
+    vertical-align: top;
 }
 .photosInSet span {
     position: relative;
@@ -135,6 +138,7 @@ cursor: pointer;
 .dateChange {
     font-size: 80%;
     color: #777;
+    text-align: center;
 }
 .dateChange a {
     color: #77a;
@@ -145,4 +149,8 @@ cursor: pointer;
   background: blue;
   margin:2px;
   padding:0 2px;
+}
+
+div.loginRow {
+    padding-left: 10px;
 }
