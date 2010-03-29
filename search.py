@@ -5,24 +5,28 @@ from urls import localSite, SITE
 from tagging import getTagsWithFreqs
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 
-def randomDates(graph, n=3):
-    dates = random.sample(graph.queryd("""
+def randomDates(graph, n=3, rand=random):
+    dates = rand.sample(graph.queryd("""
               SELECT DISTINCT ?d WHERE { ?pic dc:date ?d }
            """), n)
     return [row['d'] for row in dates]
 
-def randomSet(graph, n=3):
+def randomSet(graph, n=3, seed=None):
     """
     list of dicts with pic, filename, date
+
+    pass a seed if you want the same set of images repeatedly
     """
+    rand = random.Random(seed)
+    
     ret = []
     retUris = set()
 
-    dates = randomDates(graph, n)
+    dates = randomDates(graph, n, rand)
 
     while len(ret) < n:
         if not dates: # accidental dups could exhaust the dates
-            dates = randomDates(graph, 3)
+            dates = randomDates(graph, 3, rand)
         d = dates.pop()
 
         allPicsThatDay = graph.queryd("""
@@ -33,7 +37,7 @@ def randomSet(graph, n=3):
             }""", initBindings={Variable('d') : d})
         if not allPicsThatDay:
             continue
-        pick = random.choice(allPicsThatDay)
+        pick = rand.choice(allPicsThatDay)
         if pick['pic'] in retUris:
             continue
         retUris.add(pick['pic'])
@@ -107,6 +111,9 @@ class Events(rend.Page):
                 T.div[depicts],
                 T.div[randRow['filename'].replace('/my/pic/','')],
                 ]
+
+    def render_seed(self, ctx, data):
+        return random.randint(0, 9999999)
 
     def render_newestDirs(self, ctx, data):
         # todo- should use rdf and work over all dirs

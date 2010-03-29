@@ -233,11 +233,14 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
             topic = URIRef('http://photo.bigasterisk.com/tag/%s' % ctx.arg('tag'))
         elif ctx.arg('date'):
             topic = Literal(ctx.arg('date'), datatype=XS.date)
-        elif ctx.arg('current'):
-            topic = URIRef(ctx.arg('current'))
         elif ctx.arg('random'):
             topic = PHO.randomSet
             kw['randomSize'] = int(ctx.arg('random'))
+            if ctx.arg('seed'):
+                kw['seed'] = int(ctx.arg('seed'))
+        elif ctx.arg('current'):
+            # order is important, since 'current' could appear with other params
+            topic = URIRef(ctx.arg('current'))
         else:
             raise ValueError("no topic")
         return imageSet.ImageSet(ctx, graph, topic, **kw)

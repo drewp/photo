@@ -77,7 +77,9 @@ class ImageSet(rend.Page):
         self.graph, self.uri = graph, uri
         if uri == PHO.randomSet:
             self.photos = [r['pic'] for r in
-                           randomSet(graph, kw.get('randomSize', 10))]
+                           randomSet(graph, kw.get('randomSize', 10),
+                                     seed=kw.get('seed', None))]
+            self.setLabel = 'random choices'
         else:
             self.photos = photosWithTopic(self.graph, self.uri)
         self.currentPhoto = None
@@ -90,7 +92,27 @@ class ImageSet(rend.Page):
 
         if self.photos and self.currentPhoto not in self.photos:
             self.currentPhoto = self.photos[0]
+
+    def render_setLabel(self, ctx, data):
+
+        if self.graph.contains((self.uri, RDF.type, PHO.DiskDirectory)):
+            return ["directory ", self.graph.value(self.uri, PHO.filename)]
+
+        if hasattr(self, 'setLabel'):
+            return self.setLabel
+
+        if isinstance(self.uri, Literal):
+            return self.uri
+        
+        return self.graph.label(self.uri)
                 
+    def otherImageHref(self, ctx, img):
+        href = url.here.add("current", img)
+        for topicKey in ['dir', 'tag', 'date', 'random', 'seed']:
+            if ctx.arg(topicKey):
+                href = href.add(topicKey, ctx.arg(topicKey))
+        return href
+
     def render_currentPhotoUri(self, ctx, data):
         return self.currentPhoto
 
@@ -177,13 +199,6 @@ class ImageSet(rend.Page):
         else:
             return ''
     
-    def render_setLabel(self, ctx, data):
-
-        if self.graph.contains((self.uri, RDF.type, PHO.DiskDirectory)):
-            return ["directory ", self.graph.value(self.uri, PHO.filename)]
-        
-        return self.graph.label(self.uri)
-
     def render_currentLabel(self, ctx, data):
         if self.currentPhoto is None:
             return ''
@@ -247,13 +262,6 @@ class ImageSet(rend.Page):
         return T.span[
             T.a(href=self.otherImageHref(ctx, data))[
             T.img(class_=cls, src=[thisThumbSrc, "?size=thumb"])]]
-
-    def otherImageHref(self, ctx, img):
-        href = url.here.add("current", img)
-        for topicKey in ['dir', 'tag', 'date']:
-            if ctx.arg(topicKey):
-                href = href.add(topicKey, ctx.arg(topicKey))
-        return href
 
     def render_featured(self, ctx, data):
         if self.currentPhoto is None:
