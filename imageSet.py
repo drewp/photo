@@ -26,6 +26,7 @@ from urls import localSite, absoluteSite
 from public import isPublic
 from edit import writeStatements
 from oneimage import personAgeString
+from search import randomSet
 import tagging
 import auth
 log = logging.getLogger()
@@ -72,9 +73,13 @@ class ImageSet(rend.Page):
     multiple images, with one currently-featured one. Used for search results
     """
     docFactory = loaders.xmlfile("imageSet.html")
-    def __init__(self, ctx, graph, uri):
+    def __init__(self, ctx, graph, uri, **kw):
         self.graph, self.uri = graph, uri
-        self.photos = photosWithTopic(self.graph, self.uri)
+        if uri == PHO.randomSet:
+            self.photos = [r['pic'] for r in
+                           randomSet(graph, kw.get('randomSize', 10))]
+        else:
+            self.photos = photosWithTopic(self.graph, self.uri)
         self.currentPhoto = None
         if ctx.arg('current') is not None:
             self.currentPhoto = URIRef(ctx.arg('current'))
@@ -207,7 +212,7 @@ class ImageSet(rend.Page):
 
         def setUrl(**params):
             params['current'] = self.currentPhoto
-            return ('http://photo.bigasterisk.com/set?' +
+            return ('/set?' +
                     urllib.urlencode(params))
 
         for row in relQuery(FOAF.depicts):
@@ -264,7 +269,8 @@ class ImageSet(rend.Page):
         
         return T.div(class_="steps")[
             T.a(href=self.otherImageHref(ctx, p),
-                title="Previous image (left arrow key)")[T.raw('&#11013;')], ' ', 
+                title="Previous image (left arrow key)")[T.raw('&#11013;')], ' ',
+            "change image",
             T.a(href=self.otherImageHref(ctx, n),
                 title="Next image (click in the image, or press right arrow key)")[
                 T.raw('&#10145;')],
@@ -288,14 +294,14 @@ class ImageSet(rend.Page):
         dtd = parse_date(showingDate)
         try:
             prevDate = date_isoformat(self.nextDateWithPics(dtd, -datetime.timedelta(days=1)))
-            prev = T.a(href='http://photo.bigasterisk.com/set?date=%s' % prevDate)[
+            prev = T.a(href='/set?date=%s' % prevDate)[
                 prevDate, T.raw(' &#8672;')]
         except ValueError:
             prev = ""
 
         try:
             nextDate = date_isoformat(self.nextDateWithPics(dtd, datetime.timedelta(days=1)))
-            next = T.a(href='http://photo.bigasterisk.com/set?date=%s' % nextDate)[
+            next = T.a(href='/set?date=%s' % nextDate)[
                 T.raw('&#8674; '), nextDate]
         except ValueError:
             next = ""

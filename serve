@@ -226,6 +226,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         import imageSet
         reload(imageSet)
 
+        kw = {}
         if ctx.arg('dir'):
             topic = URIRef(ctx.arg('dir'))
         elif ctx.arg('tag'):
@@ -234,9 +235,12 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
             topic = Literal(ctx.arg('date'), datatype=XS.date)
         elif ctx.arg('current'):
             topic = URIRef(ctx.arg('current'))
+        elif ctx.arg('random'):
+            topic = PHO.randomSet
+            kw['randomSize'] = int(ctx.arg('random'))
         else:
             raise ValueError("no topic")
-        return imageSet.ImageSet(ctx, graph, topic)
+        return imageSet.ImageSet(ctx, graph, topic, **kw)
 
     def child_events(self, ctx):
         import search

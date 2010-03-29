@@ -5,6 +5,42 @@ from urls import localSite, SITE
 from tagging import getTagsWithFreqs
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 
+def randomDates(graph, n=3):
+    dates = random.sample(graph.queryd("""
+              SELECT DISTINCT ?d WHERE { ?pic dc:date ?d }
+           """), n)
+    return [row['d'] for row in dates]
+
+def randomSet(graph, n=3):
+    """
+    list of dicts with pic, filename, date
+    """
+    ret = []
+    retUris = set()
+
+    dates = randomDates(graph, n)
+
+    while len(ret) < n:
+        if not dates: # accidental dups could exhaust the dates
+            dates = randomDates(graph, 3)
+        d = dates.pop()
+
+        allPicsThatDay = graph.queryd("""
+            SELECT DISTINCT ?pic ?filename WHERE {
+              ?pic dc:date ?d .
+              ?pic a foaf:Image;
+                   pho:filename ?filename
+            }""", initBindings={Variable('d') : d})
+        if not allPicsThatDay:
+            continue
+        pick = random.choice(allPicsThatDay)
+        if pick['pic'] in retUris:
+            continue
+        ret.append({'pic': pick['pic'],
+                 'filename' : pick['filename'],
+                 'date' : d})
+    return ret
+
 class Events(rend.Page):
     docFactory = loaders.xmlfile("search.html")
     
@@ -43,21 +79,8 @@ class Events(rend.Page):
                 ]
             
     def render_random(self, ctx, data):
-        dates = random.sample(self.graph.queryd("""
-              SELECT DISTINCT ?d WHERE { ?pic dc:date ?d }
-           """), 3)
-        for row in dates:
-            d = row['d']
-            allPicsThatDay = self.graph.queryd("""
-                SELECT DISTINCT ?pic ?filename WHERE {
-                  ?pic dc:date ?d .
-                  ?pic a foaf:Image;
-                       pho:filename ?filename
-                }""", initBindings={Variable('d') : d})
-            if not allPicsThatDay:
-                continue
-            pick = random.choice(allPicsThatDay)
-            current = pick['pic']
+        for row in randomSet(self.graph, 3):
+            current = row['pic']
             bindings = {Variable("pic") : current}
             tags = [[T.a(href=['/set?tag=', row['tag']])[row['tag']], ' ']
                     for row in self.graph.queryd(
@@ -75,12 +98,13 @@ class Events(rend.Page):
             # other service should be rendering this whole section
             yield T.div(class_="randPick")[
                 T.a(href=['/set?',
-                          urllib.urlencode(dict(date=d, current=current))])[
+                          urllib.urlencode(dict(date=row['date'],
+                                                current=current))])[
                     T.img(src=[current, '?size=medium']),
                     ],
                 T.div[tags],
                 T.div[depicts],
-                T.div[pick['filename'].replace('/my/pic/','')],
+                T.div[row['filename'].replace('/my/pic/','')],
                 ]
 
     def render_newestDirs(self, ctx, data):

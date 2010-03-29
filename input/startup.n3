@@ -10,6 +10,8 @@
 :anyone
   rdfs:comment "anyone, including anonymous users" .
 
+:randomSet
+  rdfs:comment "random choices" .
 
 :Event rdfs:label "Event" .
 :Place rdfs:label "Place" .
