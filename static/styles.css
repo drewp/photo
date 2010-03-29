@@ -77,6 +77,9 @@ div.tagging {
     background: #031;
     padding: 2px;
 }
+div.tagging div:nth-child(1) {
+    height: 3.3em;
+}
 
 #tags, #desc {
     border:1px outset gray;
@@ -100,6 +103,7 @@ div.tagging {
 #ajaxError {
     border: 2px solid red;
     background: #600;
+    position: absolute;
 } 
 .actions {
     padding-left: 10px;
@@ -135,4 +139,10 @@ cursor: pointer;
 .dateChange a {
     color: #77a;
     text-decoration: none;
+}
+
+.tagMatches span {
+  background: blue;
+  margin:2px;
+  padding:0 2px;
 }

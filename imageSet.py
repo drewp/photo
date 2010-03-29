@@ -393,6 +393,11 @@ class ImageSet(rend.Page):
         
         return ''
 
+    def render_tagListJs(self, ctx, data):
+        freqs = tagging.getTagsWithFreqs(self.graph)
+        return "var allTags=" + jsonlib.dumps(freqs.keys()) + ";"
+
+
     def render_public(self, ctx, data):
         # becomes a call to oneimage/viewPerm\
         
