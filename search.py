@@ -36,9 +36,10 @@ def randomSet(graph, n=3):
         pick = random.choice(allPicsThatDay)
         if pick['pic'] in retUris:
             continue
+        retUris.add(pick['pic'])
         ret.append({'pic': pick['pic'],
-                 'filename' : pick['filename'],
-                 'date' : d})
+                    'filename' : pick['filename'],
+                    'date' : d})
     return ret
 
 class Events(rend.Page):
@@ -79,8 +80,8 @@ class Events(rend.Page):
                 ]
             
     def render_random(self, ctx, data):
-        for row in randomSet(self.graph, 3):
-            current = row['pic']
+        for randRow in randomSet(self.graph, 3):
+            current = randRow['pic']
             bindings = {Variable("pic") : current}
             tags = [[T.a(href=['/set?tag=', row['tag']])[row['tag']], ' ']
                     for row in self.graph.queryd(
@@ -98,13 +99,13 @@ class Events(rend.Page):
             # other service should be rendering this whole section
             yield T.div(class_="randPick")[
                 T.a(href=['/set?',
-                          urllib.urlencode(dict(date=row['date'],
+                          urllib.urlencode(dict(date=randRow['date'],
                                                 current=current))])[
                     T.img(src=[current, '?size=medium']),
                     ],
                 T.div[tags],
                 T.div[depicts],
-                T.div[row['filename'].replace('/my/pic/','')],
+                T.div[randRow['filename'].replace('/my/pic/','')],
                 ]
 
     def render_newestDirs(self, ctx, data):
