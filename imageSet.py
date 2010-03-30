@@ -113,6 +113,10 @@ class ImageSet(rend.Page):
                 href = href.add(topicKey, ctx.arg(topicKey))
         return href
 
+    def render_rssHref(self, ctx, img):
+        href = self.otherImageHref(ctx, img)
+        return href.remove('current').add('rss', '1')
+
     def render_currentPhotoUri(self, ctx, data):
         return self.currentPhoto
 
