@@ -54,3 +54,8 @@ make all photos viewable:
 cwm webinput/web-2008-09-28T19:32:14.558701.n3 --ntriples | sort -u  | perl -lpe 'split; $_="$_[0] <http://photo.bigasterisk.com/0.1/viewableBy> <http://photo.bigasterisk.com/0.1/friends> ."'
 (then cleanup some lines)
 
+Video compression:
+
+/my/pic/digicam/dl-2010-02-06% ffmpeg2theora -x 320 -y 212 -c 1 -v 8 --optimize DSC_5365.AVI
+
+

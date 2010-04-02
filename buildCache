@@ -12,6 +12,8 @@ it would be faster to make the 75px images out of the 600px
 images. photos.py should just remember and use its last one resize,
 and then we can ask for 600 followed by 75.
 
+perhaps this could be using gearman to farm out the work
+
 """
 
 import subprocess, random, time
