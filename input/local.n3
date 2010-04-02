@@ -14,3 +14,5 @@ place:home a :Place;
 
 <http://bigasterisk.com/foaf.rdf#drewp> foaf:name "Drew Perttula" .
 <http://bigasterisk.com/kelsi/foaf.rdf#kelsi> foaf:name "Kelsi Perttula" .
+
+<http://photo.bigasterisk.com/2009/place/changingTable> :viewableBy :friends .
