@@ -12,7 +12,7 @@ download from flickr
 ocr and search, like http://norman.walsh.name/2009/11/01/evernote
 """
 from __future__ import division
-import logging, zipfile, datetime, time, jsonlib, cgi, urllib, random
+import logging, zipfile, datetime, time, jsonlib, urllib, random
 from StringIO import StringIO
 from nevow import loaders, rend, tags as T, inevow, url
 from rdflib import Namespace, Variable, URIRef, RDF, RDFS, Literal

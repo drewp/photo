@@ -14,9 +14,8 @@ the fetching of the resized images is still over in serve
 """
 import web, sys, jsonlib
 from web.contrib.template import render_genshi
-from rdflib import Namespace, RDFS, Variable, URIRef, RDF
+from rdflib import Namespace, RDFS, URIRef, RDF
 from remotesparql import RemoteSparql
-from edit import writeStatements
 from public import isPublic, makePublic
 from xml.utils import iso8601
 

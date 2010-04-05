@@ -9,7 +9,6 @@ import web, sys
 from web.contrib.template import render_genshi
 from rdflib import Namespace, RDFS, Variable, URIRef, RDF
 from remotesparql import RemoteSparql
-from edit import writeStatements
 from public import isPublic, makePublic
 
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")

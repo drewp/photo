@@ -9,8 +9,7 @@ fs scanner needs to make this:
  uri filename basename
 
 """
-import os
-from nevow import rend, loaders, json, static
+from nevow import rend, loaders, json
 from rdflib import Namespace, URIRef, RDF, Variable
 
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")

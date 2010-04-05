@@ -1,7 +1,7 @@
-import urllib, os, random, time, datetime
+import urllib, os, random, datetime
 from nevow import rend, loaders, tags as T
-from rdflib import Namespace, URIRef, Variable, Literal
-from urls import localSite, SITE
+from rdflib import Namespace, Variable, Literal
+from urls import localSite
 from tagging import getTagsWithFreqs
 from isodate.isodates import parse_date, date_isoformat
 

@@ -1,4 +1,4 @@
-from rdflib import Namespace, URIRef
+from rdflib import Namespace
 from edit import writeStatements
 
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")

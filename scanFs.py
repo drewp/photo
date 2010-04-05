@@ -11,7 +11,7 @@ read a tree of the filesystem and write rdf about the images we find
 """
 import sys, os, urllib, logging
 from rdflib.Graph import ConjunctiveGraph
-from rdflib import Namespace, RDF, RDFS, URIRef, Literal
+from rdflib import Namespace, RDF, URIRef, Literal
 
 log = logging.getLogger('scanFs')
 log.setLevel(logging.DEBUG)

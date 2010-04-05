@@ -9,7 +9,7 @@ also: http://svn.foaf-project.org/foaftown/geo/photos/old/geoloc_media.pl
 
 """
 from __future__ import division
-from rdflib import Namespace, Literal, BNode, RDF, URIRef
+from rdflib import Namespace, Literal, RDF, URIRef
 import subprocess, logging
 from xml.etree import ElementTree
 
