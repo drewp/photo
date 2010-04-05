@@ -56,7 +56,7 @@ class index(object):
             viewable=lambda uri: isPublic(graph, uri),
             )
 
-class makePublic(object):
+class makePublicReq(object):
     def POST(self):
         i = web.input()
         uri = URIRef(i['uri'])
@@ -65,7 +65,7 @@ class makePublic(object):
                
 
 urls = (r'/', "index",
-        r'/makePublic', 'makePublic',
+        r'/makePublic', 'makePublicReq',
         )
 
 app = web.application(urls, globals())
