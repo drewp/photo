@@ -2,9 +2,12 @@
 depends on exiftool program from libimage-exiftool-perl ubuntu package
 """
 from __future__ import division
-import os, md5, time, random, string, subprocess, urllib
+import os, hashlib, time, random, string, subprocess, urllib, re, logging
+from twisted.python.util import sibpath
 from StringIO import StringIO
 import Image
+
+log = logging.getLogger()
 
 class Full(object): pass
 
@@ -40,25 +43,46 @@ def thumb(localURL, maxSize=100):
     return jpg.getvalue(), time.time()
 
 
-def justCache(url, sizes, farm=False):
+def justCache(url, sizes, grid=False, gridLogDir='/dev/null'):
+    todo = []
     for size in sizes:
         thumbPath = _thumbPath(url, size)
         if os.path.exists(thumbPath):
-            return
-        _makeDirToThumb(thumbPath)
-        localPath = _localPath(url)
-        _resizeAndSave(localPath, thumbPath, size, url)
+            continue
+        else:
+            log.debug("%s doesn't exist for %s; will resize",
+                      thumbPath, (url, size))
+            todo.append(size)
+
+    for size in todo:
+        if grid:
+            subprocess.check_call(
+                ['qsub',
+                 '-b', 'yes',
+                 '-m', 'a',
+                 '-N',  _safeSgeJobName('resize %s' % url),
+                 '-o', gridLogDir, '-e', gridLogDir,
+                 sibpath(__file__, 'resizeOne'), url] + map(str, sizes))
+        else:
+            thumbPath = _thumbPath(url, size)
+            _makeDirToThumb(thumbPath)
+            localPath = _localPath(url)
+            _resizeAndSave(localPath, thumbPath, size, url)
+
+def _safeSgeJobName(s):
+    return re.sub(r'[^a-zA-Z0-9\.]+', '_', s)
 
 def _localPath(url):
     # localURL like http://photo.bigasterisk.com/digicam/housewarm/00023.jpg
     #         means /my/pic/digicam/housewarm/00023.jpg
     assert url.startswith("http://photo.bigasterisk.com/")
-    return "/my/pic/" + urllib.unquote(url[len("http://photo.bigasterisk.com/"):])
+    return "/my/pic/" + urllib.unquote(
+        url[len("http://photo.bigasterisk.com/"):])
     
 
 def _resizeAndSave(localPath, thumbPath, maxSize, localURL):
 
-    print "resizing %s to %s" % (localPath, thumbPath)
+    print "resizing %s to %s in %s" % (localPath, maxSize, thumbPath)
 
     img = Image.open(localPath)
 
@@ -79,8 +103,8 @@ def _resizeAndSave(localPath, thumbPath, maxSize, localURL):
 
 
 def _thumbPath(localURL, maxSize):
-    cksum = md5.new(localURL + "?size=%s" % maxSize).hexdigest()
-
+    thumbUrl = localURL + "?size=%s" % maxSize
+    cksum = hashlib.md5(thumbUrl).hexdigest()
     return "/my/pic/~thumb/%s/%s" % (cksum[:2], cksum[2:])
 
 def _makeDirToThumb(path):

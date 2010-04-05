@@ -12,39 +12,46 @@ it would be faster to make the 75px images out of the 600px
 images. photos.py should just remember and use its last one resize,
 and then we can ask for 600 followed by 75.
 
-perhaps this could be using gearman to farm out the work
-
+testing? use this to remove the last 24h of thumbs:
+  find /my/pic/~thumb -mtime -1 -type f -delete
 """
 
-import subprocess, random, time
+import subprocess, random, time, optparse, logging
 from photos import justCache
+from urls import photoUri
+from picdirs import picSubDirs
+
+parser = optparse.OptionParser()
+parser.add_option("--quick", action="store_true", help="only scan a few files")
+parser.add_option("-d", action="store_true", help="debug logs")
+parser.add_option("--grid", action="store_true", help="run resizes as jobs on SGE grid")
+opts, args = parser.parse_args()
+
+log = logging.getLogger()
+logging.basicConfig(level=logging.DEBUG if opts.d else logging.INFO)
 
 cmd = ["/usr/bin/find"]
-# todo: all subdirs
-cmd += ["/my/pic/phonecam", "/my/pic/digicam", "/my/pic/wedding"]
-cmd += "-name *.jpg -o -name *.JPG -o -name *.jpeg -o -name *.JPEG".split()
-
-files = [f for f in subprocess.Popen(cmd,
-                  stdout=subprocess.PIPE).communicate()[0].splitlines()
-         if '.xvpics' not in f]
-
-# this is so i can run multiple instances of this process in parallel
-random.shuffle(files)
+cmd += picSubDirs(quick=opts.quick)
+cmd += "-regextype posix-egrep -name .xvpics -prune -type f -o".split()
+cmd += ['(', '-iregex', r'.*\.(jpg|jpeg|png|tif|tiff)', ')']
+log.debug(repr(cmd))
+files = [f.strip() for f in subprocess.Popen(cmd,
+                 stdout=subprocess.PIPE).communicate()[0].splitlines()]
 
 reportStep = 300
 lastReportStart = time.time()
 for i, filename in enumerate(files):
-    filename = filename.strip()
-
+    log.debug("file %s: %s", i, filename)
     try:
-        justCache(
-            "http://photo.bigasterisk.com/%s" % filename[len("/my/pic/"):],
-            farm=True, sizes=[75,250,600])
+        justCache(photoUri(filename),
+                  grid=opts.grid, gridLogDir='/my/log/grid',
+                  sizes=[75,250,600])
     except IOError, e:
-        print "  failed: ",e
+        log.error("  failed: %s", e)
+        
     if (i + 1) % reportStep == 0:
         perFile = (time.time() - lastReportStart) / reportStep
         lastReportStart = time.time()
-        print "finished %s of %s, est %s min left" % (
+        log.info("finished %s of %s, est %s min left" % (
             i, len(files),
-            round((len(files) - i) * perFile / 60))
+            round((len(files) - i) * perFile / 60)))
