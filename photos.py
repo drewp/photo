@@ -16,37 +16,47 @@ sizes = {'thumb' : 75,
 
 tmpSuffix = ".tmp" + ''.join([random.choice(string.letters) for c in range(5)])
 
-def thumb(localURL, maxSize=100, justCache=False):
-    """returns jpeg data, mtime"""
-    cksum = md5.new(localURL + "?size=%s" % maxSize).hexdigest()
+def thumb(localURL, maxSize=100):
+    """returns jpeg data, mtime
 
-    thumbPath = "/my/pic/~thumb/%s/%s" % (cksum[:2], cksum[2:])
-    try:
-        os.makedirs(os.path.split(thumbPath)[0])
-    except OSError:
-        pass # if the dir can't be made (as opposed to exists
-             # already), we'll get an error later
+    I forget what's 'local' about localURL. it's just the photo's main URI.
+    """
+    localPath = _localPath(localURL)
     
+    if maxSize is Full:
+        return jpgWithoutExif(localPath), os.path.getmtime(localPath)
+
+    thumbPath = _thumbPath(localURL, maxSize)
+    _makeDirToThumb(thumbPath)
+
     try:
         f = open(thumbPath)
     except IOError:
         pass
     else:
-        if justCache:
-            return
         return f.read(), os.path.getmtime(thumbPath)
 
+    jpg = _resizeAndSave(localPath, thumbPath, maxSize, localURL)
+    return jpg.getvalue(), time.time()
 
+
+def justCache(url, sizes, farm=False):
+    for size in sizes:
+        thumbPath = _thumbPath(url, size)
+        if os.path.exists(thumbPath):
+            return
+        _makeDirToThumb(thumbPath)
+        localPath = _localPath(url)
+        _resizeAndSave(localPath, thumbPath, size, url)
+
+def _localPath(url):
     # localURL like http://photo.bigasterisk.com/digicam/housewarm/00023.jpg
     #         means /my/pic/digicam/housewarm/00023.jpg
-    assert localURL.startswith("http://photo.bigasterisk.com/")
-    localPath = "/my/pic/" + urllib.unquote(localURL[len("http://photo.bigasterisk.com/"):])
+    assert url.startswith("http://photo.bigasterisk.com/")
+    return "/my/pic/" + urllib.unquote(url[len("http://photo.bigasterisk.com/"):])
+    
 
-    if maxSize is Full:
-        if justCache:
-            return
-
-        return jpgWithoutExif(localPath), os.path.getmtime(localPath)
+def _resizeAndSave(localPath, thumbPath, maxSize, localURL):
 
     print "resizing %s to %s" % (localPath, thumbPath)
 
@@ -66,10 +76,20 @@ def thumb(localURL, maxSize=100, justCache=False):
     img.save(jpg, quality=q)
     open(thumbPath + tmpSuffix, "w").write(jpg.getvalue())
     os.rename(thumbPath + tmpSuffix, thumbPath)
-    if justCache:
-        return
-    return jpg.getvalue(), time.time()
 
+
+def _thumbPath(localURL, maxSize):
+    cksum = md5.new(localURL + "?size=%s" % maxSize).hexdigest()
+
+    return "/my/pic/~thumb/%s/%s" % (cksum[:2], cksum[2:])
+
+def _makeDirToThumb(path):
+    try:
+        os.makedirs(os.path.split(path)[0])
+    except OSError:
+        pass # if the dir can't be made (as opposed to exists
+             # already), we'll get an error later
+    
 
 def jpgWithoutExif(filename):
     """this is meant to remove GPS data, and I'm just removing

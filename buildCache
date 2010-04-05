@@ -17,7 +17,7 @@ perhaps this could be using gearman to farm out the work
 """
 
 import subprocess, random, time
-from photos import thumb
+from photos import justCache
 
 cmd = ["/usr/bin/find"]
 # todo: all subdirs
@@ -36,12 +36,12 @@ lastReportStart = time.time()
 for i, filename in enumerate(files):
     filename = filename.strip()
 
-    for size in [75, 250, 600]:
-        try:
-            thumb("http://photo.bigasterisk.com/%s" % filename[len("/my/pic/"):],
-                  maxSize=size, justCache=True)
-        except IOError:
-            pass
+    try:
+        justCache(
+            "http://photo.bigasterisk.com/%s" % filename[len("/my/pic/"):],
+            farm=True, sizes=[75,250,600])
+    except IOError, e:
+        print "  failed: ",e
     if (i + 1) % reportStep == 0:
         perFile = (time.time() - lastReportStart) / reportStep
         lastReportStart = time.time()
