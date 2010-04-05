@@ -1,3 +1,5 @@
+import urllib
+from rdflib import URIRef
 SITE = "http://photo.bigasterisk.com/"
 
 def localSite(url):
@@ -7,6 +9,8 @@ def localSite(url):
 
 def absoluteSite(url):
     """
+    not correctly implemented yet
+    
     >>> absoluteSite('http://photo.bigasterisk.com/foo')
     'http://localhost:8080/foo'
     or
@@ -15,3 +19,7 @@ def absoluteSite(url):
     # would it help to pass ctx? still might not be enough info unless
     # i use vhost monster style
     return 'http://photo.bigasterisk.com' + localSite(url)
+
+def photoUri(filename):
+    assert filename.startswith('/my/pic/')
+    return URIRef(SITE + urllib.quote(filename[len("/my/pic/"):]))

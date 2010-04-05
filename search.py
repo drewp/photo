@@ -3,7 +3,8 @@ from nevow import rend, loaders, tags as T
 from rdflib import Namespace, Variable, Literal
 from urls import localSite
 from tagging import getTagsWithFreqs
-from isodate.isodates import parse_date, date_isoformat
+from isodate.isodates import date_isoformat
+from urls import photoUri
 
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 XS = Namespace("http://www.w3.org/2001/XMLSchema#")
@@ -154,7 +155,7 @@ class Events(rend.Page):
         times.sort(reverse=True)
         for t, dirname in times[:10]:
             # todo: escaping
-            yield T.div[T.a(href=[localSite('/set?dir='), uriFromDir(dirname)])[dirname]]
+            yield T.div[T.a(href=[localSite('/set?dir='), photoUri(dirname)])[dirname]]
 
     def render_newestDates(self, ctx, data, n=5):
         dates = []
@@ -172,7 +173,3 @@ class Events(rend.Page):
         return T.ul[[T.li[T.a(href=["set?tag=", t])[t, " (", n, ")"]] for t, n in freqs]]
                     
 
-
-def uriFromDir(dirname):
-    assert dirname.startswith('/my/pic/')
-    return URIRef(SITE + dirname[len('/my/pic/'):])
