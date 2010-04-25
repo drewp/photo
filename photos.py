@@ -100,6 +100,7 @@ def _resizeAndSave(localPath, thumbPath, maxSize, localURL):
     img.save(jpg, quality=q)
     open(thumbPath + tmpSuffix, "w").write(jpg.getvalue())
     os.rename(thumbPath + tmpSuffix, thumbPath)
+    return jpg
 
 
 def _thumbPath(localURL, maxSize):
