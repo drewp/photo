@@ -257,19 +257,20 @@ class ImageSet(rend.Page):
         return self.photos
     
     def render_thumb(self, ctx, data):
-        cls = "not-current"
         thisThumbSrc = localSite(data)
         if data == self.currentPhoto:
             cls = "current"
-            return T.span[
-                T.img(class_=cls, src="/static/loading.jpg",
-                      delaysrc=[thisThumbSrc, "?size=thumb"]),
-                ]
+            wrap = lambda x: x
+        else:
+            cls = "not-current"
+            wrap = lambda x: T.a(href=self.otherImageHref(ctx, data))[x]
 
-        return T.span[
-            T.a(href=self.otherImageHref(ctx, data))[
-            T.img(class_=cls, src="/static/loading.jpg",
-                  delaysrc=[thisThumbSrc, "?size=thumb"])]]
+        # if we think the client already has the thumb in-cache, it is
+        # poor to use delaysrc here.
+        return T.span[wrap(T.img(class_=cls,
+                                 #src="/static/loading.jpg",
+                                 src=[thisThumbSrc, "?size=thumb"]
+                                 ))]
 
     def render_featured(self, ctx, data):
         if self.currentPhoto is None:

@@ -99,6 +99,7 @@ $(function () {
 	      $("#comments").html(result); 
 	      $("#comments").removeAttr("style");
 	      loadDelayedImgs();
+	      startNextImgPreload(); // try to do this after other work
 	  }, "html");
 
     function loadDelayedImgs() {
@@ -147,7 +148,6 @@ $(function () {
 	$.each(data.tags, function (i, tag) {
 	    $("#otherWithTag").append("<div><a href=\"/set?tag="+tag+"\">"+tag+"</a></div>");
 	});
-	startNextImgPreload(); // try to do this after other work
     }
 
     $.getJSON("/tagging", 
