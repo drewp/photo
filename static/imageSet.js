@@ -98,9 +98,16 @@ $(function () {
 	  function (result) { 
 	      $("#comments").html(result); 
 	      $("#comments").removeAttr("style");
+	      loadDelayedImgs();
 	  }, "html");
 
-
+    function loadDelayedImgs() {
+	$("img[delaySrc]").each(function (i, elem) {
+	    elem = $(elem);
+	    elem.attr("src", elem.attr("delaysrc"));
+	    elem.removeAttr("delaysrc");
+	});
+    }
 
     function saveTagsAndDesc() {
 	$("#saveStatus").text("");

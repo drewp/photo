@@ -262,12 +262,14 @@ class ImageSet(rend.Page):
         if data == self.currentPhoto:
             cls = "current"
             return T.span[
-                T.img(class_=cls, src=[thisThumbSrc, "?size=thumb"]),
+                T.img(class_=cls, src="/static/loading.jpg",
+                      delaysrc=[thisThumbSrc, "?size=thumb"]),
                 ]
 
         return T.span[
             T.a(href=self.otherImageHref(ctx, data))[
-            T.img(class_=cls, src=[thisThumbSrc, "?size=thumb"])]]
+            T.img(class_=cls, src="/static/loading.jpg",
+                  delaysrc=[thisThumbSrc, "?size=thumb"])]]
 
     def render_featured(self, ctx, data):
         if self.currentPhoto is None:
