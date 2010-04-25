@@ -47,10 +47,10 @@ def randomSet(graph, n=3, foafUser=None, seed=None):
         pick = rand.choice(allPicsThatDay)
         if pick['pic'] in retUris:
             continue
-        print "checktag"
+
         if hasTags(graph, foafUser, pick['pic']):
             continue
-        print "keep"
+
         retUris.add(pick['pic'])
         ret.append({'pic': pick['pic'],
                     'filename' : pick['filename'],
