@@ -2,7 +2,7 @@ import urllib, os, random, datetime
 from nevow import rend, loaders, tags as T
 from rdflib import Namespace, Variable, Literal
 from urls import localSite
-from tagging import getTagsWithFreqs
+from tagging import getTagsWithFreqs, hasTags
 from isodate.isodates import date_isoformat
 from urls import photoUri
 
@@ -15,9 +15,12 @@ def randomDates(graph, n=3, rand=random):
            """), n)
     return [row['d'] for row in dates]
 
-def randomSet(graph, n=3, seed=None):
+def randomSet(graph, n=3, foafUser=None, seed=None):
     """
     list of dicts with pic, filename, date
+
+    foafUser isn't used yet, but someday it probably will for security
+    regarding presence-of-tags
 
     pass a seed if you want the same set of images repeatedly
     """
@@ -44,6 +47,10 @@ def randomSet(graph, n=3, seed=None):
         pick = rand.choice(allPicsThatDay)
         if pick['pic'] in retUris:
             continue
+        print "checktag"
+        if hasTags(graph, foafUser, pick['pic']):
+            continue
+        print "keep"
         retUris.add(pick['pic'])
         ret.append({'pic': pick['pic'],
                     'filename' : pick['filename'],

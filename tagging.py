@@ -63,6 +63,17 @@ def getTags(graph, foafUser, img):
         desc=graph.value(img, RDFS.comment, default=''),
         )
 
+_hasTags = set() # assume tags get added over time but not removed, so
+                 # i don't store the negatives
+def hasTags(graph, foafUser, img):
+    # user security check goes here
+    if img in _hasTags:
+        return True
+    ret = graph.value(img, PHO.tagString, default='').strip() != ''
+    if ret:
+        _hasTags.add(img)
+    return ret
+
 def getTagsWithFreqs(graph):
     freq = {}
     for row in graph.queryd("SELECT ?tag WHERE { ?pic scot:hasTag [ rdfs:label ?tag ] }"):

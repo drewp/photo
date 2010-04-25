@@ -75,9 +75,11 @@ class ImageSet(rend.Page):
     docFactory = loaders.xmlfile("imageSet.html")
     def __init__(self, ctx, graph, uri, **kw):
         self.graph, self.uri = graph, uri
+        agent = None# todo: inevow.IRequest(ctx).getHeader('x-foaf-agent')
         if uri == PHO.randomSet:
             self.photos = [r['pic'] for r in
                            randomSet(graph, kw.get('randomSize', 10),
+                                     agent,
                                      seed=kw.get('seed', None))]
             self.setLabel = 'random choices'
         else:
