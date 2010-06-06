@@ -24,6 +24,7 @@ from tagging import saveTags, getTags
 import auth
 
 log = logging.getLogger()
+logging.getLogger('restkit.client').setLevel(logging.WARN)
 
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 SITE = Namespace("http://photo.bigasterisk.com/")

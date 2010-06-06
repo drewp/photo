@@ -30,7 +30,7 @@ def fetchImageToTempfile(uri, size, cookie):
     tf = tempfile.NamedTemporaryFile()
     res = restkit.Resource(uri)
     # this hangs on 4MB images, possibly because of thread problems with web.py
-    jpg = res.get(size=size, headers={"Cookie" : cookie})
+    jpg = res.get(size=size, headers={"Cookie" : cookie}).body
     log.info("got %s byte image" % len(jpg))
     tf.write(jpg)
     tf.flush()

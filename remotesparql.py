@@ -63,7 +63,7 @@ class RemoteSparql(Graph2):
                             query=query, queryLn='SPARQL',
                             headers={'Accept' :
                                      'application/sparql-results+xml'}
-                            )
+                            ).body
         return parseSparqlResults(xml.encode('utf-8'))
 
     def safeParse(self, source, publicID=None, format="xml"):
@@ -115,7 +115,7 @@ class RemoteSparql(Graph2):
         self._graphModified()
 
     def __len__(self):
-        size = allegroCall(self.root.get, '/%s/size' % self.repoName)
+        size = allegroCall(self.root.get, '/%s/size' % self.repoName).body
         return int(size)
 
     def commit(self):
