@@ -12,7 +12,7 @@ GET /ariDateAge?img=http://photo... -> for ari photos
 
 the fetching of the resized images is still over in serve
 """
-import web, sys, jsonlib
+import web, sys, jsonlib, datetime
 from web.contrib.template import render_genshi
 from rdflib import Namespace, RDFS, URIRef, RDF
 from remotesparql import RemoteSparql
@@ -78,6 +78,27 @@ def personAgeString(isoBirthday, photoDate):
         return "%.2f months" % (days / 30)
     else:
         return "%.2f years" % (days / 365)
+
+_photoCreated = {} # uri : datetime
+def photoCreated(graph, uri):
+    """datetime of the photo's creation time. Cached for the life of
+    this process"""
+
+    try:
+        return _photoCreated[uri]
+    except KeyError:
+        pass
+    
+    photoDate = graph.value(uri, EXIF.dateTime)
+    try:
+        sec = iso8601.parse(str(photoDate))
+    except Exception:
+        sec = iso8601.parse(str(photoDate) + '-0700')
+
+    # todo: this is losing tz unnecessarily
+    ret = datetime.datetime.fromtimestamp(sec)
+    _photoCreated[uri] = ret
+    return ret
 
 
 urls = (r'/', "index",

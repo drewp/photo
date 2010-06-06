@@ -25,7 +25,7 @@ from photos import Full, thumb, sizes
 from urls import localSite, absoluteSite
 from public import isPublic
 from edit import writeStatements
-from oneimage import personAgeString
+from oneimage import personAgeString, photoCreated
 from search import randomSet, nextDateWithPics
 import tagging
 import auth
@@ -66,7 +66,8 @@ def photosWithTopic(graph, uri):
                              }""",
                           initBindings={Variable('u') : uri})
 
-    return sorted([row['photo'] for row in q])    
+    return sorted([row['photo'] for row in q],
+                  key=lambda uri: photoCreated(graph, uri))    
 
 class ImageSet(rend.Page):
     """
@@ -425,11 +426,8 @@ class ImageSet(rend.Page):
         lines = []
 
         try:
-            photoDate = self.graph.value(img, EXIF.dateTime)
-            try:
-                sec = iso8601.parse(str(photoDate))
-            except Exception:
-                sec = iso8601.parse(str(photoDate) + '-0700')
+            created = photoCreated(self.graph, img)
+            sec = time.mktime(created.timetuple())
         except ValueError:
             return ''
 
@@ -438,7 +436,7 @@ class ImageSet(rend.Page):
             ago = '; %s days ago' % ago
         else:
             ago = ''
-        lines.append("Picture taken %s%s" % (photoDate.replace('T', ' '), ago))
+        lines.append("Picture taken %s%s" % (created.isoformat(' '), ago))
 
         for who, tag, birthday in [
             (URIRef("http://photo.bigasterisk.com/2008/person/apollo"),
@@ -456,7 +454,7 @@ class ImageSet(rend.Page):
                             who, default=tag))
                         
                     lines.append("%s is %s old. " % (
-                        name, personAgeString(birthday, photoDate)))
+                        name, personAgeString(birthday, created.isoformat())))
             except Exception, e:
                 log.error("%s birthday failed: %s" % (who, e))
 

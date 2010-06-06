@@ -156,6 +156,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         size = sizes.get(reqSize, 250)
 
         print "need thumb for", repr(uri)
+        # this ought to return a redirect to a static error image when it breaks
         jpg, mtime = thumb(uri, size)
 
         return StaticCached(jpg, "image/jpeg", mtime)
