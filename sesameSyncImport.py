@@ -1,6 +1,9 @@
 #!/usr/bin/python2.6
+import sys
+sys.path.insert(0, "/my/proj/sparqlhttp")
+from sparqlhttp.graph2 import SyncGraph
 from remotesparql import RemoteSparql
-import os, logging, time
+import os, logging, time, web
 from rdflib import Namespace, RDFS
 from sparqlhttp.syncimport import SyncImport, IMP
 from _xmlplus.utils import iso8601
@@ -8,8 +11,7 @@ from scanFs import ScanFs
 from scanExif import ScanExif
 from fileschanged import allFiles
 from picdirs import picSubDirs
-from mulib import mu
-from eventlet import api, httpd
+import networking
 
 logging.basicConfig()
 log = logging.getLogger()
@@ -55,21 +57,6 @@ class SesameSync(SyncImport):
                 return
             self.reloadContext(filename)
 
-
-quick = False
-
-  
-graph = RemoteSparql(networking.graphRepoRoot(), "photo",
-                     initNs=dict(foaf=FOAF,
-                                 rdfs=RDFS.RDFSNS,
-                                 pho=PHO))
-
-scanFs = ScanFs(graph, '/my/pic')
-scanExif = ScanExif(graph)
-
-syncs = {}
-subdirs = picSubDirs(syncs, SesameSync, graph, quick) # root directories for fileschanged to watch underneath
-
 def fixSftpPerms():
     """files put in upload/ sometimes have the wrong perms, and
     they're owned by user picuploader. There's a setuid program in
@@ -97,6 +84,18 @@ def onChange(filename):
             # todo: freshen thumbs here too? that should be on a lower
             # priority queue than getting the exif/file data
 
+quick = False
+  
+graph = SyncGraph('sesame', networking.graphRepoRoot() + "/photo",
+                  initNs=dict(foaf=FOAF,
+                              rdfs=RDFS.RDFSNS,
+                              pho=PHO))
+
+scanFs = ScanFs(graph, '/my/pic')
+scanExif = ScanExif(graph)
+
+syncs = {}
+subdirs = picSubDirs(syncs, SesameSync, graph, quick) # root directories for fileschanged to watch underneath
 
 if quick:
     onChange('/my/site/photo/input/local.n3')
@@ -104,32 +103,33 @@ if quick:
     onChange('/my/pic/phonecam/dt-2009-07-16/CIMG0074.jpg')
     onChange('/my/pic/digicam/dl-2009-07-20/DSC_0092.JPG')
  
-class FileChanged(mu.Resource):
-    def handle_get(self, req):
-        req.write('''<html><body>
+class FileChanged(object):
+    def GET(self):
+        return '''<html><body>
         <form method="post" action="">Report a changed file: <input name="file" size="100"/> <input type="submit"/></form>
         <form method="post" action="all"><input type="submit" value="rescan all files (slow)"/></form>
         </body></html>
-        ''')
+        '''
         
-    def handle_post(self, req):
-        fileArg = req.get_arg('file')
+    def POST(self):
+        fileArg = web.input()['file']
         if not fileArg:
             raise ValueError("missing file")
         onChange(fileArg)
-        req.write("ok\n")
+        return 'ok\n'
         
-class AllChanged(mu.Resource):
-    def handle_post(self, req):
+class AllChanged(object):
+    def POST(self):
         allFiles(subdirs, onChange)
-        req.write("ok\n")
- 
-if __name__ == "__main__":
-    root = {'': FileChanged(),
-            'all': AllChanged(),
-            }
- 
-    httpd.server(api.tcp_listener(('0.0.0.0', 9042)), mu.SiteMap(root))
-#fix this;
-#make filescanner that pings here
-#cmdline client that pings here (with mnewer files?)
+        return 'ok\n'
+
+urls = (r'/', FileChanged,
+        r'/all', AllChanged,
+        )
+
+
+app = web.application(urls, globals(), autoreload=False)
+application = app.wsgifunc()
+
+# run with spawn -p 9042 --processes=1 --threads=0 sesameSyncImport.application
+
