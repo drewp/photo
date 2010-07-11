@@ -27,13 +27,6 @@ def uriOfFilename(rootUri, root, filename):
     relFile = filename[len(prefix):]
     return URIRef(rootUri + urllib.quote(relFile))
 
-def goodDirNames(names):
-    ret = []
-    for name in names:
-        if not (name.startswith('.') or name.startswith('~')):
-            ret.append(name)
-    return ret
-
 def filenameIsImage(filename):
     for ext in ['.jpg', '.gif', '.jpeg']:
         if filename.lower().endswith(ext):
@@ -43,7 +36,7 @@ def filenameIsImage(filename):
 class ScanFs(object):
     def __init__(self, graph, topDir):
         """
-        Graph2 object
+        sparqlhttp.graph2.SyncGraph object
         """
         assert not topDir.endswith('/')
         self.graph, self.topDir = graph, topDir
@@ -63,16 +56,18 @@ class ScanFs(object):
         fileUri = uriOfFilename(self.rootUri, self.topDir, filename)
 
         if (self.graph.contains((fileUri, RDF.type, FOAF.Image)) and
-            self.graph.contains((fileUri, PHO.filename))):
+            self.graph.contains((fileUri, PHO.filename, None))):
             #log.debug("seen %s" % filename)
             return fileUri
         
         dirUri = self.addDir(os.path.dirname(filename))
-        self.graph.add((fileUri, RDF.type, FOAF.Image),
-                       (fileUri, PHO.inDirectory, dirUri),
-                       (fileUri, PHO.filename, Literal(filename)),
+        self.graph.add([
+            (fileUri, RDF.type, FOAF.Image),
+            (fileUri, PHO.inDirectory, dirUri),
+            (fileUri, PHO.filename, Literal(filename)),
+            (fileUri, PHO.basename, Literal(os.path.basename(filename)))],
                        context=URIRef("http://photo.bigasterisk.com/scan/fs"))
-        log.info("added pic %s %s triples" % (filename, len(self.graph)))
+        log.info("added pic %s" % filename)
         return fileUri
 
     def addDir(self, dirPath):
@@ -84,7 +79,8 @@ class ScanFs(object):
         dirUri = URIRef(dirUri.rstrip('/') + '/')
         
         stmts = [(dirUri, RDF.type, PHO['DiskDirectory']),
-                 (dirUri, PHO['filename'], Literal(dirPath))]
+                 (dirUri, PHO['filename'], Literal(dirPath)),
+                 (dirUri, PHO['basename'], Literal(os.path.basename(dirPath)))]
 
         try:
             parentUri = self.addDir(os.path.dirname(dirPath))
@@ -92,33 +88,6 @@ class ScanFs(object):
         except ValueError:
             pass
         
-        self.graph.add(*stmts, **{'context':
-                             URIRef("http://photo.bigasterisk.com/scan/fs")})
+        self.graph.add(stmts,
+                       context=URIRef("http://photo.bigasterisk.com/scan/fs"))
         return dirUri
-
-def main(root, topDir='/my/pic'):
-
-    # this is incomplete; it needs to setup a Graph2 connection
-    
-    root = os.path.abspath(root)
-    assert root.startswith(topDir) or root == topDir
-
-    graph = ConjunctiveGraph()
-    
-    rootUri = SITE[root[len(topDir) + len('/'):]]
-    for dirpath, dirnames, filenames in os.walk(root, topdown=True):
-        print >>sys.stderr, "visit", dirpath
-
-        dirnames[:] = goodDirNames(dirnames)
-
-        for filename in filenames:
-            if not filenameIsImage(filename):
-                continue
-
-            scanFs.addPicFile(os.path.abspath(os.path.join(dirpath, filename)))
-
-    print >>sys.stderr, "done, writing %d triples" % len(graph)
-    print graph.serialize(format='nt')
-
-if __name__ == '__main__':
-    main(sys.argv[1])

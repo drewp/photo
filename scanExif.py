@@ -26,6 +26,7 @@ log.setLevel(logging.DEBUG)
 
 class ScanExif(object):
     def __init__(self, graph):
+        """Takes sparqlhttp.graph2.SyncGraph"""
         self.graph = graph
 
     def addPic(self, uri):
