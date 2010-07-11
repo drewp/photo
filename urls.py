@@ -3,6 +3,8 @@ from rdflib import URIRef
 SITE = "http://photo.bigasterisk.com/"
 
 def localSite(url):
+    if url.startswith('/'):
+        return url
     if url.startswith(SITE):
         return url[len(SITE)-1:]
     raise ValueError("%s not on site" % url)
