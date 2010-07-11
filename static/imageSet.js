@@ -173,7 +173,7 @@ $(function () {
 	var button = $(this);
 	var params = {uri: currentPhotoUri};
 	if (button.hasClass("allPublic")) {
-	    params = {allInSet: document.location};
+	    params = {allInSet: ""+document.location.pathname + document.location.search};
 	}
 	$.post('/makePublic', params,
 	       function(data, textStatus) {
