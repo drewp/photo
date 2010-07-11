@@ -80,11 +80,18 @@ def _localPath(url):
         url[len("http://photo.bigasterisk.com/"):])
     
 
+_lastOpen = None, None
 def _resizeAndSave(localPath, thumbPath, maxSize, localURL):
-
+    global _lastOpen
     print "resizing %s to %s in %s" % (localPath, maxSize, thumbPath)
 
-    img = Image.open(localPath)
+    # this is meant to reduce decompress calls when we're making
+    # multiple resizes of a new image
+    if _lastOpen[0] == localPath:
+        img = _lastOpen[1]
+    else:
+        img = Image.open(localPath)
+        _lastOpen = localPath, img
 
     # img.thumbnail is faster, but much lower quality
     w, h = img.size
@@ -106,7 +113,7 @@ def _resizeAndSave(localPath, thumbPath, maxSize, localURL):
 def _thumbPath(localURL, maxSize):
     thumbUrl = localURL + "?size=%s" % maxSize
     cksum = hashlib.md5(thumbUrl).hexdigest()
-    return "/my/pic/~thumb/%s/%s" % (cksum[:2], cksum[2:])
+    return "/var/cache/photo/%s/%s" % (cksum[:2], cksum[2:])
 
 def _makeDirToThumb(path):
     try:
