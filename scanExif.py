@@ -10,8 +10,10 @@ also: http://svn.foaf-project.org/foaftown/geo/photos/old/geoloc_media.pl
 """
 from __future__ import division
 from rdflib import Namespace, Literal, RDF, URIRef
-import subprocess, logging
+import subprocess, logging, os, datetime
 from xml.etree import ElementTree
+from dateutil.tz import tzlocal, tzutc
+from xml.parsers.expat import ExpatError
 
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 DC = Namespace("http://purl.org/dc/elements/1.1/")
@@ -58,43 +60,64 @@ class ScanExif(object):
         xml = subprocess.Popen(["exif", "-x", filename],
                                stdout=subprocess.PIPE).communicate()[0]
         if not xml:
-            # todo: no exif? we should still fake a date from the file mtime, perhaps
+            self.addFileTime(uri, filename)
             return
-        root = ElementTree.fromstring(xml)
+        try:
+            root = ElementTree.fromstring(xml)
+        except ExpatError:
+            self.addFileTime(uri, filename)
+            return
+            
         vals = {}
         for child in root:
             vals[child.tag] = child.text
-            
-        stmts = [
-            # no timezone in exif? i think the best guess is *whatever
-            # california was doing around then*
-            (uri, EXIF.dateTime, Literal(fixTime(vals['Date_and_Time']),
-                                         datatype=XS.dateTime)),
-            # this is for easier searches on date
-            (uri, DC.date, Literal(fixTime(vals['Date_and_Time']).split('T')[0],
-                                   datatype=XS.date)),
-            # camera? exposure stuff? orientation? res?
-            ]
-        if 'East_or_West_Longitude' in vals:
-            # this is how palm pre photos come in:
-            lat = floatFromDms(vals['InteroperabilityIndex'],
-                               vals['InteroperabilityVersion'])
-            long = floatFromDms(vals['East_or_West_Longitude'],
-                                vals['Longitude'])
 
-            point = URIRef("http://photo.bigasterisk.com/point/%g/%g" %
-                           (lat, long))
+        stmts = []
+
+        try:
+            dateAndTime = fixTime(vals['Date_and_Time'])
+        except KeyError:
+            pass
+        else:
             stmts.extend([
-                (uri, WGS.location, point),
-                (point, RDF.type, WGS.Point),
-                (point, WGS.lat, Literal("%g" % lat)),
-                (point, WGS.long, Literal("%g" % long)),
-                # point could be 'near' other things
+                # no timezone in exif? i think the best guess is *whatever
+                # california was doing around then*
+                (uri, EXIF.dateTime, Literal(dateAndTime, datatype=XS.dateTime)),
+                # this is for easier searches on date
+                (uri, DC.date, Literal(dateAndTime.split('T')[0], datatype=XS.date)),
+                # camera? exposure stuff? orientation? res?
                 ])
-        self.graph.add(*stmts,
-             **{'context' : URIRef("http://photo.bigasterisk.com/scan/exif")})
-        log.info("added exif from %s %s triples" % (filename, len(self.graph)))
+        if 'East_or_West_Longitude' in vals:
+            try:
+                # this is how palm pre photos come in:
+                lat = floatFromDms(vals['InteroperabilityIndex'],
+                                   vals['InteroperabilityVersion'])
+                long = floatFromDms(vals['East_or_West_Longitude'],
+                                    vals['Longitude'])
+            except KeyError:
+                pass
+            else:
+                point = URIRef("http://photo.bigasterisk.com/point/%g/%g" %
+                               (lat, long))
+                stmts.extend([
+                    (uri, WGS.location, point),
+                    (point, RDF.type, WGS.Point),
+                    (point, WGS.lat, Literal("%g" % lat)),
+                    (point, WGS.long, Literal("%g" % long)),
+                    # point could be 'near' other things
+                    ])
+        self.graph.add(stmts,
+             context=URIRef("http://photo.bigasterisk.com/scan/exif"))
+        log.info("added exif from %s %s triples" % (filename, len(stmts)))
 
+    def addFileTime(self, uri, filename):
+        dt = datetime.datetime.fromtimestamp(os.path.getmtime(filename))
+        dt = dt.replace(tzinfo=tzlocal())
+        dateLit = Literal(dt.isoformat(), datatype=XS.dateTime)
+        self.graph.add([(uri, PHO.fileTime, dateLit),
+                       (uri, DC.date, Literal(dateLit.split('T')[0],
+                                              datatype=XS.date))],
+                       context=URIRef("http://photo.bigasterisk.com/scan/exif"))
         
 def floatFromDms(compass, dms):
     d, m, s = map(float, dms.split(', '))
