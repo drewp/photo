@@ -18,13 +18,10 @@ import rdflib
 print "rdflib", rdflib.__version__
 from rdflib.Graph import ConjunctiveGraph
 from rdflib import Namespace, RDF, RDFS, Literal, Variable, URIRef
-sys.path.append("/home/drewp/projects/ffg/sparqlhttp")
-sys.path.append("/my/proj/ffg/sparqlhttp")
+sys.path.append("/my/proj/sparqlhttp")
 from sparqlhttp.dictquery import Graph2
 from tagging import saveTags, getTags
-import auth
-
-Deferred.debug = True
+import auth, networking
 
 log = logging.getLogger()
 logging.getLogger('restkit.client').setLevel(logging.WARN)
@@ -202,7 +199,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
 
 
         if segments[0] in ['2003', '2004', '2005', '2006', '2007', 
-                           '2008', '2009']:
+                           '2008', '2009', '2010', '2011', '2012']:
             its = lambda o: self.graph.contains((uri, RDF.type, o))
             if (its(PHO['Event']) or
                 its(PHO['Place']) or
