@@ -59,3 +59,61 @@ Video compression:
 /my/pic/digicam/dl-2010-02-06% ffmpeg2theora -x 320 -y 212 -c 1 -v 8 --optimize DSC_5365.AVI
 
 
+==================================================================
+
+new urls:
+
+http://photo.bigasterisk.com/set?random=3
+  as json for a list. untagged ones.
+http://photo.bigasterisk.com/set?current={uri} & date=.. & tag=..
+  the params form a search
+
+http://photo.bigasterisk.com/2008/event/campingInRain
+http://photo.bigasterisk.com/tag
+http://photo.bigasterisk.com/tag/texas
+  -> same as /set?tag=texas
+
+http://photo.bigasterisk.com/description?q=
+  search for words in descriptions (and tags and filenames?)
+
+http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG
+http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG?size=full
+http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/page
+http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/comments
+  POST
+http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/links -> sets that it's in
+  POST to assign place/event
+http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/facts
+http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/histogram
+  something that shows the brightnesses, for use by auto-contrast
+http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/tags
+  PUT to replace
+http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/description
+http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/sizes
+http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/access -> permissions
+  POST users who can see, users who can write comments and make alts
+http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/alt -> cropped/etc
+  POST to here with the description of an alt you want, crop,
+  autocontrast, etc. Get back a Location of a new image like .../alt/crop1
+
+http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/alt/crop1?size=full
+http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/alt/crop1/alt/crop2
+
+some tinyurl thing. common task is to give someone perms and make them
+a short link to send
+
+http://photo.bigasterisk.com/selection 
+
+  your current 'shopping cart' of selected images. you can add singles
+  or whole sets. To the selection, you can do things like:
+    'set event'
+    'make blog post'
+    'make public'
+    'send in email'
+    'send to sfly'
+
+  Operations on the current set appear in a menu on the set page too,
+  so you don't have to make a sel and go to /selection
+
+
+
