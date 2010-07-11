@@ -12,11 +12,12 @@ GET /ariDateAge?img=http://photo... -> for ari photos
 
 the fetching of the resized images is still over in serve
 """
-import web, sys, jsonlib, datetime
+import web, sys, jsonlib, datetime, cgi
 from web.contrib.template import render_genshi
 from rdflib import Namespace, RDFS, URIRef, RDF
 from remotesparql import RemoteSparql
-from public import isPublic, makePublic
+from public import isPublic, makePublics
+import networking
 from xml.utils import iso8601
 
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
@@ -26,7 +27,7 @@ EXIF = Namespace("http://www.kanzaki.com/ns/exif#")
 
 render = render_genshi('.', auto_reload=True)
 
-graph = RemoteSparql("http://bang:8080/openrdf-sesame/repositories", "photo",
+graph = RemoteSparql(networking.graphRepoRoot(), "photo",
                      initNs=dict(foaf=FOAF,
                                  rdfs=RDFS.RDFSNS,
                                  rdf=RDF.RDFNS,
@@ -42,10 +43,18 @@ class viewPerm(object):
                          "public" if isPublic(graph, uri) else "superuser"})
         
     def POST(self):
+        """
+        img=http://photo & img=http://photo2 & ...
+        """
         # security here---
-        i = web.input()
-        uri = URIRef(i['img'])
-        makePublic(uri)
+
+        uris = []
+        for k, v in cgi.parse_qsl(web.data()):
+            if k == 'img':
+                uris.append(URIRef(v))
+        
+        makePublics(uris)
+        
         web.header('Content-type', 'application/json')
         return '{"msg" : "public"}'
 

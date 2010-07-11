@@ -171,7 +171,11 @@ $(function () {
 
     $(".makePub").click(function() {
 	var button = $(this);
-	$.post('/makePublic', {uri: currentPhotoUri},
+	var params = {uri: currentPhotoUri};
+	if (button.hasClass("allPublic")) {
+	    params = {allInSet: document.location};
+	}
+	$.post('/makePublic', params,
 	       function(data, textStatus) {
 		   button.replaceWith(data);
 	       });

@@ -10,6 +10,7 @@ from web.contrib.template import render_genshi
 from rdflib import Namespace, RDFS, Variable, URIRef, RDF
 from remotesparql import RemoteSparql
 from public import isPublic, makePublic
+import networking
 
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 SITE = Namespace("http://photo.bigasterisk.com/")
@@ -18,7 +19,7 @@ EXIF = Namespace("http://www.kanzaki.com/ns/exif#")
 
 render = render_genshi('.', auto_reload=True)
 
-graph = RemoteSparql("http://bang:8080/openrdf-sesame/repositories", "photo",
+graph = RemoteSparql(networking.graphRepoRoot(), "photo",
                      initNs=dict(foaf=FOAF,
                                  rdfs=RDFS.RDFSNS,
                                  rdf=RDF.RDFNS,

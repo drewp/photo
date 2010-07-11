@@ -59,7 +59,7 @@ class SesameSync(SyncImport):
 quick = False
 
   
-graph = RemoteSparql("http://bang:8080/openrdf-sesame/repositories", "photo",
+graph = RemoteSparql(networking.graphRepoRoot(), "photo",
                      initNs=dict(foaf=FOAF,
                                  rdfs=RDFS.RDFSNS,
                                  pho=PHO))

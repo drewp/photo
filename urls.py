@@ -5,7 +5,8 @@ SITE = "http://photo.bigasterisk.com/"
 def localSite(url):
     if url.startswith(SITE):
         return url[len(SITE)-1:]
-    return url
+    raise ValueError("%s not on site" % url)
+
 
 def absoluteSite(url):
     """

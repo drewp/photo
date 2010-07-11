@@ -9,6 +9,7 @@ from twisted.python.util import sibpath
 from twisted.web import http
 from twisted.web.proxy import ReverseProxyResource
 from twisted.web.client import getPage
+from twisted.internet.defer import inlineCallbacks, returnValue, Deferred
 from nevow import appserver, inevow, url
 from nevow import loaders, rend, static, tags as T
 from xml.utils import iso8601
@@ -22,6 +23,8 @@ sys.path.append("/my/proj/ffg/sparqlhttp")
 from sparqlhttp.dictquery import Graph2
 from tagging import saveTags, getTags
 import auth
+
+Deferred.debug = True
 
 log = logging.getLogger()
 logging.getLogger('restkit.client').setLevel(logging.WARN)
@@ -149,7 +152,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         #request.content = StringIO("")
         print "new req", request.uri
 
-        return ReverseProxyResource("bang", 9031, "/comments")
+        return ReverseProxyResource(*networking.commentProxy())
 
     def imageResource(self, uri, ctx):
         reqSize = ctx.arg('size')
@@ -274,10 +277,10 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         return static.File(sibpath(__file__, "static"))
 
     def child_comments(self, ctx):
-        return ReverseProxyResource("bang", 9031, "/comments")
+        return ReverseProxyResource(*networking.commentProxy())
 
     def child_oneImage(self, ctx):
-        return ReverseProxyResource("localhost", 9043, "")
+        return ReverseProxyResource(*networking.oneImageServer())
 
     def child_tagging(self, ctx):
         img = URIRef(ctx.arg('img'))
@@ -293,16 +296,26 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         inevow.IRequest(ctx).setHeader("Content-Type", "text/json")
         return jsonlib.dumps(getTags(graph, user, img))
 
-
+    @inlineCallbacks
     def child_makePublic(self, ctx):
         req = inevow.IRequest(ctx)
         if req.method != 'POST':
             raise ValueError("invalid method")
-        return getPage('http://localhost:9043/viewPerm',
-                       postdata=urllib.urlencode({'img' : ctx.arg('uri')}),
-                       method='POST',
-                       headers={'X-Foaf-Agent' :
-                                inevow.IRequest(ctx).getHeader('x-foaf-agent')})
+        if ctx.arg('uri'):
+            uris = [ctx.arg('uri')]
+        if ctx.arg('allInSet'):
+            # security- make sure this is not making some bad request
+            setJs = yield getPage('http://localhost:8086/'+ctx.arg('allInSet').lstrip('/'),
+                                  headers={'Accept' : 'application/json'})
+            uris = jsonlib.read(setJs)['photos']
+            print "setting", uris
+                        
+        returnValue((yield getPage(
+            'http://localhost:9043/viewPerm',
+            postdata=urllib.urlencode({'img' : uris}, doseq=True),
+            method='POST',
+            headers={'X-Foaf-Agent' :
+                     inevow.IRequest(ctx).getHeader('x-foaf-agent')})))
 
 
 setattr(Main, "child_favicon.ico", static.File("static/favicon.ico"))
@@ -322,8 +335,7 @@ if 0:
     graph = Graph2(ConjunctiveGraph(), initNs=initNs)
 else:
     from remotesparql import RemoteSparql
-    graph = RemoteSparql("http://bang:8080/openrdf-sesame/repositories",
-                         "photo", initNs=initNs)
+    graph = RemoteSparql(networking.graphRepoRoot(), "photo", initNs=initNs)
 
 application = service.Application('photo')
 webServer = internet.TCPServer(8086, appserver.NevowSite(Main(graph)))

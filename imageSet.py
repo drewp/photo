@@ -23,11 +23,11 @@ from xml.utils import iso8601
 from isodate.isodates import parse_date, date_isoformat
 from photos import Full, thumb, sizes
 from urls import localSite, absoluteSite
-from public import isPublic
+from public import isPublic, allPublic
 from edit import writeStatements
 from oneimage import personAgeString, photoCreated
 from search import randomSet, nextDateWithPics
-import tagging
+import tagging, networking
 import auth
 log = logging.getLogger()
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
@@ -47,7 +47,6 @@ XS = Namespace("http://www.w3.org/2001/XMLSchema#")
 ##         return str(self.original.getvalue())
 ## try: registerAdapter(StringIOView, StringIO, inevow.IResource)
 ## except ValueError: pass
-
 
 def photosWithTopic(graph, uri):
     """photos can be related to uri in a variety of ways: foaf:depicts,
@@ -125,6 +124,10 @@ class ImageSet(rend.Page):
 
     def renderHTTP(self, ctx):
         req = inevow.IRequest(ctx)
+
+        if req.getHeader('accept') == 'application/json': # approximage parse
+            return self.jsonContent()
+        
         if req.method == 'POST':
             if ctx.arg('tagRange'):
                 return self.postTagRange(ctx)
@@ -144,6 +147,9 @@ class ImageSet(rend.Page):
             return self.archiveZip(ctx)
         ret = rend.Page.renderHTTP(self, ctx)
         return ret
+
+    def jsonContent(self):
+        return jsonlib.write({'photos' : self.photos})
 
     def postTagRange(self, ctx):
         # security?
@@ -168,9 +174,8 @@ class ImageSet(rend.Page):
             })
 
     def render_loginWidget(self, ctx, data):
-        return getPage("http://bang:9023/_loginBar", headers={
-            "Cookie" : inevow.IRequest(ctx).getHeader("cookie") or ''}
-                       ).addCallback(T.raw)
+        return networking.getLoginBar(inevow.IRequest(ctx).getHeader("cookie") or '').addCallback(T.raw)
+
         
     def render_zipSizeWarning(self, ctx, data):
         mb = 17.3 / 9 * len(self.photos)
@@ -411,8 +416,12 @@ class ImageSet(rend.Page):
         
         if isPublic(self.graph, self.currentPhoto):
             return 'image is public'
+
+        pubAll = ""
+        if not allPublic(self.graph, self.photos):
+            pubAll = T.button(class_="makePub allPublic")["Make all public"]
         
-        return T.button(class_="makePub")["Make public"]
+        return [T.button(class_="makePub")["Make public"], pubAll]
 
     def render_facts(self, ctx, data):
         # todo: if user doesnt have perms to see the photo, he
