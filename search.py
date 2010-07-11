@@ -1,4 +1,4 @@
-import urllib, os, random, datetime
+import urllib, os, random, datetime, time
 from nevow import rend, loaders, tags as T
 from rdflib import Namespace, Variable, Literal
 from urls import localSite
@@ -70,16 +70,47 @@ def nextDateWithPics(graph, start, offset):
         raise ValueError("traveled too far")
     return x
 
+try:
+    _dateHasPics
+except NameError:
+    _dateHasPics = set()
 def dateHasPics(graph, date):
     """
     takes datetime
     """
     dlit = Literal(date_isoformat(date), datatype=XS.date)
+    if dlit in _dateHasPics:
+        return True
+    # should be an ASK
     rows = graph.queryd("""
                SELECT ?img WHERE {
                  ?img a foaf:Image; dc:date ?d .
                }""", initBindings={Variable("d") : dlit})
-    return bool(list(rows))
+    ret = bool(list(rows))
+    if ret:
+        _dateHasPics.add(dlit)
+    return ret
+
+def printTime(func):
+    def wrapped(*args, **kw):
+        t1 = time.time()
+        ret = func(*args, **kw)
+        print "%s in %.02f ms" % (func, 1000 * (time.time() - t1))
+        return ret
+    return wrapped
+
+try:
+    _topicLabels
+except NameError:
+    _topicLabels = {}
+def topicLabel(graph, topic):
+    try:
+        return _topicLabels[topic]
+    except KeyError:
+        ret = _topicLabels[topic] = graph.label(
+            topic,
+            default=graph.value(topic, FOAF['name'], default=topic))
+        return ret
 
 class Events(rend.Page):
     docFactory = loaders.xmlfile("search.html")
@@ -88,23 +119,29 @@ class Events(rend.Page):
         self.graph = graph
         rend.Page.__init__(self, ctx)
 
+    @printTime
     def render_topics(self, ctx, data):
         graph = self.graph
         byClass = {}
-        for row in self.graph.queryd("""SELECT DISTINCT ?topic ?cls WHERE { ?img a foaf:Image ; foaf:depicts ?topic . ?topic a ?cls . }"""):
+        for row in self.graph.queryd("""
+          SELECT DISTINCT ?topic ?cls WHERE {
+            ?img a foaf:Image ;
+              foaf:depicts ?topic .
+            ?topic a ?cls .
+          }"""):
             byClass.setdefault(row['cls'], set()).add(row['topic'])
 
         for cls, topics in byClass.items():
             yield T.h2[graph.label(cls, default=cls)]
             rows = []
             for topic in topics:
-                lab = graph.label(topic, default=graph.value(topic, FOAF['name'], default=topic))
-
                 localUrl = localSite(topic)
+                lab = topicLabel(graph, topic)
                 rows.append((lab.lower(), T.div[T.a(href=localUrl)[lab]]))
             rows.sort()
             yield [r[1] for r in rows]
 
+    @printTime
     def render_saveSets(self, ctx, data):
         sets = set()
         for row in self.graph.queryd("""
@@ -117,7 +154,8 @@ class Events(rend.Page):
                     urllib.quote(row['set'], safe=''))[
                         row.get('label') or row['set']]
                 ]
-            
+
+    @printTime
     def render_random(self, ctx, data):
         for randRow in randomSet(self.graph, 3):
             current = randRow['pic']
@@ -150,6 +188,7 @@ class Events(rend.Page):
     def render_seed(self, ctx, data):
         return random.randint(0, 9999999)
 
+    @printTime
     def render_newestDirs(self, ctx, data):
         # todo- should use rdf and work over all dirs
         top = '/my/pic/digicam'
@@ -164,6 +203,7 @@ class Events(rend.Page):
             # todo: escaping
             yield T.div[T.a(href=[localSite('/set?dir='), photoUri(dirname)])[dirname]]
 
+    @printTime
     def render_newestDates(self, ctx, data, n=5):
         dates = []
         d = datetime.datetime.now() + datetime.timedelta(days=1)
@@ -174,6 +214,7 @@ class Events(rend.Page):
                 date_isoformat(d)]])
         return T.ul[dates]
 
+    @printTime
     def render_tags(self, ctx, data):
         freqs = getTagsWithFreqs(self.graph)
         freqs = sorted(freqs.items(), key=lambda (t, n): (-n, t))

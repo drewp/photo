@@ -75,6 +75,7 @@ def hasTags(graph, foafUser, img):
     return ret
 
 def getTagsWithFreqs(graph):
+    # slow- 200+ ms
     freq = {}
     for row in graph.queryd("SELECT ?tag WHERE { ?pic scot:hasTag [ rdfs:label ?tag ] }"):
         freq[row['tag']] = freq.get(row['tag'], 0) + 1
