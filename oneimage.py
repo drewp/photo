@@ -98,7 +98,8 @@ def photoCreated(graph, uri):
     except KeyError:
         pass
     
-    photoDate = graph.value(uri, EXIF.dateTime)
+    photoDate = (graph.value(uri, EXIF.dateTime) or
+                 graph.value(uri, PHO.fileTime))
     try:
         sec = iso8601.parse(str(photoDate))
     except Exception:
