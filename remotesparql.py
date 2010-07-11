@@ -1,12 +1,11 @@
 import warnings
-warnings.warn("RemoteSparl has moved to sparqlhttp package", DeprecationWarning, 2)
+warnings.warn("RemoteSparql has moved to sparqlhttp package", DeprecationWarning, 2)
 from rdflib.Graph import Graph
 
 import sys
 import restkit
 
-sys.path.append("/home/drewp/projects/ffg/sparqlhttp")
-sys.path.append("/my/proj/ffg/sparqlhttp")
+sys.path.append("/my/proj/sparqlhttp")
 from sparqlhttp.sparqlxml import parseSparqlResults
 from sparqlhttp.dictquery import Graph2
 from sparqlhttp.remotegraph import interpolateSparql
