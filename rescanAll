@@ -1,0 +1,65 @@
+#!/usr/bin/python
+"""
+rebuild the <http://photo.bigasterisk.com/scan/fs> and <http://photo.bigasterisk.com/scan/exif> graphs from the filesystem
+"""
+import os, sys, logging
+from optparse import OptionParser
+from remotesparql import RemoteSparql
+from rdflib import Namespace, RDFS
+
+from picdirs import picSubDirs
+from scanFs import filenameIsImage, ScanFs
+from scanExif import ScanExif
+import networking
+
+PHO = Namespace("http://photo.bigasterisk.com/0.1/")
+SITE = Namespace("http://photo.bigasterisk.com/")
+FOAF = Namespace("http://xmlns.com/foaf/0.1/")
+
+def goodDirNames(names):
+    ret = []
+    for name in names:
+        if not (name.startswith('.') or name.startswith('~')):
+            ret.append(name)
+    return ret
+
+def main(opts):
+    log = logging.getLogger()
+    graph = RemoteSparql(networking.graphRepoRoot(),
+                         "photo",
+                         initNs=dict(foaf=FOAF,
+                                     rdfs=RDFS.RDFSNS,
+                                     pho=PHO))
+    scanFs = ScanFs(graph, '/my/pic')
+    scanExif = ScanExif(graph)
+
+    if opts.drop:
+        log.info("dropping old statements")
+        graph.remove((None, None, None), context=SITE['scan/fs'])
+        graph.remove((None, None, None), context=SITE['scan/exif'])
+
+    for root in picSubDirs(quick=opts.quick):
+        for dirpath, dirnames, filenames in os.walk(root, topdown=True):
+            log.info("visit %s", dirpath)
+
+            dirnames[:] = goodDirNames(dirnames)
+
+            for filename in filenames:
+                if not filenameIsImage(filename):
+                    continue
+
+                fullPath = os.path.abspath(os.path.join(dirpath, filename))
+                uri = scanFs.addPicFile(fullPath)
+                scanExif.addByFilename(uri, fullPath)
+
+    log.info("done, graph has %d triples", len(graph))
+
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
+    logging.getLogger('restkit.client').setLevel(logging.WARN)
+    parser = OptionParser()
+    parser.add_option("--quick", action="store_true", help="only look at a few files")
+    parser.add_option("--drop", action="store_true", help="remove old fs and exif graphs before writing")
+    opts, args = parser.parse_args()
+    main(opts)
