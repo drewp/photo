@@ -65,6 +65,10 @@ class StaticCached(static.Data):
     def renderHTTP(self, ctx):
         request = inevow.IRequest(ctx)
         request.setLastModified(self.mtime)
+        request.setHeader('Cache-Control', 'max-age=604800')
+        # flickr uses an even longer maxage, and puts on a Expires:
+        # Mon, 28 Jul 2014 23:30:00 GMT, and then they have a squid
+        # cache providing the image
         return static.Data.renderHTTP(self, ctx)
 
 class Main(rend.Page):

@@ -83,6 +83,7 @@ http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/comments
   POST
 http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/links -> sets that it's in
   POST to assign place/event
+  this also includes images that look the same, or are at the same location, etc
 http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/facts
 http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/histogram
   something that shows the brightnesses, for use by auto-contrast
