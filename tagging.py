@@ -11,6 +11,8 @@ DCTERMS = Namespace("http://purl.org/dc/terms/")
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 SCOT = Namespace("http://scot-project.org/scot/ns#")
 
+_twf = None
+
 def allowedToWrite(graph, foafUser):
     return foafUser in [
         URIRef("http://bigasterisk.com/foaf.rdf#drewp"),
@@ -18,8 +20,10 @@ def allowedToWrite(graph, foafUser):
         ]
 
 def saveTags(graph, foafUser, img, tagString, desc):
+    global _twf
     if not allowedToWrite(graph, foafUser):
         raise ValueError("not allowed")
+    _twf = None 
     
     subgraph = URIRef('http://photo.bigasterisk.com/update/%f' %
                       time.time())
@@ -74,9 +78,14 @@ def hasTags(graph, foafUser, img):
         _hasTags.add(img)
     return ret
 
+
 def getTagsWithFreqs(graph):
     # slow- 200+ ms
+    global _twf
+    if _twf is not None:
+        return _twf
     freq = {}
     for row in graph.queryd("SELECT ?tag WHERE { ?pic scot:hasTag [ rdfs:label ?tag ] }"):
         freq[row['tag']] = freq.get(row['tag'], 0) + 1
+    _twf = freq
     return freq

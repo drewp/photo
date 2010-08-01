@@ -5,6 +5,7 @@ from urls import localSite
 from tagging import getTagsWithFreqs, hasTags
 from isodate.isodates import date_isoformat
 from urls import photoUri
+from lib import print_timing
 
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 XS = Namespace("http://www.w3.org/2001/XMLSchema#")
@@ -57,16 +58,19 @@ def randomSet(graph, n=3, foafUser=None, seed=None):
                     'date' : d})
     return ret
 
+@print_timing
 def nextDateWithPics(graph, start, offset):
     """
     takes datetime and timedelta
     """
     tries = 100
     x = start + offset
-    while not dateHasPics(graph, x) and tries:
+    future = datetime.date.today() + datetime.timedelta(days=2)
+    
+    while (not dateHasPics(graph, x)) and tries > 0 and x <= future:
         x = x + offset
         tries -= 1
-    if not tries:
+    if not tries or x > future:
         raise ValueError("traveled too far")
     return x
 
@@ -85,7 +89,7 @@ def dateHasPics(graph, date):
     rows = graph.queryd("""
                SELECT ?img WHERE {
                  ?img a foaf:Image; dc:date ?d .
-               }""", initBindings={Variable("d") : dlit})
+               } LIMIT 1""", initBindings={Variable("d") : dlit})
     ret = bool(list(rows))
     if ret:
         _dateHasPics.add(dlit)

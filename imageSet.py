@@ -29,6 +29,7 @@ from oneimage import personAgeString, photoCreated
 from search import randomSet, nextDateWithPics
 import tagging, networking
 import auth
+from lib import print_timing
 log = logging.getLogger()
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 SITE = Namespace("http://photo.bigasterisk.com/")
@@ -68,11 +69,24 @@ def photosWithTopic(graph, uri):
     return sorted([row['photo'] for row in q],
                   key=lambda uri: photoCreated(graph, uri))    
 
+@print_timing
+def photoDate(graph, img):
+    rows = graph.queryd("""
+           SELECT ?d ?label WHERE {
+             ?img dc:date ?d .
+           }""", initBindings={Variable("img") : img})
+    if not rows:
+        return ''
+    return rows[0]['d']
+
+
+
 class ImageSet(rend.Page):
     """
     multiple images, with one currently-featured one. Used for search results
     """
     docFactory = loaders.xmlfile("imageSet.html")
+    @print_timing
     def __init__(self, ctx, graph, uri, **kw):
         self.graph, self.uri = graph, uri
         agent = None# todo: inevow.IRequest(ctx).getHeader('x-foaf-agent')
@@ -220,6 +234,7 @@ class ImageSet(rend.Page):
                                 # when there's no title
                                 default=T.raw("&nbsp;"))
 
+    @print_timing
     def data_related(self, ctx, data):
         if self.currentPhoto is None:
             return
@@ -300,19 +315,14 @@ class ImageSet(rend.Page):
             ]
 
 
+    @print_timing
     def render_prevNextDateButtons(self, ctx, data):
         showingDate = ctx.arg('date')
         if showingDate is None:
             if self.currentPhoto is None:
                 return ''
-                
-            rows = self.graph.queryd("""
-                   SELECT ?d ?label WHERE {
-                     ?img dc:date ?d .
-                   }""", initBindings={Variable("img") : self.currentPhoto})
-            if not rows:
-                return ''
-            showingDate = rows[0]['d']
+
+            showingDate = photoDate(self.graph, self.currentPhoto)
         
         dtd = parse_date(showingDate)
         try:
@@ -406,6 +416,10 @@ class ImageSet(rend.Page):
         
         return ''
 
+    def render_sflyUploadButton(self, ctx, data):
+        return T.button(onclick="sflyUpload()")["Upload to ShutterFly"]
+
+    @print_timing
     def render_tagListJs(self, ctx, data):
         freqs = tagging.getTagsWithFreqs(self.graph)
         return "var allTags=" + jsonlib.dumps(freqs.keys()) + ";"
@@ -423,6 +437,7 @@ class ImageSet(rend.Page):
         
         return [T.button(class_="makePub")["Make public"], pubAll]
 
+    @print_timing
     def render_facts(self, ctx, data):
         # todo: if user doesnt have perms to see the photo, he
         # shouldnt be able to see facts or tags either
