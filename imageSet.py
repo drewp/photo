@@ -486,6 +486,19 @@ class ImageSet(rend.Page):
         # 'used in this blog entry'
                 
         return T.ul[[T.li[x] for x in lines]]
+
+    def render_bestJqueryLink(self, ctx, data):
+        req = inevow.IRequest(ctx)
+        ip = req.getHeader('x-forwarded-for')
+        if ip and ip.startswith(('10.1', '192.168')):
+            # if local wifi users got routed through my squid cache,
+            # this would be unnecessary, as I would have a local cache
+            # of the google copy
+            src = "/static/jquery-1.4.2.min.js"
+        else:
+            src = "http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"
+        return T.script(type='text/javascript', src=src)
+    
     
     def photoRss(self, ctx):
         request = inevow.IRequest(ctx)
