@@ -139,6 +139,7 @@ cursor: pointer;
     font-size: 80%;
     color: #777;
     text-align: center;
+    padding: 7px 0;
 }
 .dateChange a {
     color: #77a;
