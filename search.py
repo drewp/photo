@@ -65,7 +65,11 @@ def nextDateWithPics(graph, start, offset):
     """
     tries = 100
     x = start + offset
-    future = datetime.date.today() + datetime.timedelta(days=2)
+    if isinstance(start, datetime.datetime):
+        future = datetime.datetime.now()
+    else:
+        future = datetime.date.today()
+    future = future + datetime.timedelta(days=2)
     
     while (not dateHasPics(graph, x)) and tries > 0 and x <= future:
         x = x + offset
