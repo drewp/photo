@@ -12,19 +12,22 @@ GET /ariDateAge?img=http://photo... -> for ari photos
 
 the fetching of the resized images is still over in serve
 """
-import web, sys, jsonlib, datetime, cgi
+import web, sys, jsonlib, datetime, cgi, time, logging
 from web.contrib.template import render_genshi
 from rdflib import Namespace, RDFS, URIRef, RDF
 from remotesparql import RemoteSparql
 from public import isPublic, makePublics
 import networking
 from xml.utils import iso8601
+from tagging import getTagLabels
 
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 SITE = Namespace("http://photo.bigasterisk.com/")
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 EXIF = Namespace("http://www.kanzaki.com/ns/exif#")
+SCOT = Namespace("http://scot-project.org/scot/ns#")
 
+log = logging.getLogger()
 render = render_genshi('.', auto_reload=True)
 
 class viewPerm(object):
@@ -50,6 +53,52 @@ class viewPerm(object):
         
         web.header('Content-type', 'application/json')
         return '{"msg" : "public"}'
+
+
+def facts(graph, img):
+
+    lines = []
+    now = time.time()
+
+    try:
+        created = photoCreated(graph, img)
+        sec = time.mktime(created.timetuple())
+    except ValueError:
+        return ''
+
+    ago = int((now - sec) / 86400)
+    if ago < 365:
+        ago = '; %s days ago' % ago
+    else:
+        ago = ''
+    lines.append("Picture taken %s%s" % (created.isoformat(' '), ago))
+
+    allDepicts = [row['who'] for row in
+                  graph.queryd(
+                      "SELECT DISTINCT ?who WHERE { ?img foaf:depicts ?who }",
+                      initBindings={"img" : img})]
+
+    allTags = getTagLabels(graph, "todo", img)
+
+    for who, tag, birthday in [
+        (URIRef("http://photo.bigasterisk.com/2008/person/apollo"),
+        'apollo',
+         '2008-07-22'),
+        ]:
+        try:
+            if (who in allDepicts or tag in allTags):
+                name = graph.value(
+                    who, FOAF.name, default=graph.label(
+                        who, default=tag))
+
+                lines.append("%s is %s old. " % (
+                    name, personAgeString(birthday, created.isoformat())))
+        except Exception, e:
+            log.error("%s birthday failed: %s" % (who, e))
+
+
+    # 'used in this blog entry'
+    return lines
 
 
 class stats(object):

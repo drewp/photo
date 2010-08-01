@@ -12,20 +12,18 @@ download from flickr
 ocr and search, like http://norman.walsh.name/2009/11/01/evernote
 """
 from __future__ import division
-import logging, zipfile, datetime, time, jsonlib, urllib, random
+import logging, zipfile, datetime, jsonlib, urllib, random
 from StringIO import StringIO
 from nevow import loaders, rend, tags as T, inevow, url
 from rdflib import Namespace, Variable, URIRef, RDF, RDFS, Literal
 from zope.interface import implements
 from twisted.python.components import registerAdapter, Adapter
-from twisted.web.client import getPage
-from xml.utils import iso8601
 from isodate.isodates import parse_date, date_isoformat
 from photos import Full, thumb, sizes
 from urls import localSite, absoluteSite
 from public import isPublic, allPublic
 from edit import writeStatements
-from oneimage import personAgeString, photoCreated
+from oneimage import photoCreated, facts
 from search import randomSet, nextDateWithPics
 import tagging, networking
 import auth
@@ -446,44 +444,7 @@ class ImageSet(rend.Page):
         if img is None:
             return ''
 
-        now = time.time()
-        lines = []
-
-        try:
-            created = photoCreated(self.graph, img)
-            sec = time.mktime(created.timetuple())
-        except ValueError:
-            return ''
-
-        ago = int((now - sec) / 86400)
-        if ago < 365:
-            ago = '; %s days ago' % ago
-        else:
-            ago = ''
-        lines.append("Picture taken %s%s" % (created.isoformat(' '), ago))
-
-        for who, tag, birthday in [
-            (URIRef("http://photo.bigasterisk.com/2008/person/apollo"),
-            'apollo',
-             '2008-07-22'),
-            (URIRef("http://bigasterisk.com/foaf.rdf#drewp"),
-             'drew', '1900-01-01'),
-            ]:
-            try:
-                tag = URIRef('http://photo.bigasterisk.com/tag/%s' % tag)
-                if (self.graph.contains((img, FOAF['depicts'], who)) or
-                    self.graph.contains((img, SCOT.hasTag, tag))):
-                    name = self.graph.value(
-                        who, FOAF.name, default=self.graph.label(
-                            who, default=tag))
-                        
-                    lines.append("%s is %s old. " % (
-                        name, personAgeString(birthday, created.isoformat())))
-            except Exception, e:
-                log.error("%s birthday failed: %s" % (who, e))
-
-
-        # 'used in this blog entry'
+        lines = facts(self.graph, img)
                 
         return T.ul[[T.li[x] for x in lines]]
 

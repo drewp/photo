@@ -55,15 +55,19 @@ def saveTags(graph, foafUser, img, tagString, desc):
     for c in prevContexts:
         graph.remove((None, None, None), context=c)
 
+def getTagLabels(graph, foafUser, img):
+    # check user read perms
+    return [r['tag'] for r in graph.queryd(
+        "SELECT ?tag WHERE { ?img scot:hasTag [ rdfs:label ?tag ] }",
+        initBindings={Variable("img") : img})]
+
 def getTags(graph, foafUser, img):
 
     # check user read perms
 
     return dict(
         tagString=graph.value(img, PHO.tagString, default=''),
-        tags=[r['tag'] for r in graph.queryd(
-            "SELECT ?tag WHERE { ?img scot:hasTag [ rdfs:label ?tag ] }",
-            initBindings={Variable("img") : img})],
+        tags=getTagLabels(graph, foafUser, img),
         desc=graph.value(img, RDFS.comment, default=''),
         )
 
