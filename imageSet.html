@@ -87,7 +87,9 @@
 	  </div>
 	</td>
 	<td>
-	  <div id="comments" style="height:165px"></div>
+	  <div id="commentsFade">
+	    <div id="comments" style="height:165px"></div>
+          </div>
 	</td>
       </tr>
     </table>
@@ -142,22 +144,16 @@
       Download a <a rel="nofollow"><n:attr name="href"><n:invisible n:render="zipUrl"/></n:attr>.zip file of the full size images on this page</a> <n:invisible n:render="zipSizeWarning"/>
     </div>
 
-
-    <!--    <div>
-	 <h2>Related</h2>
-	 
-	 </div>-->
     <n:invisible n:render="bestJqueryLink"/>
     <script type="text/javascript" src="/static/jquery.form.min.js"></script>
     <script type="text/javascript" src="/static/tag.js" ></script>
     <script type="text/javascript" n:render="prevNextJs"/>
-    
     <script type="text/javascript">
       var currentPhotoUri = "<n:invisible n:render="currentPhotoUri"/>";
       var preloadImg = "<n:invisible n:render="nextImagePreload"/>";
       <n:invisible n:render="tagListJs"/>
     </script>
-    <script type="text/javascript" src="/static/imageSet.js" ></script>
+    <script type="text/javascript" src="/static/imageSet.js?v6" ></script>
 
     <img id="preload" src=""/>
   </body>
