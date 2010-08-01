@@ -27,13 +27,6 @@ EXIF = Namespace("http://www.kanzaki.com/ns/exif#")
 
 render = render_genshi('.', auto_reload=True)
 
-graph = RemoteSparql(networking.graphRepoRoot(), "photo",
-                     initNs=dict(foaf=FOAF,
-                                 rdfs=RDFS.RDFSNS,
-                                 rdf=RDF.RDFNS,
-                                 exif=EXIF,
-                                 pho=PHO))
-
 class viewPerm(object):
     def GET(self):
         i = web.input()
@@ -111,13 +104,21 @@ def photoCreated(graph, uri):
     return ret
 
 
-urls = (r'/', "index",
-        r'/viewPerm', 'viewPerm',
-        r'/stats', 'stats',
-        )
-
-app = web.application(urls, globals(), autoreload=True)
-
 if __name__ == '__main__':
+
+    graph = RemoteSparql(networking.graphRepoRoot(), "photo",
+                         initNs=dict(foaf=FOAF,
+                                     rdfs=RDFS.RDFSNS,
+                                     rdf=RDF.RDFNS,
+                                     exif=EXIF,
+                                     pho=PHO))
+
+    urls = (r'/', "index",
+            r'/viewPerm', 'viewPerm',
+            r'/stats', 'stats',
+            )
+
+    app = web.application(urls, globals(), autoreload=True)
+
     sys.argv.append("9043")
     app.run()
