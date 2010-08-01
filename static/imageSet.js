@@ -99,7 +99,6 @@ $(function () {
 	  {post: currentPhotoUri}, 
 	  function (result) { 
 	      $("#comments").html(result); 
-	      $("#comments").removeAttr("style");
 	      $("#commentsFade").fadeTo(500, 1);
 	      loadDelayedImgs();
 	      startNextImgPreload(); // try to do this after other work
