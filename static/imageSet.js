@@ -202,6 +202,9 @@ function flickrUpload() {
 	   }, "json");
 }
 
+function sflyUpload() {
+    alert("not implemented")
+}
 
 
 

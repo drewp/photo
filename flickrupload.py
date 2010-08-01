@@ -16,7 +16,6 @@ Returns json:
 import web, time, logging, os
 import flickrapi
 import restkit, tempfile, jsonlib
-restkit.debuglevel = 10
 from rdflib.Graph import Graph
 from rdflib import Namespace, URIRef, Literal
 from xml.utils import iso8601

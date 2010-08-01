@@ -30,7 +30,10 @@
 	  <div class="actions" n:render="actionsAllowed">
 	    <h2>Actions</h2>
 	    <div class="ac"><n:invisible n:render="public"/></div>
-	    <div class="ac"><n:invisible n:render="uploadButton"/></div>
+	    <div class="ac">
+	      <n:invisible n:render="sflyUploadButton"/>
+	      <n:invisible n:render="uploadButton"/>
+	    </div>
 	    <div class="ac" style="opacity: .4">Email</div>
 	    <div class="ac" style="opacity: .4">Post to blog</div>
 	    <div class="ac"><a><n:attr name="href">http://bang:8080/openrdf-workbench/repositories/photo/explore?resource=&lt;<n:invisible n:render="currentPhotoUri"/>&gt;</n:attr>Debug rdf</a></div>
