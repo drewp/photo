@@ -18,6 +18,10 @@ sizes = {'thumb' : 75,
         'full' : Full}
 
 tmpSuffix = ".tmp" + ''.join([random.choice(string.letters) for c in range(5)])
+"""
+uses 'exiftool', from ubuntu package libimage-exiftool-perl
+
+"""
 
 def thumb(localURL, maxSize=100):
     """returns jpeg data, mtime
@@ -113,7 +117,7 @@ def _resizeAndSave(localPath, thumbPath, maxSize, localURL):
 def _thumbPath(localURL, maxSize):
     thumbUrl = localURL + "?size=%s" % maxSize
     cksum = hashlib.md5(thumbUrl).hexdigest()
-    return "/var/cache/photo/%s/%s" % (cksum[:2], cksum[2:])
+    return "/var/cache/photo/%s/%s/%s" % (cksum[:2], cksum[2:4], cksum[4:])
 
 def _makeDirToThumb(path):
     try:
