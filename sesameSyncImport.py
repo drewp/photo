@@ -16,6 +16,7 @@ import networking
 logging.basicConfig()
 log = logging.getLogger()
 log.setLevel(logging.DEBUG)
+logging.getLogger("restkit.client").setLevel(logging.WARN)
 
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 SITE = Namespace("http://photo.bigasterisk.com/")
