@@ -2,10 +2,10 @@
 import time, logging
 tlog = logging.getLogger('timing')
 def print_timing(func):
-  def wrapper(*arg):
+  def wrapper(*arg, **kw):
     t1 = time.time()
     try:
-        res = func(*arg)
+        res = func(*arg, **kw)
         return res
     finally:
         t2 = time.time()
