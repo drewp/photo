@@ -305,7 +305,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
             'http://localhost:9043/viewPerm',
             postdata=urllib.urlencode({'img' : uris}, doseq=True),
             method='POST',
-            headers={'X-Foaf-Agent' : getUser(ctx)})))
+            headers={'X-Foaf-Agent' : str(getUser(ctx))})))
 
 
 setattr(Main, "child_favicon.ico", static.File("static/favicon.ico"))
