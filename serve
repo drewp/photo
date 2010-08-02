@@ -136,22 +136,22 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
 
         return False
 
-    def comments(self, uri, ctx, request):
-        """take uri with /comments tail and proxy to the comment server"""
-        assert uri.endswith('/comments')
-        imgUri = URIRef(uri[:-len('/comments')])
-        if not (
-            (self.graph.contains((imgUri, RDF.type, FOAF['Image'])) and
-            self.viewable(imgUri, ctx))):
-            raise ValueError("%r is not a viewable image" % imgUri)
+    def subresource(self, lastSegment, uri, ctx, request):
+        """uri is some image, lastSegment is like /comments. This
+        proxying might be done upstream by the webserver, so we can't
+        add any other logic in here (including security checks!)
+
+        the other server will always be passed a param 'uri' with the
+        image uri
+        """
 
         request.uri = str(
             url.URL.fromString(request.uri).
-            add('post', imgUri)#.
+            add('uri', uri)#.
             #add('content', ctx.arg('content'))
             )
         #request.content = StringIO("")
-        print "new req", request.uri
+        print "subresource req", request.uri
 
         return ReverseProxyResource(*networking.commentProxy())
 
@@ -181,10 +181,15 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         uri = SITE[urllib.quote('/'.join(segments))]
         log.debug("fetch uri %s", uri)
         if segments[0] in myPicSubdirs:
+            if segments[-1] in ['facts', 'page', 'links', 'comments',
+                                'histogram', 'tags', 'description',
+                                'sizes', 'access']:
+                # danger, user data!
+                uri = SITE[urllib.quote('/'.join(segments[:-1]))]
+                return self.subresource(segments[-1], uri, ctx, request), []
 
-            if uri.endswith('/comments'):
-                return self.comments(uri, ctx, request), []
-            
+            uri = SITE[urllib.quote('/'.join(segments))]
+
             if self.graph.contains((uri, RDF.type, FOAF['Image'])):
 
                 """
