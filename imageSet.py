@@ -12,21 +12,23 @@ download from flickr
 ocr and search, like http://norman.walsh.name/2009/11/01/evernote
 """
 from __future__ import division
-import logging, zipfile, datetime, jsonlib, urllib, random
+import logging, zipfile, datetime, jsonlib, urllib, random, cgi, time
 from StringIO import StringIO
 from nevow import loaders, rend, tags as T, inevow, url
 from rdflib import Namespace, Variable, URIRef, RDF, RDFS, Literal
 from zope.interface import implements
 from twisted.python.components import registerAdapter, Adapter
+from twisted.web.client import getPage
 from isodate.isodates import parse_date, date_isoformat
 from photos import Full, thumb, sizes
 from urls import localSite, absoluteSite
 from public import isPublic, allPublic
 from edit import writeStatements
-from oneimage import photoCreated, facts
+from oneimage import photoCreated
 from search import randomSet, nextDateWithPics
 import tagging, networking
 import auth
+from access import getUser
 from lib import print_timing
 log = logging.getLogger()
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
@@ -87,7 +89,7 @@ class ImageSet(rend.Page):
     @print_timing
     def __init__(self, ctx, graph, uri, **kw):
         self.graph, self.uri = graph, uri
-        agent = None# todo: inevow.IRequest(ctx).getHeader('x-foaf-agent')
+        agent = getUser(ctx)
         if uri == PHO.randomSet:
             self.photos = [r['pic'] for r in
                            randomSet(graph, kw.get('randomSize', 10),
@@ -133,6 +135,9 @@ class ImageSet(rend.Page):
 
     def render_currentPhotoUri(self, ctx, data):
         return self.currentPhoto
+
+    def render_relCurrentPhotoUri(self, ctx, data):
+        return localSite(self.currentPhoto)
 
     def renderHTTP(self, ctx):
         req = inevow.IRequest(ctx)
@@ -387,7 +392,7 @@ class ImageSet(rend.Page):
         return ''
 
     def render_allowedToWriteMeta(self, ctx, data):
-        agent = inevow.IRequest(ctx).getHeader('x-foaf-agent')
+        agent = getUser(ctx)
         if agent is not None and tagging.allowedToWrite(self.graph, URIRef(agent)):
             return ctx.tag
         return ''
@@ -435,7 +440,6 @@ class ImageSet(rend.Page):
         
         return [T.button(class_="makePub")["Make public"], pubAll]
 
-    @print_timing
     def render_facts(self, ctx, data):
         # todo: if user doesnt have perms to see the photo, he
         # shouldnt be able to see facts or tags either
@@ -444,9 +448,12 @@ class ImageSet(rend.Page):
         if img is None:
             return ''
 
-        lines = facts(self.graph, img)
-                
-        return T.ul[[T.li[x] for x in lines]]
+        d = serviceCall(ctx, 'facts', img)
+        def render(j):
+            lines = jsonlib.read(j)['factLines']
+            return T.ul[[T.li[x] for x in lines]]
+        d.addCallback(render)
+        return d
 
     def render_bestJqueryLink(self, ctx, data):
         req = inevow.IRequest(ctx)
@@ -493,6 +500,22 @@ class ImageSet(rend.Page):
             </channel>
         </rss>
         """
+
+def serviceCall(ctx, name, uri):
+    """
+    deferred to result of calling this internal service on the image
+    uri. user credentials are passed on
+    """
+    url = {
+        'facts' : 'http://dash:9043/facts',
+        }[name]
+    t1 = time.time()
+    def endTime(result):
+        log.info("service call %r in %.01f ms", name, 1000 * (time.time() - t1))
+        return result
+    return getPage(str('%s?uri=%s' % (url, cgi.escape(uri))),
+            headers={ # user stuff
+                       }).addCallback(endTime)
           
 class RandomImage(rend.Page):
     """redirect to any image with this topic.

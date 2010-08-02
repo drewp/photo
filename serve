@@ -22,7 +22,7 @@ sys.path.append("/my/proj/sparqlhttp")
 from sparqlhttp.dictquery import Graph2
 from tagging import saveTags, getTags
 import auth, networking
-
+from access import getUser
 log = logging.getLogger()
 logging.getLogger('restkit.client').setLevel(logging.WARN)
 
@@ -97,10 +97,10 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
     def viewable(self, uri,  ctx):
         request = inevow.IRequest(ctx)
 
-        openid = URIRef(request.getHeader('x-openid-proxy'))
+        agent = getUser(ctx)
 
         # not final; just matching the old logic
-        if openid in auth.superusers:
+        if agent in auth.superagents:
             return True
 
         # somehow allow local clients who could get to the filesystem
@@ -147,13 +147,18 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
 
         request.uri = str(
             url.URL.fromString(request.uri).
-            add('uri', uri)#.
-            #add('content', ctx.arg('content'))
+            add('uri', uri)
             )
-        #request.content = StringIO("")
-        print "subresource req", request.uri
 
-        return ReverseProxyResource(*networking.commentProxy())
+
+        if lastSegment == 'comments':
+            args = networking.commentProxy()
+        elif lastSegment == 'facts':
+            args = 'dash', 9043, '/facts'
+        else:
+            raise NotImplementedError()
+
+        return ReverseProxyResource(*args)
 
     def imageResource(self, uri, ctx):
         reqSize = ctx.arg('size')
@@ -175,11 +180,9 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
 
     def locateChild(self, ctx, segments):
         request = inevow.IRequest(ctx)
-        request.setHost('photo.bigasterisk.com', 80)
+        if 1:
+            request.setHost('photo.bigasterisk.com', 80)
 
-        # danger, user data!
-        uri = SITE[urllib.quote('/'.join(segments))]
-        log.debug("fetch uri %s", uri)
         if segments[0] in myPicSubdirs:
             if segments[-1] in ['facts', 'page', 'links', 'comments',
                                 'histogram', 'tags', 'description',
@@ -282,16 +285,13 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
     def child_static(self, ctx):
         return static.File(sibpath(__file__, "static"))
 
-    def child_comments(self, ctx):
-        return ReverseProxyResource(*networking.commentProxy())
-
     def child_oneImage(self, ctx):
         return ReverseProxyResource(*networking.oneImageServer())
 
     def child_tagging(self, ctx):
         img = URIRef(ctx.arg('img'))
         req = inevow.IRequest(ctx)
-        user = URIRef(inevow.IRequest(ctx).getHeader('x-foaf-agent'))
+        user = getUser(ctx)
         if req.method == 'POST':
             saveTags(graph,
                      foafUser=user,
@@ -320,8 +320,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
             'http://localhost:9043/viewPerm',
             postdata=urllib.urlencode({'img' : uris}, doseq=True),
             method='POST',
-            headers={'X-Foaf-Agent' :
-                     inevow.IRequest(ctx).getHeader('x-foaf-agent')})))
+            headers={'X-Foaf-Agent' : getUser(ctx)})))
 
 
 setattr(Main, "child_favicon.ico", static.File("static/favicon.ico"))

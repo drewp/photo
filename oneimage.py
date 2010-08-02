@@ -17,7 +17,7 @@ from web.contrib.template import render_genshi
 from rdflib import Namespace, RDFS, URIRef, RDF
 from remotesparql import RemoteSparql
 from public import isPublic, makePublics
-import networking
+import networking, auth
 from xml.utils import iso8601
 from tagging import getTagLabels
 
@@ -54,52 +54,56 @@ class viewPerm(object):
         web.header('Content-type', 'application/json')
         return '{"msg" : "public"}'
 
+class factsResource(object):
+    def GET(self):
+        img = URIRef(web.input()['uri'])
 
-def facts(graph, img):
+        # check security
 
-    lines = []
-    now = time.time()
+        lines = []
+        now = time.time()
 
-    try:
-        created = photoCreated(graph, img)
-        sec = time.mktime(created.timetuple())
-    except ValueError:
-        return ''
-
-    ago = int((now - sec) / 86400)
-    if ago < 365:
-        ago = '; %s days ago' % ago
-    else:
-        ago = ''
-    lines.append("Picture taken %s%s" % (created.isoformat(' '), ago))
-
-    allDepicts = [row['who'] for row in
-                  graph.queryd(
-                      "SELECT DISTINCT ?who WHERE { ?img foaf:depicts ?who }",
-                      initBindings={"img" : img})]
-
-    allTags = getTagLabels(graph, "todo", img)
-
-    for who, tag, birthday in [
-        (URIRef("http://photo.bigasterisk.com/2008/person/apollo"),
-        'apollo',
-         '2008-07-22'),
-        ]:
         try:
-            if (who in allDepicts or tag in allTags):
-                name = graph.value(
-                    who, FOAF.name, default=graph.label(
-                        who, default=tag))
+            created = photoCreated(graph, img)
+            sec = time.mktime(created.timetuple())
+        except ValueError:
+            return ''
 
-                lines.append("%s is %s old. " % (
-                    name, personAgeString(birthday, created.isoformat())))
-        except Exception, e:
-            log.error("%s birthday failed: %s" % (who, e))
+        ago = int((now - sec) / 86400)
+        if ago < 365:
+            ago = '; %s days ago' % ago
+        else:
+            ago = ''
+        lines.append("Picture taken %s%s" % (created.isoformat(' '), ago))
+
+        allDepicts = [row['who'] for row in
+                      graph.queryd(
+                          "SELECT DISTINCT ?who WHERE { ?img foaf:depicts ?who }",
+                          initBindings={"img" : img})]
+
+        allTags = getTagLabels(graph, "todo", img)
+
+        for who, tag, birthday in [
+            (URIRef("http://photo.bigasterisk.com/2008/person/apollo"),
+            'apollo',
+             '2008-07-22'),
+            ] + auth.birthdays:
+            try:
+                if (who in allDepicts or tag in allTags):
+                    name = graph.value(
+                        who, FOAF.name, default=graph.label(
+                            who, default=tag))
+
+                    lines.append("%s is %s old. " % (
+                        name, personAgeString(birthday, created.isoformat())))
+            except Exception, e:
+                log.error("%s birthday failed: %s" % (who, e))
 
 
-    # 'used in this blog entry'
-    return lines
+        # 'used in this blog entry'        
 
+        return jsonlib.write({'factLines' : lines})
+        
 
 class stats(object):
     def GET(self):
@@ -160,9 +164,11 @@ if __name__ == '__main__':
                                      rdfs=RDFS.RDFSNS,
                                      rdf=RDF.RDFNS,
                                      exif=EXIF,
+                                     scot=SCOT,
                                      pho=PHO))
 
     urls = (r'/', "index",
+            r'/facts', 'factsResource',
             r'/viewPerm', 'viewPerm',
             r'/stats', 'stats',
             )

@@ -95,8 +95,8 @@ $(function () {
 
     
     $("#commentsFade").fadeTo(0, 0);
-    $.get("/comments", 
-	  {post: currentPhotoUri}, 
+    $.get(relCurrentPhotoUri + "/comments", 
+	  {}, 
 	  function (result) { 
 	      $("#comments").html(result); 
 	      $("#commentsFade").fadeTo(500, 1);
