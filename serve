@@ -185,6 +185,8 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         if 1:
             request.setHost('photo.bigasterisk.com', 80)
 
+        uri = SITE[urllib.quote('/'.join(segments))]
+
         if segments[0] in myPicSubdirs:
             if segments[-1] in ['facts', 'page', 'links', 'comments',
                                 'histogram', 'tags', 'description',
@@ -192,8 +194,6 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
                 # danger, user data!
                 uri = SITE[urllib.quote('/'.join(segments[:-1]))]
                 return self.subresource(segments[-1], uri, ctx, request), []
-
-            uri = SITE[urllib.quote('/'.join(segments))]
 
             if self.graph.contains((uri, RDF.type, FOAF['Image'])):
 

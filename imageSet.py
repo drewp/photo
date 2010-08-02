@@ -469,7 +469,7 @@ def serviceCall(ctx, name, uri):
         log.info("service call %r in %.01f ms", name, 1000 * (time.time() - t1))
         return result
     return getPage(str('%s?uri=%s' % (networking.serviceUrl(name),
-                                      cgi.escape(uri))),
+                                      urllib.quote(uri, safe=''))),
             headers={'x-foaf-agent' : str(getUser(ctx)),
                        }).addCallback(endTime)
           
