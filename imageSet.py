@@ -18,6 +18,7 @@ from nevow import loaders, rend, tags as T, inevow, url
 from rdflib import Namespace, Variable, URIRef, RDF, RDFS, Literal
 from zope.interface import implements
 from twisted.python.components import registerAdapter, Adapter
+from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.web.client import getPage
 from isodate.isodates import parse_date, date_isoformat
 from photos import Full, thumb, sizes
@@ -109,6 +110,17 @@ class ImageSet(rend.Page):
         if self.photos and self.currentPhoto not in self.photos:
             self.currentPhoto = self.photos[0]
 
+    @inlineCallbacks
+    def render_picInfoJson(self, ctx, data):
+        # vars for the javascript side to use
+        links = (yield serviceCall(ctx, 'links',
+                              self.currentPhoto).addCallback(jsonlib.read))
+        returnValue(jsonlib.write(dict(
+            relCurrentPhotoUri=localSite(self.currentPhoto),
+            currentPhotoUri=self.currentPhoto,
+            links=links['links'],
+            )))
+
     def render_setLabel(self, ctx, data):
 
         if self.graph.contains((self.uri, RDF.type, PHO.DiskDirectory)):
@@ -132,12 +144,6 @@ class ImageSet(rend.Page):
     def render_rssHref(self, ctx, img):
         href = self.otherImageHref(ctx, img)
         return href.remove('current').add('rss', '1')
-
-    def render_currentPhotoUri(self, ctx, data):
-        return self.currentPhoto
-
-    def render_relCurrentPhotoUri(self, ctx, data):
-        return localSite(self.currentPhoto)
 
     def renderHTTP(self, ctx):
         req = inevow.IRequest(ctx)
@@ -236,46 +242,6 @@ class ImageSet(rend.Page):
                                 # so the image doesn't bounce around
                                 # when there's no title
                                 default=T.raw("&nbsp;"))
-
-    @print_timing
-    def data_related(self, ctx, data):
-        if self.currentPhoto is None:
-            return
-
-
-        def relQuery(rel):
-            rows = self.graph.queryd("""
-               SELECT DISTINCT ?d ?label WHERE {
-                 ?img ?rel ?d .
-                 OPTIONAL { ?d rdfs:label ?label }
-               }""", initBindings={Variable("rel") : rel,
-                                   Variable("img") : self.currentPhoto})
-            for r in rows:
-                if 'label' not in r:
-                    r['label'] = r['d']
-                yield r
-
-        def setUrl(**params):
-            params['current'] = self.currentPhoto
-            return ('/set?' +
-                    urllib.urlencode(params))
-
-        for row in relQuery(FOAF.depicts):
-            yield ('depicting', row['d'], row['label'])
-
-        for row in relQuery(PHO.inDirectory):
-            yield ('in directory', setUrl(dir=row['d']),
-                   row['d'].split('/')[-2])
-
-        for row in relQuery(DC.date):
-           
-            yield ('taken on', setUrl(date=row['d']), row['d'])
-
-        for row in relQuery(SCOT.hasTag):
-            yield ('with tag', setUrl(tag=row['label']), row['label'])
-
-        # taken near xxxxx
-
     
     def data_photosInSet(self, ctx, data):
         return self.photos
@@ -508,6 +474,7 @@ def serviceCall(ctx, name, uri):
     """
     url = {
         'facts' : 'http://dash:9043/facts',
+        'links' : 'http://dash:9043/links',
         }[name]
     t1 = time.time()
     def endTime(result):

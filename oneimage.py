@@ -12,9 +12,9 @@ GET /ariDateAge?img=http://photo... -> for ari photos
 
 the fetching of the resized images is still over in serve
 """
-import web, sys, jsonlib, datetime, cgi, time, logging
+import web, sys, jsonlib, datetime, cgi, time, logging, urllib
 from web.contrib.template import render_genshi
-from rdflib import Namespace, RDFS, URIRef, RDF
+from rdflib import Namespace, RDFS, URIRef, RDF, Variable
 from remotesparql import RemoteSparql
 from public import isPublic, makePublics
 import networking, auth
@@ -26,6 +26,7 @@ SITE = Namespace("http://photo.bigasterisk.com/")
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 EXIF = Namespace("http://www.kanzaki.com/ns/exif#")
 SCOT = Namespace("http://scot-project.org/scot/ns#")
+DC = Namespace("http://purl.org/dc/elements/1.1/")
 
 log = logging.getLogger()
 render = render_genshi('.', auto_reload=True)
@@ -54,7 +55,7 @@ class viewPerm(object):
         web.header('Content-type', 'application/json')
         return '{"msg" : "public"}'
 
-class factsResource(object):
+class facts(object):
     def GET(self):
         img = URIRef(web.input()['uri'])
 
@@ -103,6 +104,52 @@ class factsResource(object):
         # 'used in this blog entry'        
 
         return jsonlib.write({'factLines' : lines})
+
+class links(object):
+    """images and other things related to this one"""
+    def GET(self):
+
+        img = URIRef(web.input()['uri'])
+        links = {}
+        
+        def relQuery(rel):
+            rows = graph.queryd("""
+               SELECT DISTINCT ?d ?label WHERE {
+                 ?img ?rel ?d .
+                 OPTIONAL { ?d rdfs:label ?label }
+               }""", initBindings={Variable("rel") : rel,
+                                   Variable("img") : img})
+            for r in rows:
+                if 'label' not in r:
+                    r['label'] = r['d']
+                yield r
+
+        def setUrl(**params):
+            params['current'] = img
+            return ('/set?' + urllib.urlencode(params))
+
+        for row in relQuery(FOAF.depicts):
+            links.setdefault('depicting', []).append(
+                {'uri' : row['d'], 'label' : row['label']})
+
+        for row in relQuery(PHO.inDirectory):
+            links.setdefault('inDirectory', []).append(
+                {'uri' : setUrl(dir=row['d']),
+                 'label' : row['d'].split('/')[-2]})
+
+        for row in relQuery(DC.date):
+            links.setdefault('takenOn', []).append(
+                {'uri' : setUrl(date=row['d']),
+                 'label' : row['d']})
+
+        for row in relQuery(SCOT.hasTag):
+            links.setdefault('withTag', []).append(
+                {'uri' : setUrl(tag=row['label']),
+                 'label' : row['label']})
+
+        # taken near xxxxx
+
+        return jsonlib.write({'links' : links.items()})
         
 
 class stats(object):
@@ -168,7 +215,8 @@ if __name__ == '__main__':
                                      pho=PHO))
 
     urls = (r'/', "index",
-            r'/facts', 'factsResource',
+            r'/facts', 'facts',
+            r'/links', 'links',
             r'/viewPerm', 'viewPerm',
             r'/stats', 'stats',
             )

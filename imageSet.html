@@ -36,18 +36,14 @@
 	    </div>
 	    <div class="ac" style="opacity: .4">Email</div>
 	    <div class="ac" style="opacity: .4">Post to blog</div>
-	    <div class="ac"><a><n:attr name="href">http://bang:8080/openrdf-workbench/repositories/photo/explore?resource=&lt;<n:invisible n:render="currentPhotoUri"/>&gt;</n:attr>Debug rdf</a></div>
+	    <div class="ac"><a><n:attr name="href">http://bang:8080/openrdf-workbench/repositories/photo/explore?resource=&lt;++currentPhotoUri++&gt;</n:attr>Debug rdf</a></div>
 
 	  </div>
 	  <div class="actions">
 	    <h2>Links</h2>
 	    <div class="ac">
 	      More images:
-	      <ul n:render="sequence" n:data="related">
-		<li n:pattern="item">
-		  <n:invisible n:render="string" n:data="0"/> 
-		  <a><n:attr name="href"><n:invisible n:render="string" n:data="1"/></n:attr><n:invisible n:render="string" n:data="2"/></a>
-		</li>
+	      <ul id="related">
 	      </ul>
 	    </div>
 
@@ -149,12 +145,11 @@
     <script type="text/javascript" src="/static/tag.js" ></script>
     <script type="text/javascript" n:render="prevNextJs"/>
     <script type="text/javascript">
-      var currentPhotoUri = "<n:invisible n:render="currentPhotoUri"/>";
-      var relCurrentPhotoUri = "<n:invisible n:render="relCurrentPhotoUri"/>";
+      var picInfo = <n:invisible n:render="picInfoJson"/>;
       var preloadImg = "<n:invisible n:render="nextImagePreload"/>";
       <n:invisible n:render="tagListJs"/>
     </script>
-    <script type="text/javascript" src="/static/imageSet.js?v8" ></script>
+    <script type="text/javascript" src="/static/imageSet.js?v10" ></script>
 
     <img id="preload" src=""/>
   </body>

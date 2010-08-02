@@ -95,7 +95,7 @@ $(function () {
 
     
     $("#commentsFade").fadeTo(0, 0);
-    $.get(relCurrentPhotoUri + "/comments", 
+    $.get(picInfo.relCurrentPhotoUri + "/comments", 
 	  {}, 
 	  function (result) { 
 	      $("#comments").html(result); 
@@ -116,7 +116,7 @@ $(function () {
 	$("#saveStatus").text("");
 	$("#saveMeta").attr('disabled', true);
 	$.post("/tagging", {
-	    img: currentPhotoUri,
+	    img: picInfo.currentPhotoUri,
 	    tags: $("#tags").val(),
 	    desc: $("#desc").val()}, 
 	       function(data) { 
@@ -153,7 +153,7 @@ $(function () {
     }
 
     $.getJSON("/tagging", 
-	      {img: currentPhotoUri},
+	      {img: picInfo.currentPhotoUri},
 	      refreshTagsAndDesc);
 
 
@@ -173,7 +173,7 @@ $(function () {
 
     $(".makePub").click(function() {
 	var button = $(this);
-	var params = {uri: currentPhotoUri};
+	var params = {uri: picInfo.currentPhotoUri};
 	if (button.hasClass("allPublic")) {
 	    params = {allInSet: ""+document.location.pathname + document.location.search};
 	}
@@ -184,6 +184,16 @@ $(function () {
     });
 
     $("#tags").focus();
+
+    $.each(picInfo.links, function (i, kind) {
+	$.each(kind[1], function (i2, link) {
+	    var li = $("<li>");
+	    var a = $("<a>");
+	    a.attr('href', link.uri).text(link.label);
+	    li.text(kind[0] + " ").append(a);
+	    $("#related").append(li);
+	});
+    });
  
 });
 
@@ -195,7 +205,7 @@ function flickrUpload() {
 	    '<img class="spinner" src="static/snake-spinner.gif"/>');
     
     $.post("/flickrUpload/",
-	   {img: currentPhotoUri,
+	   {img: picInfo.currentPhotoUri,
 	    size: sz,
 	    test: ''}, 
 	   function (data) {

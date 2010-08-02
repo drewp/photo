@@ -155,6 +155,10 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
             args = networking.commentProxy()
         elif lastSegment == 'facts':
             args = 'dash', 9043, '/facts'
+        elif lastSegment == 'links':
+            args = 'dash', 9043, '/links'
+        elif lastSegment == 'page':
+            return ImagePage(graph, uri)
         else:
             raise NotImplementedError()
 
@@ -204,7 +208,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
                 if not self.viewable(uri, ctx):
                     return self.nonViewable(request)
                 
-                if ctx.arg('page'):
+                if ctx.arg('page'): # old; use {img}/page now
                     return ImagePage(graph, uri), ()
 
                 return self.imageResource(uri, ctx), ()
