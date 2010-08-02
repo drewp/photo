@@ -150,6 +150,29 @@ class links(object):
         # taken near xxxxx
 
         return jsonlib.write({'links' : links.items()})
+
+from tagging import getTags, saveTags
+
+class tags(object):
+    """description too, though you can get that separately if you want"""
+    def GET(self):
+        img = URIRef(web.input()['uri'])
+        user = URIRef(web.ctx.environ['HTTP_X_FOAF_AGENT'])
+        web.header("Content-Type", "text/json")
+        return jsonlib.dumps(getTags(graph, user, img))
+
+    def PUT(self):
+        i = web.input()
+        img = URIRef(i['uri'])
+        user = URIRef(web.ctx.environ['HTTP_X_FOAF_AGENT'])
+        saveTags(graph,
+                 foafUser=user,
+                 img=img,
+                 tagString=i.get('tags', ''),
+                 desc=i.get('desc', ''))
+        web.header("Content-Type", "text/json")
+        return jsonlib.dumps(getTags(graph, user, img))
+
         
 
 class stats(object):
@@ -219,6 +242,7 @@ if __name__ == '__main__':
             r'/links', 'links',
             r'/viewPerm', 'viewPerm',
             r'/stats', 'stats',
+            r'/tags', 'tags',
             )
 
     app = web.application(urls, globals(), autoreload=True)

@@ -36,7 +36,7 @@
 	    </div>
 	    <div class="ac" style="opacity: .4">Email</div>
 	    <div class="ac" style="opacity: .4">Post to blog</div>
-	    <div class="ac"><a><n:attr name="href">http://bang:8080/openrdf-workbench/repositories/photo/explore?resource=&lt;++currentPhotoUri++&gt;</n:attr>Debug rdf</a></div>
+	    <div class="ac"><a id="debugRdf">Debug rdf</a></div>
 
 	  </div>
 	  <div class="actions">
@@ -70,8 +70,9 @@
     <table id="t1">
       <tr>
 	<td>
-	  <div class="imageInfo">
-	    <n:invisible n:render="facts"/>
+	  <div id="facts">
+	    <ul>
+	    </ul>
 	  </div>
 	</td>
 
@@ -149,7 +150,7 @@
       var preloadImg = "<n:invisible n:render="nextImagePreload"/>";
       <n:invisible n:render="tagListJs"/>
     </script>
-    <script type="text/javascript" src="/static/imageSet.js?v10" ></script>
+    <script type="text/javascript" src="/static/imageSet.js?v11" ></script>
 
     <img id="preload" src=""/>
   </body>

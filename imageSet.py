@@ -18,7 +18,7 @@ from nevow import loaders, rend, tags as T, inevow, url
 from rdflib import Namespace, Variable, URIRef, RDF, RDFS, Literal
 from zope.interface import implements
 from twisted.python.components import registerAdapter, Adapter
-from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet.defer import inlineCallbacks, returnValue, DeferredList
 from twisted.web.client import getPage
 from isodate.isodates import parse_date, date_isoformat
 from photos import Full, thumb, sizes
@@ -113,13 +113,20 @@ class ImageSet(rend.Page):
     @inlineCallbacks
     def render_picInfoJson(self, ctx, data):
         # vars for the javascript side to use
-        links = (yield serviceCall(ctx, 'links',
-                              self.currentPhoto).addCallback(jsonlib.read))
-        returnValue(jsonlib.write(dict(
+
+        results = yield DeferredList([
+            serviceCall(ctx, 'links', self.currentPhoto),
+            serviceCall(ctx, 'facts', self.currentPhoto),
+            serviceCall(ctx, 'tags', self.currentPhoto)])
+        
+        ret = jsonlib.write(dict(
             relCurrentPhotoUri=localSite(self.currentPhoto),
             currentPhotoUri=self.currentPhoto,
-            links=links['links'],
-            )))
+            links=jsonlib.read(results[0][1]),
+            facts=jsonlib.read(results[1][1]),
+            tags=jsonlib.read(results[2][1]),
+            ))
+        returnValue(ret)
 
     def render_setLabel(self, ctx, data):
 
@@ -352,8 +359,8 @@ class ImageSet(rend.Page):
 
     def render_actionsAllowed(self, ctx, data):
         """should the actions section be displayed"""
-        openid = inevow.IRequest(ctx).getHeader('x-openid-proxy')
-        if openid is not None and URIRef(openid) in auth.superusers:
+        agent = getUser(ctx)
+        if agent is not None and agent in auth.superagents:
             return ctx.tag
         return ''
 
@@ -405,21 +412,6 @@ class ImageSet(rend.Page):
             pubAll = T.button(class_="makePub allPublic")["Make all public"]
         
         return [T.button(class_="makePub")["Make public"], pubAll]
-
-    def render_facts(self, ctx, data):
-        # todo: if user doesnt have perms to see the photo, he
-        # shouldnt be able to see facts or tags either
-        
-        img = self.currentPhoto
-        if img is None:
-            return ''
-
-        d = serviceCall(ctx, 'facts', img)
-        def render(j):
-            lines = jsonlib.read(j)['factLines']
-            return T.ul[[T.li[x] for x in lines]]
-        d.addCallback(render)
-        return d
 
     def render_bestJqueryLink(self, ctx, data):
         req = inevow.IRequest(ctx)
@@ -475,13 +467,14 @@ def serviceCall(ctx, name, uri):
     url = {
         'facts' : 'http://dash:9043/facts',
         'links' : 'http://dash:9043/links',
+        'tags' : 'http://dash:9043/tags',
         }[name]
     t1 = time.time()
     def endTime(result):
         log.info("service call %r in %.01f ms", name, 1000 * (time.time() - t1))
         return result
     return getPage(str('%s?uri=%s' % (url, cgi.escape(uri))),
-            headers={ # user stuff
+            headers={'x-foaf-agent' : str(getUser(ctx)),
                        }).addCallback(endTime)
           
 class RandomImage(rend.Page):

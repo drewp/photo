@@ -15,7 +15,7 @@ h2 {
 a {
     color: #ccf;
 } 
-div.imageInfo {
+div#facts {
     border: 1px solid gray;
 }
 img {

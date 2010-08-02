@@ -20,7 +20,6 @@ from rdflib.Graph import ConjunctiveGraph
 from rdflib import Namespace, RDF, RDFS, Literal, Variable, URIRef
 sys.path.append("/my/proj/sparqlhttp")
 from sparqlhttp.dictquery import Graph2
-from tagging import saveTags, getTags
 import auth, networking
 from access import getUser
 log = logging.getLogger()
@@ -153,10 +152,9 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
 
         if lastSegment == 'comments':
             args = networking.commentProxy()
-        elif lastSegment == 'facts':
-            args = 'dash', 9043, '/facts'
-        elif lastSegment == 'links':
-            args = 'dash', 9043, '/links'
+        elif lastSegment == 'facts': args = 'dash', 9043, '/facts'
+        elif lastSegment == 'links': args = 'dash', 9043, '/links'
+        elif lastSegment == 'tags': args = 'dash', 9043, '/tags'
         elif lastSegment == 'page':
             return ImagePage(graph, uri)
         else:
@@ -168,7 +166,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         reqSize = ctx.arg('size')
         size = sizes.get(reqSize, 250)
 
-        print "need thumb for", repr(uri)
+        log.debug("need thumb for %r", uri)
         # this ought to return a redirect to a static error image when it breaks
         jpg, mtime = thumb(uri, size)
 
@@ -289,23 +287,6 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
     def child_static(self, ctx):
         return static.File(sibpath(__file__, "static"))
 
-    def child_oneImage(self, ctx):
-        return ReverseProxyResource(*networking.oneImageServer())
-
-    def child_tagging(self, ctx):
-        img = URIRef(ctx.arg('img'))
-        req = inevow.IRequest(ctx)
-        user = getUser(ctx)
-        if req.method == 'POST':
-            saveTags(graph,
-                     foafUser=user,
-                     img=img,
-                     tagString=ctx.arg('tags') or '',
-                     desc=ctx.arg('desc') or '')
-        
-        inevow.IRequest(ctx).setHeader("Content-Type", "text/json")
-        return jsonlib.dumps(getTags(graph, user, img))
-
     @inlineCallbacks
     def child_makePublic(self, ctx):
         req = inevow.IRequest(ctx)
@@ -329,7 +310,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
 
 setattr(Main, "child_favicon.ico", static.File("static/favicon.ico"))
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 initNs = dict(
         foaf=FOAF,

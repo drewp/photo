@@ -115,15 +115,18 @@ $(function () {
     function saveTagsAndDesc() {
 	$("#saveStatus").text("");
 	$("#saveMeta").attr('disabled', true);
-	$.post("/tagging", {
-	    img: picInfo.currentPhotoUri,
-	    tags: $("#tags").val(),
-	    desc: $("#desc").val()}, 
-	       function(data) { 
-		   $("#saveStatus").text("ok");
-		   refreshTagsAndDesc(data);
-	       },
-	       "json");
+	$.ajax({
+	    type: 'PUT',
+	    url: picInfo.relCurrentPhotoUri + "/tags", 
+	    data : {
+		tags: $("#tags").val(),
+		desc: $("#desc").val()}, 
+	    success: function(data) { 
+		$("#saveStatus").text("ok");
+		refreshTagsAndDesc(data);
+	    },
+	    dataType: "json",
+	});
     };
     $("#saveMeta").click(saveTagsAndDesc);
 
@@ -146,19 +149,14 @@ $(function () {
 	$("#desc").val(data.desc);
 	$("#saveMeta").attr('disabled', true);
 
+	    // not working with new links section yet
 	$("#otherWithTag").empty();
 	$.each(data.tags, function (i, tag) {
 	    $("#otherWithTag").append("<div><a href=\"/set?tag="+tag+"\">"+tag+"</a></div>");
 	});
     }
 
-    $.getJSON("/tagging", 
-	      {img: picInfo.currentPhotoUri},
-	      refreshTagsAndDesc);
-
-
-
-
+    refreshTagsAndDesc(picInfo.tags);
 
     setGlobalTags(allTags);
     $("#tags").tagSuggest({});
@@ -185,7 +183,13 @@ $(function () {
 
     $("#tags").focus();
 
-    $.each(picInfo.links, function (i, kind) {
+
+});
+
+
+function fillImageInfo() {
+
+    $.each(picInfo.links.links, function (i, kind) {
 	$.each(kind[1], function (i2, link) {
 	    var li = $("<li>");
 	    var a = $("<a>");
@@ -194,8 +198,16 @@ $(function () {
 	    $("#related").append(li);
 	});
     });
- 
-});
+    
+    $("#debugRdf").attr('href', 'http://bang:8080/openrdf-workbench/repositories/photo/explore?' + $.param({resource: '<'+picInfo.currentPhotoUri+'>'}));
+
+    $.each(picInfo.facts.factLines, function (i, line) {
+	$("#facts ul").append($("<li>").text(line));
+    });
+
+}
+fillImageInfo(); // *before* page draw
+
 
 function flickrUpload() {
     var st = $("#flickrUpload");
