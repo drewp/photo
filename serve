@@ -152,9 +152,9 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
 
         if lastSegment == 'comments':
             args = networking.commentProxy()
-        elif lastSegment == 'facts': args = 'dash', 9043, '/facts'
-        elif lastSegment == 'links': args = 'dash', 9043, '/links'
-        elif lastSegment == 'tags': args = 'dash', 9043, '/tags'
+        elif lastSegment == 'facts': args = networking.serviceHost, 9043, '/facts'
+        elif lastSegment == 'links': args = networking.serviceHost, 9043, '/links'
+        elif lastSegment == 'tags': args = networking.serviceHost, 9043, '/tags'
         elif lastSegment == 'page':
             return ImagePage(graph, uri)
         else:

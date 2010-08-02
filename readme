@@ -79,6 +79,7 @@ http://photo.bigasterisk.com/description?q=
 http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG
 http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG?size=full
 http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/page
+  redir to the page, with uri=?? param
 http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/comments
   POST
 http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/links -> sets that it's in
