@@ -464,16 +464,12 @@ def serviceCall(ctx, name, uri):
     deferred to result of calling this internal service on the image
     uri. user credentials are passed on
     """
-    url = {
-        'facts' : 'http://dash:9043/facts',
-        'links' : 'http://dash:9043/links',
-        'tags' : 'http://dash:9043/tags',
-        }[name]
     t1 = time.time()
     def endTime(result):
         log.info("service call %r in %.01f ms", name, 1000 * (time.time() - t1))
         return result
-    return getPage(str('%s?uri=%s' % (url, cgi.escape(uri))),
+    return getPage(str('%s?uri=%s' % (networking.serviceUrl(name),
+                                      cgi.escape(uri))),
             headers={'x-foaf-agent' : str(getUser(ctx)),
                        }).addCallback(endTime)
           

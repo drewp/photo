@@ -15,3 +15,9 @@ def commentProxy():
 def oneImageServer():
     return serviceHost, 9043, ""
 
+def serviceUrls(name):
+    return {
+        'facts' : 'http://%s:9043/facts' % serviceHost,
+        'links' : 'http://%s:9043/links' % serviceHost,
+        'tags' : 'http://%s:9043/tags' % serviceHost,
+        }[name]
