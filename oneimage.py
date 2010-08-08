@@ -201,7 +201,7 @@ def personAgeString(isoBirthday, photoDate):
     birth = iso8601.parse(isoBirthday)
     days = (sec - birth) / 86400
     if days / 30 < 12:
-        return "%.2f months" % (days / 30)
+        return "%.1f months" % (days / 30)
     else:
         return "%.2f years" % (days / 365)
 
