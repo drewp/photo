@@ -103,7 +103,8 @@ class facts(object):
 
         # 'used in this blog entry'        
 
-        return jsonlib.write({'factLines' : lines})
+        return jsonlib.write({'factLines' : lines, 
+                              'created' : created.isoformat()})
 
 class links(object):
     """images and other things related to this one"""
