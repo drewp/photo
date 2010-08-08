@@ -1,4 +1,4 @@
-import urllib, os, random, datetime, time
+import urllib, os, random, datetime, time, logging
 from nevow import rend, loaders, tags as T
 from rdflib import Namespace, Variable, Literal
 from urls import localSite
@@ -7,15 +7,26 @@ from isodate.isodates import date_isoformat
 from urls import photoUri
 from lib import print_timing
 
+log = logging.getLogger()
+log.setLevel(logging.DEBUG)
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 XS = Namespace("http://www.w3.org/2001/XMLSchema#")
 
+_datePool = []
+_datePoolCreated = None
+@print_timing
 def randomDates(graph, n=3, rand=random):
-    dates = rand.sample(graph.queryd("""
-              SELECT DISTINCT ?d WHERE { ?pic dc:date ?d }
-           """), n)
-    return [row['d'] for row in dates]
+    global _datePoolCreated, _datePool
+    if _datePoolCreated < time.time() - 40000:
+        _datePool = [row['d'] for row in graph.queryd("""
+            SELECT DISTINCT ?d WHERE { ?pic dc:date ?d }
+            """)]
+        _datePoolCreated = time.time()
 
+    return rand.sample(_datePool, n)
+
+
+@print_timing
 def randomSet(graph, n=3, foafUser=None, seed=None):
     """
     list of dicts with pic, filename, date
@@ -50,6 +61,7 @@ def randomSet(graph, n=3, foafUser=None, seed=None):
             continue
 
         if hasTags(graph, foafUser, pick['pic']):
+            log.debug("random: skip pic with tags")
             continue
 
         retUris.add(pick['pic'])

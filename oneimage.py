@@ -216,6 +216,8 @@ def photoCreated(graph, uri):
     
     photoDate = (graph.value(uri, EXIF.dateTime) or
                  graph.value(uri, PHO.fileTime))
+    if photoDate is None:
+        raise ValueError("can't find a date for %s" % uri)
     try:
         sec = iso8601.parse(str(photoDate))
     except Exception:
