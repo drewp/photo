@@ -12,6 +12,7 @@ GET /ariDateAge?img=http://photo... -> for ari photos
 
 the fetching of the resized images is still over in serve
 """
+from __future__ import division
 import web, sys, jsonlib, datetime, cgi, time, logging, urllib
 from web.contrib.template import render_genshi
 from rdflib import Namespace, RDFS, URIRef, RDF, Variable
