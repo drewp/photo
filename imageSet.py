@@ -67,8 +67,13 @@ def photosWithTopic(graph, uri):
                              }""",
                           initBindings={Variable('u') : uri})
 
-    return sorted([row['photo'] for row in q],
-                  key=lambda uri: photoCreated(graph, uri))    
+    def sortkey(uri):
+        try:
+            return photoCreated(graph, uri)
+        except ValueError:
+            return datetime.datetime(1,1,1)
+
+    return sorted([row['photo'] for row in q], key=sortkey)
 
 @print_timing
 def photoDate(graph, img):
