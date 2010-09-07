@@ -94,12 +94,14 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         return False
 
     def viewable(self, uri,  ctx):
+        log.debug("viewable check for %s", uri)
         request = inevow.IRequest(ctx)
 
         agent = getUser(ctx)
 
         # not final; just matching the old logic
         if agent in auth.superagents:
+            log.debug("ok, agent %r is in superagents", agent)
             return True
 
         # somehow allow local clients who could get to the filesystem
@@ -111,6 +113,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
 
         if (self.graph.contains((uri, PHO['viewableBy'], PHO['friends']))
             or self.graph.contains((uri, PHO['viewableBy'], PHO['anyone']))):
+            log.debug("ok, graph says :viewableBy :friends or :anyone")
             return True
 
         if self.graph.queryd("""
@@ -119,7 +122,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
               ?post sioc:links_to ?uri .
             }""", initBindings={Variable('uri') : uri}): # should just be ASK
             # this should also be limiting to readers of the blog!
-            print "%s ok because it's on the blog" % uri
+            log.debug("ok because it's on the blog")
             return True
         
         # this capability doesn't appear in the make-public button
@@ -131,6 +134,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         """, initBindings={Variable("uri") : uri}))
         if (PHO['friends'] in topicViewableBy or
             PHO['anyone'] in topicViewableBy):
+            log.debug("a photo topic is viewable by anyone")
             return True
 
         return False
@@ -310,7 +314,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
 
 setattr(Main, "child_favicon.ico", static.File("static/favicon.ico"))
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 initNs = dict(
         foaf=FOAF,
