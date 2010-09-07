@@ -12,7 +12,7 @@ download from flickr
 ocr and search, like http://norman.walsh.name/2009/11/01/evernote
 """
 from __future__ import division
-import logging, zipfile, datetime, jsonlib, urllib, random, cgi, time
+import logging, zipfile, datetime, jsonlib, urllib, random, cgi, time, traceback
 from StringIO import StringIO
 from nevow import loaders, rend, tags as T, inevow, url
 from rdflib import Namespace, Variable, URIRef, RDF, RDFS, Literal
@@ -38,6 +38,7 @@ FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 EXIF = Namespace("http://www.kanzaki.com/ns/exif#")
 SCOT = Namespace("http://scot-project.org/scot/ns#")
 DC = Namespace("http://purl.org/dc/elements/1.1/")
+DCTERMS = Namespace("http://purl.org/dc/terms/")
 XS = Namespace("http://www.w3.org/2001/XMLSchema#")
 
 
@@ -62,6 +63,8 @@ def photosWithTopic(graph, uri):
                                  ?photo scot:hasTag ?u .
                                } UNION {
                                  ?photo dc:date ?u .
+                               } UNION {
+                                 ?email a pho:Email ; dc:date ?u ; dcterms:hasPart ?photo .
                                }
                               # ?photo pho:viewableBy pho:friends .
                              }""",
@@ -77,12 +80,26 @@ def photosWithTopic(graph, uri):
 
 @print_timing
 def photoDate(graph, img):
-    rows = graph.queryd("""
-           SELECT ?d ?label WHERE {
+    for q in [
+        """SELECT ?d ?label WHERE {
              ?img dc:date ?d .
-           }""", initBindings={Variable("img") : img})
-    if not rows:
-        return ''
+           }""",
+        """SELECT ?d ?label WHERE {
+             ?img dcterms:date ?d .
+           }""",
+        """SELECT ?d ?label WHERE {
+             ?email a pho:Email ; dcterms:created ?d ; dcterms:hasPart ?img .
+           }""",
+        
+        ]:
+        log.info("photodate query: %s", q.replace("\n", " "))
+        rows = graph.queryd(q, initBindings={"img" : img})
+        if rows:
+            break
+    else:
+        raise ValueError("can't find date for %r" % img)
+
+    log.info("found %s date row matches", len(rows))
     return rows[0]['d']
 
 
@@ -123,16 +140,23 @@ class ImageSet(rend.Page):
             serviceCall(ctx, 'links', self.currentPhoto),
             serviceCall(ctx, 'facts', self.currentPhoto),
             serviceCall(ctx, 'tags', self.currentPhoto)])
-        
+
+        def readOrError(js):
+            try:
+                return jsonlib.read(js)
+            except Exception, e:
+                log.error(traceback.format_exc())
+                return jsonlib.write({'error' : str(e)})
+
         ret = jsonlib.write(dict(
             relCurrentPhotoUri=localSite(self.currentPhoto),
             currentPhotoUri=self.currentPhoto,
-            links=jsonlib.read(results[0][1]),
-            facts=jsonlib.read(results[1][1]),
-            tags=jsonlib.read(results[2][1]),
+            links=readOrError(results[0][1]),
+            facts=readOrError(results[1][1]),
+            tags=readOrError(results[2][1]),
             ))
         returnValue(ret)
-
+        
     def render_setLabel(self, ctx, data):
 
         if self.graph.contains((self.uri, RDF.type, PHO.DiskDirectory)):
@@ -303,7 +327,10 @@ class ImageSet(rend.Page):
             if self.currentPhoto is None:
                 return ''
 
-            showingDate = photoDate(self.graph, self.currentPhoto)
+            try:
+                showingDate = photoDate(self.graph, self.currentPhoto)
+            except ValueError:
+                return ''
         
         dtd = parse_date(showingDate)
         try:

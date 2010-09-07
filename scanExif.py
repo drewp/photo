@@ -49,7 +49,21 @@ class ScanExif(object):
         self.addByFilename(uri, filename)
 
     def addByFilename(self, uri, filename):
+        try:
+            vals = self.exifValues(filename)
+        except (ExpatError, ValueError):
+            stmts = self.fileTimeStatements(uri, filename)
+        else:
+            stmts = []
 
+            stmts.extend(self.timeStatements(uri, vals))
+            stmts.extend(self.positionStatements(uri, vals))
+
+        self.graph.add(stmts,
+             context=URIRef("http://photo.bigasterisk.com/scan/exif"))
+        log.info("added exif from %s %s triples" % (filename, len(stmts)))
+
+    def exifValues(self, filename):
         # ctypes was starting to work, but libexif uses C macros for
         # some of the data traversal, so pyrex would probably be
         # better for this.
@@ -61,33 +75,38 @@ class ScanExif(object):
         xml = subprocess.Popen(["exif", "-x", filename],
                                stdout=subprocess.PIPE).communicate()[0]
         if not xml:
-            self.addFileTime(uri, filename)
-            return
-        try:
-            root = ElementTree.fromstring(xml)
-        except ExpatError:
-            self.addFileTime(uri, filename)
-            return
+            raise ValueError("no result from exif")
+
+        root = ElementTree.fromstring(xml)
             
         vals = {}
         for child in root:
             vals[child.tag] = child.text
-
-        stmts = []
-
-        try:
-            dateAndTime = fixTime(vals['Date_and_Time'])
-        except KeyError:
-            pass
-        else:
-            stmts.extend([
+        return vals
+    
+    def timeStatements(self, uri, vals):
+        dateAndTime = None
+        for timeKey in ['Date_and_Time', 'Date_and_Time__original_',
+                        'Date_and_Time__digitized_']:
+            try:
+                dateAndTime = fixTime(vals[timeKey])
+                break
+            except KeyError:
+                pass
+        if dateAndTime is not None:
+            return [
                 # no timezone in exif? i think the best guess is *whatever
                 # california was doing around then*
                 (uri, EXIF.dateTime, Literal(dateAndTime, datatype=XS.dateTime)),
                 # this is for easier searches on date
                 (uri, DC.date, Literal(dateAndTime.split('T')[0], datatype=XS.date)),
                 # camera? exposure stuff? orientation? res?
-                ])
+                ]
+        return []
+    
+
+    def positionStatements(self, uri, vals):
+        stmts = []
         if 'East_or_West_Longitude' in vals:
             try:
                 # this is how palm pre photos come in:
@@ -107,18 +126,15 @@ class ScanExif(object):
                     (point, WGS.long, Literal("%g" % long)),
                     # point could be 'near' other things
                     ])
-        self.graph.add(stmts,
-             context=URIRef("http://photo.bigasterisk.com/scan/exif"))
-        log.info("added exif from %s %s triples" % (filename, len(stmts)))
+        return stmts
 
-    def addFileTime(self, uri, filename):
+    def fileTimeStatements(self, uri, filename):
         dt = datetime.datetime.fromtimestamp(os.path.getmtime(filename))
         dt = dt.replace(tzinfo=tzlocal())
         dateLit = Literal(dt.isoformat(), datatype=XS.dateTime)
-        self.graph.add([(uri, PHO.fileTime, dateLit),
-                       (uri, DC.date, Literal(dateLit.split('T')[0],
-                                              datatype=XS.date))],
-                       context=URIRef("http://photo.bigasterisk.com/scan/exif"))
+        return [(uri, PHO.fileTime, dateLit),
+                (uri, DC.date, Literal(dateLit.split('T')[0],
+                                       datatype=XS.date))]
         
 def floatFromDms(compass, dms):
     d, m, s = map(float, dms.split(', '))

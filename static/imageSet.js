@@ -201,9 +201,11 @@ function fillImageInfo() {
     
     $("#debugRdf").attr('href', 'http://bang:8080/openrdf-workbench/repositories/photo/explore?' + $.param({resource: '<'+picInfo.currentPhotoUri+'>'}));
 
-    $.each(picInfo.facts.factLines, function (i, line) {
-	$("#facts ul").append($("<li>").text(line));
-    });
+    if(picInfo.facts.factLines) {
+	$.each(picInfo.facts.factLines, function (i, line) {
+	    $("#facts ul").append($("<li>").text(line));
+	});
+    }
 
 }
 fillImageInfo(); // *before* page draw

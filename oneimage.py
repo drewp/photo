@@ -143,6 +143,7 @@ class links(object):
             links.setdefault('takenOn', []).append(
                 {'uri' : setUrl(date=row['d']),
                  'label' : row['d']})
+        # photos from email may have only the email's date
 
         for row in relQuery(SCOT.hasTag):
             links.setdefault('withTag', []).append(

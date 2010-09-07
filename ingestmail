@@ -6,3 +6,85 @@ photo library.
 associate metadata about the email with the images
 """
 
+import maillib
+
+import datetime, os, logging, sys, urllib
+from dateutil.tz import tzlocal
+from remotesparql import RemoteSparql
+import networking
+from rdflib import Namespace, RDFS, URIRef, Literal, RDF
+from scanFs import uriOfFilename
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger()
+logging.getLogger("restkit.client").setLevel(logging.WARN)
+
+PHO = Namespace("http://photo.bigasterisk.com/0.1/")
+SITE = Namespace("http://photo.bigasterisk.com/")
+FOAF = Namespace("http://xmlns.com/foaf/0.1/")
+DC = Namespace("http://purl.org/dc/terms/")
+
+def writeExcl(path, content):
+    log.info("writing %r", path)
+    fd = os.open(path, os.O_WRONLY | os.O_EXCL | os.O_CREAT, 0644)
+    os.write(fd, content)
+    os.close(fd)
+
+def main():
+    #f = open("/my/mail/drewp/cur/1283804816.32729_0.bang:2,S")
+    msg = maillib.Message.from_file(sys.stdin)
+
+    attachments = [(f, c) for f, c in msg.attachments()
+                   if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif'))]
+    if not attachments:
+        log.info("no attachments with image extensions")
+        raise SystemExit(0)
+
+    graph = RemoteSparql(networking.graphRepoRoot(),
+                         "photo",
+                         initNs=dict(foaf=FOAF,
+                                     rdfs=RDFS.RDFSNS,
+                                     pho=PHO))
+
+    uri = URIRef("mid:" + urllib.quote(msg.headers['Message-ID'].strip('<>')))
+
+    msgDate = msg.date.date().isoformat()
+    now = Literal(datetime.datetime.now(tzlocal()))
+
+    sender = URIRef("mailto:" + msg.sender[1]) # quote?
+    stmts = [
+        (uri, RDF.type, PHO['Email']),
+        (uri, DC.creator, sender),
+        (sender, RDFS.label, Literal(msg.sender[1])),
+        (sender, FOAF.name, Literal(msg.sender[0])),
+        (uri, DC.created, Literal(msg.date.replace(tzinfo=tzlocal()))),
+        (uri, DC.date, Literal(msg.date.replace(tzinfo=tzlocal()).date())),
+    ]
+
+    for filename, content in attachments:
+        outDir = "/my/pic/email/%s" % msgDate
+        if not os.path.isdir(outDir):
+            os.mkdir(outDir)
+
+        outFilename = filename.replace(" ","_")
+        outPath = os.path.join(outDir, outFilename)
+
+        img = uriOfFilename(rootUri=URIRef(SITE.rstrip('/')),
+                            root='/my/pic',
+                            filename=outPath)
+
+        stmts.extend([
+            (uri, DC['hasPart'], img),
+            (img, PHO['filenameInEmail'], Literal(filename)),
+            (img, PHO['emailReadTime'], now),
+            ])
+
+        log.info("  described new image: %s", img)
+        writeExcl(outPath, content)
+
+
+    ctx = SITE['fromEmail/%s' % uri[4:]] # (already quoted above)
+    graph.add(*stmts, **{'context' : ctx})
+    log.info("added %s statements about %s to context %s", len(stmts), uri, ctx)
+
+main()

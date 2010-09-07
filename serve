@@ -319,6 +319,7 @@ initNs = dict(
         pho=PHO,
         scot=SCOT,
         dc=DC,
+	dcterms=DCTERMS,
     )
 
 if 0:
