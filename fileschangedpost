@@ -19,6 +19,8 @@ logging.getLogger('restkit.client').setLevel(logging.INFO)
 syncImportEndpoint = Resource("http://bang:9042/") # should be a PSHB hub
 
 def post(f):
+    if f.endswith(('.filepart')):
+        return
     syncImportEndpoint.post(
         payload=dict(file=f),
         headers={'Content-Type' : 'application/x-www-form-urlencoded'})

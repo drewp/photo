@@ -76,7 +76,7 @@ def onChange(filename):
             sync.someChange(filename, doubleCheckMtime=True)
             break
 
-    if filename.startswith('/my/pic'):
+    if filename.startswith('/my/pic') and '/.hide/' not in filename:
         # this one wants to hear about image files for path/exif data
         if filename.startswith('/my/pic/upload'):
             fixSftpPerms()
