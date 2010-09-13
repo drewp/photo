@@ -14,6 +14,7 @@ import logging
 logging.basicConfig()
 log = logging.getLogger()
 log.setLevel(logging.DEBUG)
+logging.getLogger('restkit.client').setLevel(logging.INFO)
 
 syncImportEndpoint = Resource("http://bang:9042/") # should be a PSHB hub
 

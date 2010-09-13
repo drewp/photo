@@ -3,7 +3,6 @@ wrapper for the fileschanged command
 """
 import time, os, subprocess, logging, traceback
 log = logging.getLogger('fileschanged')
-log.setLevel(logging.DEBUG)
 
 def runCallback(func, filename):
     try:

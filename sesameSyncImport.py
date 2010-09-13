@@ -3,7 +3,7 @@ import sys
 sys.path.insert(0, "/my/proj/sparqlhttp")
 from sparqlhttp.graph2 import SyncGraph
 from remotesparql import RemoteSparql
-import os, logging, time, web
+import os, logging, time, web, traceback
 from rdflib import Namespace, RDFS
 from sparqlhttp.syncimport import SyncImport, IMP
 from _xmlplus.utils import iso8601
@@ -72,6 +72,7 @@ def onChange(filename):
     for root, sync in syncs.items():
         if filename.startswith(root):
             # this one reads .n3 files into sesame
+            log.info("rdf data sync on %r", filename)
             sync.someChange(filename, doubleCheckMtime=True)
             break
 
@@ -79,6 +80,7 @@ def onChange(filename):
         # this one wants to hear about image files for path/exif data
         if filename.startswith('/my/pic/upload'):
             fixSftpPerms()
+        log.info("scanFs and scanExif on %r", filename)
         picUri = scanFs.fileChanged(filename)
         if picUri is not None:
             scanExif.addPic(picUri)
@@ -130,6 +132,11 @@ urls = (r'/', FileChanged,
 
 
 app = web.application(urls, globals(), autoreload=False)
+
+def errorToUser():
+    return web.webapi._InternalError(traceback.format_exc())
+app.internalerror = errorToUser
+
 application = app.wsgifunc()
 
 # run with spawn -p 9042 --processes=1 --threads=0 sesameSyncImport.application
