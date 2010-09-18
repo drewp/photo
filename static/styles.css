@@ -155,3 +155,14 @@ cursor: pointer;
 div.loginRow {
     padding-left: 10px;
 }
+#starTag {
+    display: inline-block;
+    vertical-align:top;
+    width: 24px;
+    height: 24px;
+    background: url(star-icon-set/star-gold/star-gold24-pair.png?v=2);
+    cursor: pointer;
+}
+#starTag.set {
+    background-position: -24px 0;
+}

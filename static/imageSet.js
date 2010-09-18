@@ -112,6 +112,27 @@ $(function () {
 	});
     }
 
+    function getTagString() {
+	// turns star into a '*' tag
+	return $("#tags").val() + ($("#starTag").hasClass("set") ? " *" : "");
+    }
+    function setTags(tagString) {
+	// turns '*' tag into the star icon setting
+	tagString = " " + tagString + " ";
+	var sansStar = tagString.replace(/ \* /g, "");
+	if (sansStar != tagString) {
+	    $("#starTag").addClass("set");
+	} else {
+	    $("#starTag").removeClass("set");
+	}
+	$("#tags").val(sansStar);
+    }
+  
+    $("#starTag").click(function () {
+	$("#starTag").toggleClass("set");
+	tagsOrDescChanged(false);
+    });
+
     function saveTagsAndDesc() {
 	$("#saveStatus").text("");
 	$("#saveMeta").attr('disabled', true);
@@ -119,9 +140,9 @@ $(function () {
 	    type: 'PUT',
 	    url: picInfo.relCurrentPhotoUri + "/tags", 
 	    data : {
-		tags: $("#tags").val(),
-		desc: $("#desc").val()}, 
-	    success: function(data) { 
+		tags: getTagString(),
+		desc: $("#desc").val()},
+	    success: function(data) {
 		$("#saveStatus").text("ok");
 		refreshTagsAndDesc(data);
 	    },
@@ -130,29 +151,35 @@ $(function () {
     };
     $("#saveMeta").click(saveTagsAndDesc);
 
-    $("#tags,#desc").keypress(function(event) {
-
+    function tagsOrDescChanged(pressedEnter) {
 	// I mean to catch any change, including mouse paste
 	$("#saveMeta").attr('disabled', false);
+	tagsChanged();
 
-	if (event.keyCode == '13') {
+	if (pressedEnter) {
 	    saveTagsAndDesc();
 	    event.preventDefault();
 	    $("#tags,#desc").blur();
 	    return false;
 	}
 	return true;
+    }
+
+    $("#tags,#desc").keypress(function(event) {
+	return tagsOrDescChanged(event.keyCode == '13');
     });
 
     function refreshTagsAndDesc(data) {
-	$("#tags").val(data.tagString);
+	setTags(data.tagString);
 	$("#desc").val(data.desc);
 	$("#saveMeta").attr('disabled', true);
 
 	    // not working with new links section yet
-	$("#otherWithTag").empty();
+	$(".related-withTag").remove();
 	$.each(data.tags, function (i, tag) {
-	    $("#otherWithTag").append("<div><a href=\"/set?tag="+tag+"\">"+tag+"</a></div>");
+	    var label = tag == "*" ? "{starred}" : tag;
+	    $("#related").append(
+		imageLinkListElem("withTag", "/set?tag="+tag, label));
 	});
     }
 
@@ -186,19 +213,23 @@ $(function () {
 
 });
 
+function imageLinkListElem(kind, uri, label) {
+    var li = $("<li>");
+    var a = $("<a>");
+    li.addClass("related-"+kind);
+    a.attr('href', uri).text(label);
+    li.text(kind + " ").append(a);
+    return li;
+}
 
 function fillImageInfo() {
-
     $.each(picInfo.links.links, function (i, kind) {
 	$.each(kind[1], function (i2, link) {
-	    var li = $("<li>");
-	    var a = $("<a>");
-	    a.attr('href', link.uri).text(link.label);
-	    li.text(kind[0] + " ").append(a);
-	    $("#related").append(li);
+	    $("#related").append(
+		imageLinkListElem(kind[0], link.uri, link.label));
 	});
     });
-    
+
     $("#debugRdf").attr('href', 'http://bang:8080/openrdf-workbench/repositories/photo/explore?' + $.param({resource: '<'+picInfo.currentPhotoUri+'>'}));
 
     if(picInfo.facts.factLines) {
@@ -217,7 +248,7 @@ function flickrUpload() {
     var sz = $("#flickrUpload input[name=size]:checked").val();
     st.html('Uploading... ' +
 	    '<img class="spinner" src="static/snake-spinner.gif"/>');
-    
+
     $.post("/flickrUpload/",
 	   {img: picInfo.currentPhotoUri,
 	    size: sz,
