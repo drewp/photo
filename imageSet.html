@@ -150,8 +150,11 @@
       var preloadImg = "<n:invisible n:render="nextImagePreload"/>";
       <n:invisible n:render="tagListJs"/>
     </script>
-    <script type="text/javascript" src="/static/imageSet.js?v12" ></script>
+    <script type="text/javascript" src="/static/imageSet.js?v14" ></script>
 
-    <img id="preload" src=""/>
-  </body>
+    <!-- you can leave src empty and let the js set it after ajax is done,
+	 but in chrome, when the download is interrupted, it sometimes doesn't
+	 resume and you see partial img on the next page -->
+    <img id="preload"><n:attr name="src"><n:invisible n:render="nextImagePreload"/></n:attr></img>  </body>
+
 </html>

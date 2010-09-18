@@ -3,12 +3,12 @@ $(function () {
 	s = s.replace(/^\s*/, "").replace(/\s*$/, "");
 	s = s.replace(/[^a-zA-Z0-9\-_\s]/g, "");
 	s = s.toLowerCase();
-	s = s.replace(/[-_\s]+([a-z0-9])/ig, 
+	s = s.replace(/[-_\s]+([a-z0-9])/ig,
 		      function(z,b) { return b.toUpperCase();} );
 	return s;
     }
 
-    $(".expand").click(function () { 
+    $(".expand").click(function () {
 	$(this).next().toggle('fast');
 	return false;
     }).next().hide();
@@ -50,23 +50,23 @@ $(function () {
 	var cls = $('#addForm select[name=class]').val();
 	var clsWord = /\/([^\/]+)$/.exec(cls)[1].toLowerCase();
 	var label = $('#addForm input[name=label]').val();
-	
-	var newUri = ("http://photo.bigasterisk.com/" + 
-		      (new Date()).getFullYear() + "/" + 
-		      clsWord + "/" + 
+
+	var newUri = ("http://photo.bigasterisk.com/" +
+		      (new Date()).getFullYear() + "/" +
+		      clsWord + "/" +
 		      encodeURIComponent(slug(label)));
 	$('#add-uri').val(newUri);
     }
     $("#addForm select[name=class], #addForm input[name=label]"
      ).bind("keyup change", updateTagUrl);
-    
+
     $("#submitRange").click(function () {
 	$("#rangeState").text("saving...");
-	$.post(document.location + "&tagRange=1", 
-	       {start: $("#rangeStart .pick").text(), 
-		end: $("#rangeEnd .pick").text(), 
+	$.post(document.location + "&tagRange=1",
+	       {start: $("#rangeStart .pick").text(),
+		end: $("#rangeEnd .pick").text(),
 		rdfClass: $('#addForm select[name=class]').val(),
-		label: $("#addForm input[name=label]").val(), 
+		label: $("#addForm input[name=label]").val(),
 		uri: $("#addForm input[name=uri]").val()},
 	       function (data, textStatus) {
 		   $("#rangeState").html(data.msg);
@@ -85,7 +85,7 @@ $(function () {
 	    // no arrow key flips in the text boxes (unless you add ctrl)
 	    return true;
 	}
-	if (e.which == 37) { 
+	if (e.which == 37) {
 	    document.location = arrowPages.prev;
 	} else if (e.which == 39) {
 	    document.location = arrowPages.next;
@@ -93,12 +93,12 @@ $(function () {
 
     });
 
-    
+
     $("#commentsFade").fadeTo(0, 0);
-    $.get(picInfo.relCurrentPhotoUri + "/comments", 
-	  {}, 
-	  function (result) { 
-	      $("#comments").html(result); 
+    $.get(picInfo.relCurrentPhotoUri + "/comments",
+	  {},
+	  function (result) {
+	      $("#comments").html(result);
 	      $("#commentsFade").fadeTo(500, 1);
 	      loadDelayedImgs();
 	      //startNextImgPreload(); // try to do this after other work
@@ -138,7 +138,7 @@ $(function () {
 	$("#saveMeta").attr('disabled', true);
 	$.ajax({
 	    type: 'PUT',
-	    url: picInfo.relCurrentPhotoUri + "/tags", 
+	    url: picInfo.relCurrentPhotoUri + "/tags",
 	    data : {
 		tags: getTagString(),
 		desc: $("#desc").val()},
@@ -252,7 +252,7 @@ function flickrUpload() {
     $.post("/flickrUpload/",
 	   {img: picInfo.currentPhotoUri,
 	    size: sz,
-	    test: ''}, 
+	    test: ''},
 	   function (data) {
 	       st.html("Done: " +
 		       "<a href=\""+data.flickrUrl+"\">flickr copy</a>");
