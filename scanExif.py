@@ -9,6 +9,7 @@ also: http://svn.foaf-project.org/foaftown/geo/photos/old/geoloc_media.pl
 
 """
 from __future__ import division
+from decimal import Decimal
 from rdflib import Namespace, Literal, RDF, URIRef
 import subprocess, logging, os, datetime
 from xml.etree import ElementTree
@@ -29,15 +30,18 @@ class ScanExif(object):
         """Takes sparqlhttp.graph2.SyncGraph"""
         self.graph = graph
 
-    def addPic(self, uri):
+    def addPic(self, uri, rerunScans=False):
         """
         uri has a PHO.filename edge with a real path object. Read that
         path and write more statements from the exif data.
 
-        Skip this if there is already exif data for the image. Todo:
+        Skip this if there is already exif data for the image (unless
+        you force rerunScans).
+
+        Todo:
         notice if the image file -changed-, and reread in that case.
         """
-        if self.graph.contains((uri, EXIF.dateTime, None)):
+        if not rerunScans and self.graph.contains((uri, EXIF.dateTime, None)):
             #log.debug("seen %s" % uri)
             return
         
@@ -51,6 +55,7 @@ class ScanExif(object):
     def addByFilename(self, uri, filename):
         try:
             vals = self.exifValues(filename)
+            log.debug("exif values: %r", vals)
         except (ExpatError, ValueError):
             stmts = self.fileTimeStatements(uri, filename)
         else:
@@ -58,6 +63,7 @@ class ScanExif(object):
 
             stmts.extend(self.timeStatements(uri, vals))
             stmts.extend(self.positionStatements(uri, vals))
+            stmts.extend(self.exposureStatements(uri, vals))
 
         self.graph.add(stmts,
              context=URIRef("http://photo.bigasterisk.com/scan/exif"))
@@ -107,26 +113,42 @@ class ScanExif(object):
 
     def positionStatements(self, uri, vals):
         stmts = []
-        if 'East_or_West_Longitude' in vals:
+
+        try:
+            # this is how old palm pre photos come in:
+            lat = floatFromDms(vals['InteroperabilityIndex'],
+                               vals['InteroperabilityVersion'])
+            long = floatFromDms(vals['East_or_West_Longitude'],
+                                vals['Longitude'])
+        except KeyError:
+            # modern palm pre photos, and presumably other normal systems:
             try:
-                # this is how palm pre photos come in:
-                lat = floatFromDms(vals['InteroperabilityIndex'],
-                                   vals['InteroperabilityVersion'])
+                lat = floatFromDms(vals['North_or_South_Latitude'],
+                                   vals['Latitude'])
                 long = floatFromDms(vals['East_or_West_Longitude'],
                                     vals['Longitude'])
             except KeyError:
-                pass
-            else:
-                point = URIRef("http://photo.bigasterisk.com/point/%g/%g" %
-                               (lat, long))
-                stmts.extend([
-                    (uri, WGS.location, point),
-                    (point, RDF.type, WGS.Point),
-                    (point, WGS.lat, Literal("%g" % lat)),
-                    (point, WGS.long, Literal("%g" % long)),
-                    # point could be 'near' other things
-                    ])
+                return []
+
+        point = URIRef("http://photo.bigasterisk.com/point/%g/%g" %
+                       (lat, long))
+        stmts.extend([
+            (uri, WGS.location, point),
+            (point, RDF.type, WGS.Point),
+            (point, WGS.lat, Literal("%g" % lat, datatype=XS.decimal)),
+            (point, WGS.long, Literal("%g" % long, datatype=XS.decimal)),
+            # point could be 'near' other things
+            ])
         return stmts
+    
+    def exposureStatements(self, uri, vals):
+        stmts = []
+        if 'Exposure_Time' in vals:
+            n, d = map(Decimal, vals['Exposure_Time'].split(' ')[0].split('/'))
+            stmts.append((uri, EXIF['exposureTime'], 
+                          Literal(n/d, datatype=XS.decimal)))
+        return stmts
+
 
     def fileTimeStatements(self, uri, filename):
         dt = datetime.datetime.fromtimestamp(os.path.getmtime(filename))
@@ -137,7 +159,7 @@ class ScanExif(object):
                                        datatype=XS.date))]
         
 def floatFromDms(compass, dms):
-    d, m, s = map(float, dms.split(', '))
+    d, m, s = map(Decimal, dms.split(', '))
     r = d + (m + s / 60) / 60
     if compass in ['S', 'W']:
         r = -r
@@ -148,7 +170,9 @@ def fixTime(exifTime):
     return "%s-%s-%sT%s:%s:%s" % tuple(words)
 
 if __name__ == '__main__':
-    ScanExif(None).addByFilename(None,
-      '/my/pic/phonecam/dt-2009-07-16/CIMG0068.jpg'
-#                                 '/my/pic/digicam/dl-2009-07-20/DSC_0092.JPG'
-                                 )
+    import sys, pprint
+    logging.basicConfig(level=logging.DEBUG)
+    class PrintStmts(object):
+        def add(self, *args, **kw):
+            pprint.pprint(("graph add", args, kw))
+    ScanExif(PrintStmts()).addByFilename(None, sys.argv[1])
