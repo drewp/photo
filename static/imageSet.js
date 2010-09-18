@@ -101,7 +101,7 @@ $(function () {
 	      $("#comments").html(result); 
 	      $("#commentsFade").fadeTo(500, 1);
 	      loadDelayedImgs();
-	      startNextImgPreload(); // try to do this after other work
+	      //startNextImgPreload(); // try to do this after other work
 	  }, "html");
 
     function loadDelayedImgs() {

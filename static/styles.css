@@ -41,8 +41,8 @@ img.current {
     padding: 1px;
 }
 img#preload {
+    display: none;
     width: 0px;
-    border: 0;
 }
 span img {
     width: 75px;
