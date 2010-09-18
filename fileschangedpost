@@ -5,6 +5,10 @@ getting written to the pic areas. It would be nice to run this only on
 the nfs server, but that's solaris and doesn't have any FAM system
 that I'm aware of. So instead I run this on every linux box that might
 write to the pic dirs.
+
+todo: there's a bug where if someone makes a dir and writes a file in
+it right away, we only send a message about the dir. Annoying!
+
 """
 
 from fileschanged import fileschanged
