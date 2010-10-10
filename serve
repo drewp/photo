@@ -207,22 +207,8 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
                 return self.subresource(segments[-1], uri, ctx, request), []
 
             if self.graph.contains((uri, RDF.type, FOAF['Image'])):
-
-                """
-                proxy openid; now compare that header to the allowed viewers. if header is missing or empty, that becomes the 'anonymous' user. other openids are just URIRefs in the graph, and you have to be able to get from the viewableBy link to that URIRef (via any number of groups)
-
-                in the url, take a tag to show. Display a checkbutton of whether the current image has that tag. Take key input to toggle the button. Post button changes as graph edits. click on the tag to go to an imageset of that tag.
-"""
-                
-                if not self.viewable(uri, ctx):
-                    return self.nonViewable(request)
-                
-                if ctx.arg('page'): # old; use {img}/page now
-                    return ImagePage(graph, uri), ()
-
-                return self.imageResource(uri, ctx), ()
-
-
+                return self.imageChild(ctx, uri)
+            
         if segments[0] in ['2003', '2004', '2005', '2006', '2007', 
                            '2008', '2009', '2010', '2011', '2012']:
             its = lambda o: self.graph.contains((uri, RDF.type, o))
