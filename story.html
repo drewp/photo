@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/">
+  <head>
+    <meta charset="utf-8"/>
+    <title>${title}</title>
+    <meta name="viewport" content="initial-scale=1.0, width=device-width, maximum-scale=1.0"/>
+ 
+    <link rel="Stylesheet" type="text/css" href="/static/grid-135.css" media="all" />
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+
+    <script src="/static/jquery.lazyload.mini.js"></script>
+    <script>
+    //<![CDATA[
+// ipad trouble? http://www.appelsiini.net/projects/lazyload#comment-49868170
+		 $(function() {$("img").lazyload({effect      : "fadeIn"});}); 
+    // ]]>
+    </script>
+
+    <style type="text/css" media="all">
+    /* <![CDATA[ */
+
+/*
+	Less Framework 2, version 2.0
+	by Joni Korpi
+	-----------------------------
+	http://lessframework.com
+*/
+
+html, body, div, span, object, iframe, h1, h2, h3, h4, h5, h6, 
+p, blockquote, pre, a, abbr, address, cite, code, del, dfn, em, 
+img, ins, q, small, strong, sub, sup, dl, dt, dd, ol, ul, li, 
+fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+article, aside, figure, figure img, figcaption, hgroup,
+footer, header, nav, section, video, object {
+	display: block;
+}
+
+a img {border: 0;}
+
+figure {position: relative;}
+figure img {width: 100%;}
+
+
+/*
+	Typography presets
+	------------------
+*/
+
+.gigantic {
+	font-size: 105px;
+	line-height: 120px;
+	letter-spacing: -2px;
+}
+
+.huge, h1 {
+	font-size: 68px;
+	line-height: 72px;
+	letter-spacing: -2px;
+}
+
+.large, h2 {
+	font-size: 42px;
+	line-height: 48px;
+	letter-spacing: -1px;
+}
+
+.big, h3 {
+	font-size: 26px;
+	line-height: 36px;
+        padding: 0 10px;
+}
+
+.normal, body {
+	font: 16px/1.5 Helvetica, Arial, sans-serif;
+}
+
+.small, small {
+	font-size: 13px;
+	line-height: 18px;
+} 
+
+
+::selection 	 {background: rgb(255,255,0);}
+::-moz-selection {background: rgb(255,255,0);}
+
+
+body {
+    background: url(/static/bg2.jpg);
+}
+#column {
+    -moz-box-shadow:0 0 37px #514E4A;
+    -webkit-box-shadow:0 0 37px #514E4A;
+}
+.frame {
+    background: url(/static/tint1.png);
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+.caption {
+    background: #c3c587;
+    padding: 15px;
+    margin-bottom: 10px;
+    -moz-border-radius:21px;
+    -webkit-border-radius: 21px;
+    margin: 6px
+}
+
+.comments {
+    background: white;
+}
+.facts {
+    background: #a7a790;
+}
+.picNum {
+    background:none repeat scroll 0 0 #B3B3B3;
+    font-size:10px;
+    height:14px;
+    margin-bottom:-14px;
+    position:relative;
+    text-align:center;
+    width:2em;
+}
+.picNum a {
+    text-decoration: none;
+}
+/*
+todo: 
+click in image bumps page scroll down to the next one. auto-slideshow feature.
+try the plugin that loads imgs only when they're coming up. may not help here.
+actions appear over image: goto full page, email-to, see related, edit tags here, zoom in.
+
+*/
+    /* ]]> */
+</style>
+
+  </head>
+  <body>
+
+    <div class="container_6" id="column">
+      <h2 class="grid_6" style="margin: 20px 0; padding: 0 10px;">${title}: ${dateRange}</h2>
+      <div class="clear"/>
+
+      <py:for each="(rowNum, row) in enumerate(rows)">
+
+	<py:choose test="row['type']">
+	  <h3 py:when="'date'">${row['date'].isoformat()}</h3>
+
+	  <div py:when="'pic'" class="frame grid_6" relphoto="${localSite(row['uri'])}">
+	    <div class="grid_4 alpha">
+	      <a name="${row['anchor']}"/>
+	      <div class="picNum"><a href="#${row['anchor']}">${rowNum}</a></div>
+	      <img src="${localSite(row['uri'])}?size=large"/>
+	      <div class="clear"/>
+	    </div>
+	    <div class="grid_2 omega">
+	      <div><a href="${localSite(row['uri'])}?size=full">Original size</a>, <a href="${localSite(row['uri'])}?size=screen">large size</a></div>
+	      <div class="facts">
+		<ul>
+		  <li py:for="line in row['factLines']">${line}</li>
+		</ul>
+	      </div>
+
+	      <div py:if="row['desc']" class="caption">${row['desc']}</div>
+
+	      <div class="commentSpace grid_2">
+		${row['commentHtml']}
+	      </div>
+	      <div class="clear"/>
+	    </div>
+	  </div>
+	  <div class="clear"/>
+	</py:choose>
+      </py:for>
+
+    </div>
+
+    <div>
+      <a href="http://www.flickr.com/photos/borealnz/3578157418/">background image</a> by <a href="http://www.flickr.com/photos/borealnz/">borealnz</a>
+    </div>
+    <script src="/static/story.js?v=6"></script>
+  </body>
+</html>
