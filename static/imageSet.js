@@ -128,10 +128,11 @@ $(function () {
 	sansStar = sansStar.replace(/^ +/, "").replace(/ +$/, "");
 	$("#tags").val(sansStar);
     }
-  
+
     $("#starTag").click(function () {
 	$("#starTag").toggleClass("set");
 	tagsOrDescChanged();
+	saveTagsAndDesc();
     });
 
     function saveTagsAndDesc() {
