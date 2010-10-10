@@ -20,4 +20,5 @@ def serviceUrl(name):
         'facts' : 'http://%s:9043/facts' % serviceHost,
         'links' : 'http://%s:9043/links' % serviceHost,
         'tags' : 'http://%s:9043/tags' % serviceHost,
+        'comments' : 'http://%s:%s%s' % commentProxy(),
         }[name]

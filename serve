@@ -68,6 +68,15 @@ class StaticCached(static.Data):
         # flickr uses an even longer maxage, and puts on a Expires:
         # Mon, 28 Jul 2014 23:30:00 GMT, and then they have a squid
         # cache providing the image
+
+        # For public requests, it would be nice to omit this so a
+        # cache can give the image to two listeners. 
+        # Note that this header is the only thing 'securing'
+        # non-public requests, and it has to work with trusted
+        # intermediate caches that aren't reachable by users, which is
+        # unrealistic security.
+        request.setHeader('Vary', 'Cookie')      
+
         return static.Data.renderHTTP(self, ctx)
 
 class Main(rend.Page):
@@ -94,10 +103,8 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         return False
 
     def viewable(self, uri,  ctx):
-        log.debug("viewable check for %s", uri)
-        request = inevow.IRequest(ctx)
-
         agent = getUser(ctx)
+        log.debug("viewable check for %s to see %s", agent, uri)
 
         # not final; just matching the old logic
         if agent in auth.superagents:
@@ -137,6 +144,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
             log.debug("a photo topic is viewable by anyone")
             return True
 
+        log.debug("not viewable")
         return False
 
     def subresource(self, lastSegment, uri, ctx, request):
@@ -152,7 +160,6 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
             url.URL.fromString(request.uri).
             add('uri', uri)
             )
-
 
         if lastSegment == 'comments':
             args = networking.commentProxy()
@@ -223,18 +230,53 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
                 its(PHO['Place']) or
                 its(PHO['Person']) or # oops
                 its(FOAF['Person'])):
-
-                if ctx.arg('random'):
-                    import imageSet
-                    reload(imageSet)
-                    return imageSet.RandomImage(graph, uri, ctx), ()
-                
-                import imageSet
-                reload(imageSet)
-                return imageSet.ImageSet(ctx, graph, uri), ()
+                return self.topicChild(ctx, uri)
             print "uri %r not a searchable set" % uri
 
         return rend.Page.locateChild(self, ctx, segments)
+
+    def imageChild(self, ctx, uri):
+        """
+
+        
+        proxy openid; now compare that header to the allowed viewers. if header is missing or empty, that becomes the 'anonymous' user. other openids are just URIRefs in the graph, and you have to be able to get from the viewableBy link to that URIRef (via any number of groups)
+
+        in the url, take a tag to show. Display a checkbutton of whether the current image has that tag. Take key input to toggle the button. Post button changes as graph edits. click on the tag to go to an imageset of that tag.
+        """
+        if not self.viewable(uri, ctx):
+            request = inevow.IRequest(ctx)
+            return self.nonViewable(request)
+
+        if ctx.arg('page'): # old; use {img}/page now
+            return ImagePage(graph, uri), ()
+
+        return self.imageResource(uri, ctx), ()
+        
+
+    def topicChild(self, ctx, uri):
+        if ctx.arg('random'):
+            import imageSet
+            reload(imageSet)
+            return imageSet.RandomImage(self.graph, uri, ctx), ()
+
+        if ctx.arg('edit'):
+            import imageSet
+            reload(imageSet)
+            return imageSet.ImageSet(ctx, self.graph, uri), ()
+
+        return self.makeStoryPage(uri), ()
+
+    def makeStoryPage(self, topic):
+        import story
+        reload(story)
+        class ret(rend.Page):
+            def renderHTTP(self, ctx):
+                req = inevow.IRequest(ctx)
+                req.setHeader('Content-Type', 'application/xhtml+xml')
+                req.write(story.renderPage(graph, topic, getUser(ctx)))
+                req.finish()
+                return ''
+        return ret()
 
     def needAuth(self, ctx):
         request = inevow.IRequest(ctx)

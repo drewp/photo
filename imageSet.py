@@ -103,6 +103,19 @@ def photoDate(graph, img):
     return rows[0]['d']
 
 
+def starFilter(graph, starArg, agent, photos):
+    """culls from your list"""
+    if starArg is None:
+        pass
+    elif starArg == 'only':
+        keep = []
+        for p in photos:
+            if tagging.hasTag(graph, agent, p, SITE['tag/*']):
+                keep.append(p)
+        photos[:] = keep
+    else:
+        raise NotImplementedError("star == %r" % starArg)
+
 
 class ImageSet(rend.Page):
     """
@@ -123,11 +136,13 @@ class ImageSet(rend.Page):
             self.photos = photosWithTopic(self.graph, self.uri)
         self.currentPhoto = None
         if ctx.arg('current') is not None:
-            self.currentPhoto = URIRef(ctx.arg('current'))
+            self.currentPhoto = URIRef(ctx.arg('current'))          
 
         if not self.photos and self.currentPhoto:
             print "featuring one pic"
             self.photos = [self.currentPhoto]
+
+        starFilter(self.graph, ctx.arg('star'), agent, self.photos)
 
         if self.photos and self.currentPhoto not in self.photos:
             self.currentPhoto = self.photos[0]
@@ -172,10 +187,13 @@ class ImageSet(rend.Page):
                 
     def otherImageHref(self, ctx, img):
         href = url.here.add("current", img)
-        for topicKey in ['dir', 'tag', 'date', 'random', 'seed']:
+        for topicKey in ['dir', 'tag', 'date', 'random', 'seed', 'star', 'edit']:
             if ctx.arg(topicKey):
                 href = href.add(topicKey, ctx.arg(topicKey))
         return href
+
+    def render_storyModeUrl(self, ctx, data):
+        return url.here.clear('edit')
 
     def render_rssHref(self, ctx, img):
         href = self.otherImageHref(ctx, img)
@@ -457,6 +475,16 @@ class ImageSet(rend.Page):
             src = "http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"
         return T.script(type='text/javascript', src=src)
     
+    def render_starLinkAll(self, ctx, data):
+        if ctx.arg('star') is None:
+            return ''
+        else:
+            return T.a(href=url.here.clear('star'))[ctx.tag]
+    def render_starLinkOnly(self, ctx, data):
+        if ctx.arg('star') == 'only':
+            return ''
+        else:
+            return T.a(href=url.here.add('star', 'only'))[ctx.tag]
     
     def photoRss(self, ctx):
         request = inevow.IRequest(ctx)

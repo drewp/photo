@@ -7,12 +7,14 @@
           src="http://lite.piclens.com/current/piclens.js" ></script>
 
     <!-- if we're on a phone screen, things should shrink accordingly -->
-   <link rel="Stylesheet" type="text/css" href="/static/styles.css?v3" media="all" />
+   <link rel="Stylesheet" type="text/css" href="/static/styles.css?v4" media="all" />
     <title><n:invisible n:render="title"/></title>
   </head>
   <body>
     <div id="ajaxError" style="display:none"/>
-    <div><a href="/events">Home</a> | Pictures of <span class="tag"><n:invisible n:render="setLabel"/></span></div>
+    <div><a href="/events">Home</a> | 
+Pictures of <span class="tag"><n:invisible n:render="setLabel"/></span> | 
+<a><n:attr name="href"><n:invisible n:render="storyModeUrl"/></n:attr>Story mode</a></div>
     <div class="intro" n:render="intro"></div>
 
     <div class="featured">
@@ -34,8 +36,8 @@
 	      <n:invisible n:render="sflyUploadButton"/>
 	      <n:invisible n:render="uploadButton"/>
 	    </div>
-	    <div class="ac" style="opacity: .4">Email</div>
-	    <div class="ac" style="opacity: .4">Post to blog</div>
+	  <!--  <div class="ac" style="opacity: .4">Email</div>
+	    <div class="ac" style="opacity: .4">Post to blog</div>-->
 	    <div class="ac"><a id="debugRdf">Debug rdf</a></div>
 
 	  </div>
@@ -91,6 +93,7 @@
       </tr>
     </table>
     <div class="photosInSet">
+      <div>Switch to <n:invisible n:render="starLinkAll">all</n:invisible> <n:invisible n:render="starLinkOnly">starred only</n:invisible></div>
       <n:invisible n:render="sequence" n:data="photosInSet">
 	<n:invisible n:pattern="item">
 	  <n:invisible n:render="thumb"/>
@@ -132,7 +135,7 @@
 	    </div>
 	    <div style="clear:both"></div>
 	  </div>
-	  <div>4. <button id="submitRange">Add tag</button></div>
+	  <div>4. <button id="submitRange">Create set</button></div>
 	</div>
       </div>
     </div>
@@ -142,7 +145,6 @@
     </div>
 
     <n:invisible n:render="bestJqueryLink"/>
-    <script type="text/javascript" src="/static/jquery.form.min.js"></script>
     <script type="text/javascript" src="/static/tag.js" ></script>
     <script type="text/javascript" n:render="prevNextJs"/>
     <script type="text/javascript">
@@ -150,7 +152,7 @@
       var preloadImg = "<n:invisible n:render="nextImagePreload"/>";
       <n:invisible n:render="tagListJs"/>
     </script>
-    <script type="text/javascript" src="/static/imageSet.js?v14" ></script>
+    <script type="text/javascript" src="/static/imageSet.js?v21" ></script>
 
     <!-- you can leave src empty and let the js set it after ajax is done,
 	 but in chrome, when the download is interrupted, it sometimes doesn't

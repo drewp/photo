@@ -82,6 +82,9 @@ def hasTags(graph, foafUser, img):
         _hasTags.add(img)
     return ret
 
+def hasTag(graph, foafUser, img, tagUri):
+    # todo: user security check
+    return graph.contains((img, SCOT.hasTag, tagUri))
 
 def getTagsWithFreqs(graph):
     # slow- 200+ ms

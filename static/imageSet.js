@@ -119,18 +119,19 @@ $(function () {
     function setTags(tagString) {
 	// turns '*' tag into the star icon setting
 	tagString = " " + tagString + " ";
-	var sansStar = tagString.replace(/ \* /g, "");
+	var sansStar = tagString.replace(/ \*(?= )/g, "");
 	if (sansStar != tagString) {
 	    $("#starTag").addClass("set");
 	} else {
 	    $("#starTag").removeClass("set");
 	}
+	sansStar = sansStar.replace(/^ +/, "").replace(/ +$/, "");
 	$("#tags").val(sansStar);
     }
   
     $("#starTag").click(function () {
 	$("#starTag").toggleClass("set");
-	tagsOrDescChanged(false);
+	tagsOrDescChanged();
     });
 
     function saveTagsAndDesc() {
@@ -151,14 +152,12 @@ $(function () {
     };
     $("#saveMeta").click(saveTagsAndDesc);
 
-    function tagsOrDescChanged(pressedEnter) {
+    function tagsOrDescChanged(event) {
 	// I mean to catch any change, including mouse paste
 	$("#saveMeta").attr('disabled', false);
-	tagsChanged();
 
-	if (pressedEnter) {
+	if (event && event.keyCode == '13') {
 	    saveTagsAndDesc();
-	    event.preventDefault();
 	    $("#tags,#desc").blur();
 	    return false;
 	}
@@ -166,7 +165,7 @@ $(function () {
     }
 
     $("#tags,#desc").keypress(function(event) {
-	return tagsOrDescChanged(event.keyCode == '13');
+	return tagsOrDescChanged(event);
     });
 
     function refreshTagsAndDesc(data) {
