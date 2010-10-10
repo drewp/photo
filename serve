@@ -21,7 +21,7 @@ from rdflib import Namespace, RDF, RDFS, Literal, Variable, URIRef
 sys.path.append("/my/proj/sparqlhttp")
 from sparqlhttp.dictquery import Graph2
 import auth, networking
-from access import getUser
+import access
 log = logging.getLogger()
 logging.getLogger('restkit.client').setLevel(logging.WARN)
 
@@ -90,62 +90,9 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
     def __init__(self, graph):
         self.graph = graph
 
-    def httpAuthorized(self, ctx):
-        request = inevow.IRequest(ctx)
-        username, password = request.getUser(), request.getPassword()
-        if username and password:
-            userMatches = self.graph.queryd(
-                """SELECT ?user WHERE { ?user pho:username ?u; pho:password ?p . }""",
-                initBindings={Variable("u") : Literal(request.getUser()),
-                              Variable("p") : Literal(request.getPassword())})
-            if userMatches:
-                return True
-        return False
-
     def viewable(self, uri,  ctx):
-        agent = getUser(ctx)
-        log.debug("viewable check for %s to see %s", agent, uri)
-
-        # not final; just matching the old logic
-        if agent in auth.superagents:
-            log.debug("ok, agent %r is in superagents", agent)
-            return True
-
-        # somehow allow local clients who could get to the filesystem
-        # anyway. maybe with a cookie file in the fs, or just ip
-        # screening
-        
-#        if self.httpAuthorized(ctx):
-#            return True
-
-        if (self.graph.contains((uri, PHO['viewableBy'], PHO['friends']))
-            or self.graph.contains((uri, PHO['viewableBy'], PHO['anyone']))):
-            log.debug("ok, graph says :viewableBy :friends or :anyone")
-            return True
-
-        if self.graph.queryd("""
-            SELECT ?post WHERE {
-              <http://bigasterisk.com/ari/> sioc:container_of ?post .
-              ?post sioc:links_to ?uri .
-            }""", initBindings={Variable('uri') : uri}): # should just be ASK
-            # this should also be limiting to readers of the blog!
-            log.debug("ok because it's on the blog")
-            return True
-        
-        # this capability doesn't appear in the make-public button
-        topicViewableBy = set(r['vb'] for r in self.graph.queryd("""
-        SELECT ?vb WHERE {
-          ?uri foaf:depicts ?d .
-          ?d pho:viewableBy ?vb .
-          }
-        """, initBindings={Variable("uri") : uri}))
-        if (PHO['friends'] in topicViewableBy or
-            PHO['anyone'] in topicViewableBy):
-            log.debug("a photo topic is viewable by anyone")
-            return True
-
-        log.debug("not viewable")
-        return False
+        agent = access.getUser(ctx)
+        return access.viewable(self.graph, uri, agent)
 
     def subresource(self, lastSegment, uri, ctx, request):
         """uri is some image, lastSegment is like /comments. This
@@ -189,7 +136,9 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         # if it was an image, we should return a legal image here
           # this should pass our own url in a redirect
           # parameter to openid_proxy
-        return '<a href="/login">openid login required</a>', []
+        
+        return open("static/noaccess.png").read(), []
+
 
     def locateChild(self, ctx, segments):
         request = inevow.IRequest(ctx)
@@ -259,7 +208,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
             def renderHTTP(self, ctx):
                 req = inevow.IRequest(ctx)
                 req.setHeader('Content-Type', 'application/xhtml+xml')
-                req.write(story.renderPage(graph, topic, getUser(ctx)))
+                req.write(story.renderPage(graph, topic, access.getUser(ctx)))
                 req.finish()
                 return ''
         return ret()
@@ -337,7 +286,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
             'http://localhost:9043/viewPerm',
             postdata=urllib.urlencode({'img' : uris}, doseq=True),
             method='POST',
-            headers={'X-Foaf-Agent' : str(getUser(ctx))})))
+            headers={'X-Foaf-Agent' : str(access.getUser(ctx))})))
 
 
 setattr(Main, "child_favicon.ico", static.File("static/favicon.ico"))
