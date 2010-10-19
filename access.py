@@ -35,6 +35,25 @@ def viewable(graph, uri, agent):
         return True
 
     if graph.queryd("""
+        SELECT ?cls WHERE {
+           ?uri pho:viewableBy ?cls .
+           ?agent a ?cls .
+        }
+        """, initBindings={'uri' : uri, 'agent' : agent}):
+        log.debug("ok because the user is in a class who may view the photo")
+        return True
+
+    if graph.queryd("""
+        SELECT ?cls WHERE {
+           ?uri foaf:depicts ?topic . 
+           ?topic pho:viewableByClass ?cls .
+           ?agent a ?cls .
+        }
+        """, initBindings={'uri' : uri, 'agent' : agent}):
+        log.debug("ok because the user is in a class who may view the photo's topic")
+        return True
+
+    if graph.queryd("""
         SELECT ?post WHERE {
           <http://bigasterisk.com/ari/> sioc:container_of ?post .
           ?post sioc:links_to ?uri .
