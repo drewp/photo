@@ -12,7 +12,7 @@ from rdflib import RDFS
 from urls import localSite
 from imageSet import starFilter
 from oneimage import photoCreated
-import networking
+import networking, access
 loader = TemplateLoader(".", auto_reload=True)
 serializer = XHTMLSerializer()
 log = logging.getLogger()
@@ -29,7 +29,7 @@ def syncServiceCall(name, photoUri, foafUser, **moreParams):
     return response.body_string()
 
 @print_timing
-def renderPage(graph, topic, foafUser):
+def renderPage(graph, topic, foafUser, cookie):
     photos = photosWithTopic(graph, topic)
     starFilter(graph, 'only', 'someagent', photos)
     
@@ -68,6 +68,8 @@ def renderPage(graph, topic, foafUser):
         rows=rows,
         title=graph.value(topic, RDFS.label),
         localSite=localSite,
+        loginBar=Markup(networking.getLoginBarSync(cookie)),
+        accessControl=Markup(access.accessControlWidget(graph, foafUser).decode('utf8')),
         dateRange=findDateRange(graph, photos),
         )
     return (''.join(serializer(stream))).encode('utf8')

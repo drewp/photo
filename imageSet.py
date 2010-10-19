@@ -29,7 +29,7 @@ from oneimage import photoCreated
 from search import randomSet, nextDateWithPics
 import tagging, networking
 import auth
-from access import getUser
+from access import getUser, accessControlWidget
 from lib import print_timing
 log = logging.getLogger()
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
@@ -116,6 +116,25 @@ def starFilter(graph, starArg, agent, photos):
     else:
         raise NotImplementedError("star == %r" % starArg)
 
+class ImageSetDesc(object): # in design phase
+    def __init__(self, uriOrQuery):
+        pass
+    def label(self):
+        """
+        Something that could fit in the phrase 'Pictures of _______'
+        e.g. 'DSC_9993.JPG', 'sometagname', '2005-11-12', 'the foo
+        directory', 'random choices'.
+        """
+    def storyModeUrl(self):
+        """this set in story mode"""
+    def relatedSetLinks(self):
+        """all the related ImageSetDescs, e.g. ones with the same tag, etc"""
+    def sampleImages(self):
+        """i had a plan that when we're talking about another image
+        set, we could include a few tiny thumbnails and a count to let
+        you know what that other set has"""
+
+    # methods to make alternate urls of this set with some other params applied
 
 class ImageSet(rend.Page):
     """
@@ -252,6 +271,11 @@ class ImageSet(rend.Page):
 
     def render_loginWidget(self, ctx, data):
         return networking.getLoginBar(inevow.IRequest(ctx).getHeader("cookie") or '').addCallback(T.raw)
+
+    def render_aclWidget(self, ctx, data):
+        import access
+        reload(access)
+        return T.raw(access.accessControlWidget(self.graph, getUser(ctx)))
 
         
     def render_zipSizeWarning(self, ctx, data):

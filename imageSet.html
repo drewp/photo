@@ -9,6 +9,7 @@
     <!-- if we're on a phone screen, things should shrink accordingly -->
    <link rel="Stylesheet" type="text/css" href="/static/styles.css?v4" media="all" />
     <title><n:invisible n:render="title"/></title>
+    <n:invisible n:render="bestJqueryLink"/>
   </head>
   <body>
     <div id="ajaxError" style="display:none"/>
@@ -28,6 +29,7 @@ Pictures of <span class="tag"><n:invisible n:render="setLabel"/></span> |
 	</div>
 	<div style="float: left; width: 400px">
 	  <div class="loginRow"><n:invisible n:render="loginWidget"/></div>
+	  <div class="aclRow"><n:invisible n:render="aclWidget"/></div>
 
 	  <div class="actions" n:render="actionsAllowed">
 	    <h2>Actions</h2>
@@ -144,7 +146,6 @@ Pictures of <span class="tag"><n:invisible n:render="setLabel"/></span> |
       Download a <a rel="nofollow"><n:attr name="href"><n:invisible n:render="zipUrl"/></n:attr>.zip file of the full size images on this page</a> <n:invisible n:render="zipSizeWarning"/>
     </div>
 
-    <n:invisible n:render="bestJqueryLink"/>
     <script type="text/javascript" src="/static/tag.js" ></script>
     <script type="text/javascript" n:render="prevNextJs"/>
     <script type="text/javascript">

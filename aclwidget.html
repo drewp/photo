@@ -1,0 +1,20 @@
+<div class="aclWidget" xmlns="http://www.w3.org/1999/xhtml"> 
+Who can see these photos: <button>&#9660;</button>
+<div class="expandable" style="display: none">
+<div style="opacity: .5"><input name="ariBlog" type="checkbox"/> Ari blog readers</div>
+<div style="opacity: .5"><input type="checkbox"/> anyone logged in</div>
+<div style="opacity: .5"><input type="checkbox"/> anyone</div>
+</div>
+<script type="text/javascript">
+// <![CDATA[
+  $(function () {
+    $(".aclWidget button").click(function () {
+      $(".aclWidget .expandable").toggle();
+    });
+    $(".aclWidget input[name=ariBlog]").change(function () {
+      $(".aclWidget input[name=ariBlog]").val();
+    });
+  });
+// ]]>
+</script>
+</div>

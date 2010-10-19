@@ -1,10 +1,15 @@
 from twisted.web.client import getPage
+from restkit import request
 
 serviceHost = 'bang'
 
 def getLoginBar(cookie=''):
     return getPage("http://%s:9023/_loginBar" % serviceHost,
                    headers={"Cookie" : cookie})
+
+def getLoginBarSync(cookie=''):
+    return request("http://%s:9023/_loginBar" % serviceHost,
+                   headers={"Cookie" : cookie}).body_string()
 
 def graphRepoRoot():
     return "http://%s:8080/openrdf-sesame/repositories" % serviceHost

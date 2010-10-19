@@ -2,7 +2,11 @@ import logging
 from rdflib import URIRef, Namespace
 from nevow import inevow
 import auth
+from genshi.template import TemplateLoader
+from genshi.output import XHTMLSerializer
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
+loader = TemplateLoader(".", auto_reload=True)
+serializer = XHTMLSerializer()
 
 log = logging.getLogger()
 
@@ -76,3 +80,17 @@ def viewable(graph, uri, agent):
 
     log.debug("not viewable")
     return False
+
+def agentMaySetAccessControl(agent):
+    return agent in auth.superagents
+
+def accessControlWidget(graph, agent):
+    if not agentMaySetAccessControl(agent):
+        return ""
+
+    tmpl = loader.load("aclwidget.html")
+
+    stream = tmpl.generate(
+        
+        )
+    return (''.join(serializer(stream))).encode('utf8')

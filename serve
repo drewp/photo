@@ -208,7 +208,9 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
             def renderHTTP(self, ctx):
                 req = inevow.IRequest(ctx)
                 req.setHeader('Content-Type', 'application/xhtml+xml')
-                req.write(story.renderPage(graph, topic, access.getUser(ctx)))
+                cookie = inevow.IRequest(ctx).getHeader("cookie") or ''
+                req.write(story.renderPage(graph, topic, access.getUser(ctx), 
+                                           cookie))
                 req.finish()
                 return ''
         return ret()
