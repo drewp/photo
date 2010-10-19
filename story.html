@@ -18,7 +18,7 @@
 		 $(function() {$("img").lazyload({effect      : "fadeIn"});}); 
     // ]]>
     </script>
-
+<link href="http://fonts.googleapis.com/css?family=Neuton&amp;subset=latin" rel="stylesheet" type="text/css"/>
     <style type="text/css" media="all">
     /* <![CDATA[ */
 
@@ -69,7 +69,6 @@ figure img {width: 100%;}
 .large, h2 {
 	font-size: 42px;
 	line-height: 48px;
-	letter-spacing: -1px;
 }
 
 .big, h3 {
@@ -79,7 +78,7 @@ figure img {width: 100%;}
 }
 
 .normal, body {
-	font: 16px/1.5 Helvetica, Arial, sans-serif;
+	font: 16px/1.5 Neuton, Helvetica, Arial, sans-serif;
 }
 
 .small, small {
@@ -105,12 +104,13 @@ body {
     padding-bottom: 10px;
 }
 .caption {
-    background: #c3c587;
-    padding: 15px;
-    margin-bottom: 10px;
     -moz-border-radius:21px;
-    -webkit-border-radius: 21px;
-    margin: 6px
+    -webkit-border-radius:21px;
+    background:-moz-linear-gradient(center top , #C3C587, #969868);
+    background:-webkit-gradient(linear, center top, center bottom, from(#C3C587), to(#969868));
+    border:1px inset #C3C587;
+    margin:6px;
+    padding:15px;
 }
 
 .comments {
@@ -131,10 +131,18 @@ body {
 .picNum a {
     text-decoration: none;
 }
+.commentlist li {
+    padding:7px;
+    margin:7px 16px 7px 7px;
+    -moz-box-shadow:2px 1px 7px #5B5B5B;
+    -webkit-box-shadow:2px 1px 7px #5B5B5B;
+    background:-moz-linear-gradient(center top , #C2D8D9, #7F9A9C);
+    background:-webkit-gradient(linear, center top, center bottom, from(#C2D8D9), to(#7F9A9C));
+}
+
 /*
 todo: 
 click in image bumps page scroll down to the next one. auto-slideshow feature.
-try the plugin that loads imgs only when they're coming up. may not help here.
 actions appear over image: goto full page, email-to, see related, edit tags here, zoom in.
 
 */
@@ -161,7 +169,7 @@ actions appear over image: goto full page, email-to, see related, edit tags here
 	      <div class="clear"/>
 	    </div>
 	    <div class="grid_2 omega">
-	      <div><a href="${localSite(row['uri'])}?size=full">Original size</a>, <a href="${localSite(row['uri'])}?size=screen">large size</a></div>
+	      <div><a href="${localSite(row['uri'])}?size=screen">Larger size</a> / <a href="${localSite(row['uri'])}?size=full">Full size</a></div>
 	      <div class="facts">
 		<ul>
 		  <li py:for="line in row['factLines']">${line}</li>
