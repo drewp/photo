@@ -131,14 +131,25 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         return StaticCached(jpg, "image/jpeg", mtime)
 
     def nonViewable(self, request):
-        #return self.needAuth(ctx), [] # for http auth
-        request.setResponseCode(http.FORBIDDEN)
-        # if it was an image, we should return a legal image here
-          # this should pass our own url in a redirect
-          # parameter to openid_proxy
-        
-        return open("static/noaccess.png").read(), []
+        """
+        this shouldn't reveal whether the image was real or not-- just
+        that there's nothing you can get to at your access level.
+        """
+        accept = request.getHeader('accept')
+        ua = request.getHeader('user-agent')
 
+        if (accept.split(',')[0].startswith('image/') or
+            # http://code.google.com/p/chromium/issues/detail?id=63173
+            ('Chromium' in ua and accept == '*/*')):
+            log.info("failing with image")
+            return open("static/noaccess.png").read()
+        
+        request.setHeader('WWW-Authenticate', 'Basic realm="topsecret"')
+        request.setResponseCode(http.UNAUTHORIZED)
+        #request.setResponseCode(http.FORBIDDEN)
+        log.info("failing with text")
+        # todo: login prompt if they weren't logged in; apology if they were
+        return "Authentication required."        
 
     def locateChild(self, ctx, segments):
         request = inevow.IRequest(ctx)
@@ -180,7 +191,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         """
         if not self.viewable(uri, ctx):
             request = inevow.IRequest(ctx)
-            return self.nonViewable(request)
+            return self.nonViewable(request), ()
 
         if ctx.arg('page'): # old; use {img}/page now
             return ImagePage(graph, uri), ()
@@ -214,12 +225,6 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
                 req.finish()
                 return ''
         return ret()
-
-    def needAuth(self, ctx):
-        request = inevow.IRequest(ctx)
-        request.setHeader('WWW-Authenticate', 'Basic realm="topsecret"')
-        request.setResponseCode(http.UNAUTHORIZED)
-        return "Authentication required."        
 
     def child_set(self, ctx):
         import imageSet
