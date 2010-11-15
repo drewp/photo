@@ -69,7 +69,7 @@ def renderPage(graph, topic, foafUser, cookie):
         title=graph.value(topic, RDFS.label),
         localSite=localSite,
         loginBar=Markup(networking.getLoginBarSync(cookie)),
-        accessControl=Markup(access.accessControlWidget(graph, foafUser).decode('utf8')),
+        accessControl=Markup(access.accessControlWidget(graph, foafUser, topic).decode('utf8')),
         dateRange=findDateRange(graph, photos),
         )
     return (''.join(serializer(stream))).encode('utf8')

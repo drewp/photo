@@ -29,11 +29,10 @@ Pictures of <span class="tag"><n:invisible n:render="setLabel"/></span> |
 	</div>
 	<div style="float: left; width: 400px">
 	  <div class="loginRow"><n:invisible n:render="loginWidget"/></div>
-	  <div class="aclRow"><n:invisible n:render="aclWidget"/></div>
 
 	  <div class="actions" n:render="actionsAllowed">
 	    <h2>Actions</h2>
-	    <div class="ac"><n:invisible n:render="public"/></div>
+	    <div class="ac aclRow"><n:invisible n:render="aclWidget"/></div>
 	    <div class="ac">
 	      <n:invisible n:render="sflyUploadButton"/>
 	      <n:invisible n:render="uploadButton"/>
@@ -95,6 +94,7 @@ Pictures of <span class="tag"><n:invisible n:render="setLabel"/></span> |
       </tr>
     </table>
     <div class="photosInSet">
+      <div><n:invisible n:render="setAclWidget"/></div>
       <div>Switch to <n:invisible n:render="starLinkAll">all</n:invisible> <n:invisible n:render="starLinkOnly">starred only</n:invisible></div>
       <n:invisible n:render="sequence" n:data="photosInSet">
 	<n:invisible n:pattern="item">
@@ -147,6 +147,7 @@ Pictures of <span class="tag"><n:invisible n:render="setLabel"/></span> |
     </div>
 
     <script type="text/javascript" src="/static/tag.js" ></script>
+    <script type="text/javascript" src="/static/aclwidget.js" ></script>
     <script type="text/javascript" n:render="prevNextJs"/>
     <script type="text/javascript">
       var picInfo = <n:invisible n:render="picInfoJson"/>;

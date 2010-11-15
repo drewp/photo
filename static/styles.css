@@ -6,6 +6,10 @@ body {
     background: black;
     color: white;
 }
+form {
+    margin: 0;
+    padding: 0;
+}
 h1 {
     font-size: 110%;
 }
@@ -44,7 +48,7 @@ img#preload {
     display: none;
     width: 0px;
 }
-span img {
+.photosInSet span img {
     width: 75px;
     height: 56px;
 }
@@ -165,4 +169,27 @@ div.loginRow {
 }
 #starTag.set {
     background-position: -24px 0;
+}
+span.result {
+    color: #4F475C;
+}
+.aclWidget .inferred {
+    color: green;
+}
+.aclWidget .accessAgents {
+    margin: 0;
+}
+.aclWidget .accessAgents li {
+    list-style: none;
+}
+
+.aclWidget .expandable {
+    background: #2a343d;
+    border: 1px solid white;
+    display: none;
+    padding: 10px;
+    position: absolute;
+    z-index: 100;
+    box-shadow: 4px 7px 10px #000000;
+    -webkit-box-shadow: 4px 7px 10px #000000;
 }

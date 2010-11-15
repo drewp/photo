@@ -23,13 +23,12 @@ from twisted.web.client import getPage
 from isodate.isodates import parse_date, date_isoformat
 from photos import Full, thumb, sizes
 from urls import localSite, absoluteSite
-from public import isPublic, allPublic
 from edit import writeStatements
 from oneimage import photoCreated
 from search import randomSet, nextDateWithPics
 import tagging, networking
 import auth
-from access import getUser, accessControlWidget
+from access import getUser, accessControlWidget, isPublic
 from lib import print_timing
 log = logging.getLogger()
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
@@ -275,8 +274,16 @@ class ImageSet(rend.Page):
     def render_aclWidget(self, ctx, data):
         import access
         reload(access)
-        return T.raw(access.accessControlWidget(self.graph, getUser(ctx)))
-
+        return T.raw(access.accessControlWidget(self.graph, getUser(ctx),
+                                                self.currentPhoto))
+    def render_setAclWidget(self, ctx, data):
+        """
+        access for the whole displayed set
+        """
+        import access
+        reload(access)
+        return T.raw(access.accessControlWidget(self.graph, getUser(ctx),
+                                                URIRef("http://example.com/wholeset")))
         
     def render_zipSizeWarning(self, ctx, data):
         mb = 17.3 / 9 * len(self.photos)
@@ -473,19 +480,6 @@ class ImageSet(rend.Page):
     def render_tagListJs(self, ctx, data):
         freqs = tagging.getTagsWithFreqs(self.graph)
         return "var allTags=" + jsonlib.dumps(freqs.keys()) + ";"
-
-
-    def render_public(self, ctx, data):
-        # becomes a call to oneimage/viewPerm\
-        
-        if isPublic(self.graph, self.currentPhoto):
-            return 'image is public'
-
-        pubAll = ""
-        if not allPublic(self.graph, self.photos):
-            pubAll = T.button(class_="makePub allPublic")["Make all public"]
-        
-        return [T.button(class_="makePub")["Make public"], pubAll]
 
     def render_bestJqueryLink(self, ctx, data):
         req = inevow.IRequest(ctx)

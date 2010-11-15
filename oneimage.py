@@ -17,10 +17,10 @@ import web, sys, jsonlib, datetime, cgi, time, logging, urllib
 from web.contrib.template import render_genshi
 from rdflib import Namespace, RDFS, URIRef, RDF, Variable
 from remotesparql import RemoteSparql
-from public import isPublic, makePublics
 import networking, auth
 from xml.utils import iso8601
 from tagging import getTagLabels
+import access
 
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 SITE = Namespace("http://photo.bigasterisk.com/")
@@ -38,23 +38,13 @@ class viewPerm(object):
         uri = URIRef(i['img'])
         web.header('Content-type', 'application/json')
         return jsonlib.dumps({"viewableBy" :
-                         "public" if isPublic(graph, uri) else "superuser"})
+                    "public" if access.isPublic(graph, uri) else "superuser"})
         
     def POST(self):
         """
-        img=http://photo & img=http://photo2 & ...
+        moved to /aclChange
         """
-        # security here---
-
-        uris = []
-        for k, v in cgi.parse_qsl(web.data()):
-            if k == 'img':
-                uris.append(URIRef(v))
-        
-        makePublics(uris)
-        
-        web.header('Content-type', 'application/json')
-        return '{"msg" : "public"}'
+        raise NotImplementedError
 
 class facts(object):
     def GET(self):

@@ -270,26 +270,34 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
     def child_static(self, ctx):
         return static.File(sibpath(__file__, "static"))
 
-    @inlineCallbacks
-    def child_makePublic(self, ctx):
+    def child_aclChange(self, ctx):
         req = inevow.IRequest(ctx)
         if req.method != 'POST':
             raise ValueError("invalid method")
-        if ctx.arg('uri'):
-            uris = [ctx.arg('uri')]
-        if ctx.arg('allInSet'):
-            # security- make sure this is not making some bad request
-            setJs = yield getPage('http://localhost:8086/'+ctx.arg('allInSet').lstrip('/'),
-                                  headers={'Accept' : 'application/json'})
-            uris = jsonlib.read(setJs)['photos']
-            print "setting", uris
-                        
-        returnValue((yield getPage(
-            'http://localhost:9043/viewPerm',
-            postdata=urllib.urlencode({'img' : uris}, doseq=True),
-            method='POST',
-            headers={'X-Foaf-Agent' : str(access.getUser(ctx))})))
 
+        user = access.getUser(ctx)
+        agent = URIRef(ctx.arg('agent'))
+        accessTo = URIRef(ctx.arg('accessTo'))
+        op = ctx.arg('op')
+        if op == 'allow':
+            access.addAccess(graph, user, agent, accessTo)
+            return returnJson({"msg" : "added", "agentState":True})
+        elif op == 'deny':
+            access.removeAccess(graph, user, agent, accessTo)
+            return returnJson({"msg" : "removed", "agentState":False})
+        else:
+            raise NotImplementedError("op: %r" % op)
+
+def returnJson(d):
+    class ret(rend.Page):
+        def renderHTTP(self, ctx):
+            req = inevow.IRequest(ctx)
+            req.setHeader('Content-Type', 'application/json')
+            req.write(jsonlib.write(d))
+            req.finish()
+            return ''
+    return ret()
+    
 
 setattr(Main, "child_favicon.ico", static.File("static/favicon.ico"))
 
@@ -303,6 +311,7 @@ initNs = dict(
         scot=SCOT,
         dc=DC,
 	dcterms=DCTERMS,
+        acl=Namespace("http://www.w3.org/ns/auth/acl#"),
     )
 
 if 0:

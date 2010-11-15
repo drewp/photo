@@ -196,21 +196,7 @@ $(function () {
 	$(this).append("<p>Ajax error: "+xhr.responseText+"</p>");
     });
 
-    $(".makePub").click(function() {
-	var button = $(this);
-	var params = {uri: picInfo.currentPhotoUri};
-	if (button.hasClass("allPublic")) {
-	    params = {allInSet: ""+document.location.pathname + document.location.search};
-	}
-	$.post('/makePublic', params,
-	       function(data, textStatus) {
-		   button.replaceWith(data);
-	       });
-    });
-
     $("#tags").focus();
-
-
 });
 
 function imageLinkListElem(kind, uri, label) {
