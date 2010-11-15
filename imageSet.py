@@ -12,7 +12,7 @@ download from flickr
 ocr and search, like http://norman.walsh.name/2009/11/01/evernote
 """
 from __future__ import division
-import logging, zipfile, datetime, jsonlib, urllib, random, cgi, time, traceback
+import logging, zipfile, datetime, jsonlib, urllib, random, time, traceback
 from StringIO import StringIO
 from nevow import loaders, rend, tags as T, inevow, url
 from rdflib import Namespace, Variable, URIRef, RDF, RDFS, Literal
@@ -23,12 +23,12 @@ from twisted.web.client import getPage
 from isodate.isodates import parse_date, date_isoformat
 from photos import Full, thumb, sizes
 from urls import localSite, absoluteSite
+from imageurl import ImageSetDesc, photosWithTopic
 from edit import writeStatements
-from oneimage import photoCreated
-from search import randomSet, nextDateWithPics
+from search import nextDateWithPics
 import tagging, networking
 import auth
-from access import getUser, accessControlWidget, isPublic
+from access import getUser, accessControlWidget
 from lib import print_timing
 log = logging.getLogger()
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
@@ -49,33 +49,6 @@ XS = Namespace("http://www.w3.org/2001/XMLSchema#")
 ##         return str(self.original.getvalue())
 ## try: registerAdapter(StringIOView, StringIO, inevow.IResource)
 ## except ValueError: pass
-
-def photosWithTopic(graph, uri):
-    """photos can be related to uri in a variety of ways: foaf:depicts,
-    dc:date, etc"""
-    q = graph.queryd("""SELECT DISTINCT ?photo WHERE {
-                               {
-                                 ?photo foaf:depicts ?u .
-                               } UNION {
-                                 ?photo pho:inDirectory ?u .
-                               } UNION {
-                                 ?photo scot:hasTag ?u .
-                               } UNION {
-                                 ?photo dc:date ?u .
-                               } UNION {
-                                 ?email a pho:Email ; dc:date ?u ; dcterms:hasPart ?photo .
-                               }
-                              # ?photo pho:viewableBy pho:friends .
-                             }""",
-                          initBindings={Variable('u') : uri})
-
-    def sortkey(uri):
-        try:
-            return photoCreated(graph, uri)
-        except ValueError:
-            return datetime.datetime(1,1,1)
-
-    return sorted([row['photo'] for row in q], key=sortkey)
 
 @print_timing
 def photoDate(graph, img):
@@ -102,39 +75,6 @@ def photoDate(graph, img):
     return rows[0]['d']
 
 
-def starFilter(graph, starArg, agent, photos):
-    """culls from your list"""
-    if starArg is None:
-        pass
-    elif starArg == 'only':
-        keep = []
-        for p in photos:
-            if tagging.hasTag(graph, agent, p, SITE['tag/*']):
-                keep.append(p)
-        photos[:] = keep
-    else:
-        raise NotImplementedError("star == %r" % starArg)
-
-class ImageSetDesc(object): # in design phase
-    def __init__(self, uriOrQuery):
-        pass
-    def label(self):
-        """
-        Something that could fit in the phrase 'Pictures of _______'
-        e.g. 'DSC_9993.JPG', 'sometagname', '2005-11-12', 'the foo
-        directory', 'random choices'.
-        """
-    def storyModeUrl(self):
-        """this set in story mode"""
-    def relatedSetLinks(self):
-        """all the related ImageSetDescs, e.g. ones with the same tag, etc"""
-    def sampleImages(self):
-        """i had a plan that when we're talking about another image
-        set, we could include a few tiny thumbnails and a count to let
-        you know what that other set has"""
-
-    # methods to make alternate urls of this set with some other params applied
-
 class ImageSet(rend.Page):
     """
     multiple images, with one currently-featured one. Used for search results
@@ -142,29 +82,18 @@ class ImageSet(rend.Page):
     docFactory = loaders.xmlfile("imageSet.html")
     @print_timing
     def __init__(self, ctx, graph, uri, **kw):
+        """
+        uri is the whole page load (relative) uri
+        """
         self.graph, self.uri = graph, uri
         agent = getUser(ctx)
-        if uri == PHO.randomSet:
-            self.photos = [r['pic'] for r in
-                           randomSet(graph, kw.get('randomSize', 10),
-                                     agent,
-                                     seed=kw.get('seed', None))]
-            self.setLabel = 'random choices'
-        else:
-            self.photos = photosWithTopic(self.graph, self.uri)
-        self.currentPhoto = None
-        if ctx.arg('current') is not None:
-            self.currentPhoto = URIRef(ctx.arg('current'))          
 
-        if not self.photos and self.currentPhoto:
-            print "featuring one pic"
-            self.photos = [self.currentPhoto]
-
-        starFilter(self.graph, ctx.arg('star'), agent, self.photos)
-
-        if self.photos and self.currentPhoto not in self.photos:
-            self.currentPhoto = self.photos[0]
-
+        desc = ImageSetDesc(graph, agent, uri)
+        self.topic = desc.topic
+        self.photos = desc.photos()
+        self.setLabel = desc.label()
+        self.currentPhoto = desc.currentPhoto()
+        
     @inlineCallbacks
     def render_picInfoJson(self, ctx, data):
         # vars for the javascript side to use
@@ -191,17 +120,7 @@ class ImageSet(rend.Page):
         returnValue(ret)
         
     def render_setLabel(self, ctx, data):
-
-        if self.graph.contains((self.uri, RDF.type, PHO.DiskDirectory)):
-            return ["directory ", self.graph.value(self.uri, PHO.filename)]
-
-        if hasattr(self, 'setLabel'):
-            return self.setLabel
-
-        if isinstance(self.uri, Literal):
-            return self.uri
-        
-        return self.graph.label(self.uri)
+        return self.setLabel
                 
     def otherImageHref(self, ctx, img):
         href = url.here.add("current", img)
@@ -282,8 +201,10 @@ class ImageSet(rend.Page):
         """
         import access
         reload(access)
-        return T.raw(access.accessControlWidget(self.graph, getUser(ctx),
-                                                URIRef("http://example.com/wholeset")))
+        req = inevow.IRequest(ctx)
+        return T.raw(access.accessControlWidget(
+            self.graph, getUser(ctx),
+            URIRef("http://photo.bigasterisk.com" + req.uri)))
         
     def render_zipSizeWarning(self, ctx, data):
         mb = 17.3 / 9 * len(self.photos)
@@ -301,7 +222,7 @@ class ImageSet(rend.Page):
         request = inevow.IRequest(ctx)
         request.setHeader("Content-Type", "multipart/x-zip")
 
-        downloadFilename = self.uri.split('/')[-1] + ".zip"
+        downloadFilename = self.topic.split('/')[-1] + ".zip"
         request.setHeader("Content-Disposition",
                           "attachment; filename=%s" %
                           downloadFilename.encode('ascii'))
@@ -309,10 +230,11 @@ class ImageSet(rend.Page):
         return f.getvalue()
         
     def render_title(self, ctx, data):
-        return self.graph.label(self.uri)
+        # why not setLabel?
+        return self.graph.label(self.topic)
 
     def render_intro(self, ctx, data):
-        intro = self.graph.value(self.uri, PHO['intro'])
+        intro = self.graph.value(self.topic, PHO['intro'])
         if intro is not None:
             intro = intro.replace(r'\n', '\n') # rdflib parse bug?
             return ctx.tag[T.raw(intro)]
@@ -417,7 +339,7 @@ class ImageSet(rend.Page):
         return [localSite(nextImg), "?size=large"]
 
     def render_zipUrl(self, ctx, data):
-        return [self.uri, "?archive=zip"]
+        return [self.topic, "?archive=zip"]
 
     def render_link(self, ctx, data):
         src = [self.currentPhoto, '?size=large']
@@ -513,7 +435,7 @@ class ImageSet(rend.Page):
         # copied from what flickr emits
         request.setHeader("Content-Type", "text/xml; charset=utf-8")
 
-        items = [T.Tag('title')["bigasterisk %s photos" % self.graph.label(self.uri)]]
+        items = [T.Tag('title')["bigasterisk %s photos" % self.graph.label(self.topic)]]
         for pic in self.photos[-20:]: # no plan yet for the range. use paging i guess
             items.append(T.Tag('item')[
                 T.Tag('title')[self.graph.label(pic, default=pic.split('/')[-1])],

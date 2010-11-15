@@ -208,7 +208,8 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         if ctx.arg('edit'):
             import imageSet
             reload(imageSet)
-            return imageSet.ImageSet(ctx, self.graph, uri), ()
+            return imageSet.ImageSet(ctx, self.graph,
+                                     inevow.IRequest(ctx).uri), ()
 
         return self.makeStoryPage(uri), ()
 
@@ -229,25 +230,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
     def child_set(self, ctx):
         import imageSet
         reload(imageSet)
-
-        kw = {}
-        if ctx.arg('dir'):
-            topic = URIRef(ctx.arg('dir'))
-        elif ctx.arg('tag'):
-            topic = URIRef('http://photo.bigasterisk.com/tag/%s' % ctx.arg('tag'))
-        elif ctx.arg('date'):
-            topic = Literal(ctx.arg('date'), datatype=XS.date)
-        elif ctx.arg('random'):
-            topic = PHO.randomSet
-            kw['randomSize'] = int(ctx.arg('random'))
-            if ctx.arg('seed'):
-                kw['seed'] = int(ctx.arg('seed'))
-        elif ctx.arg('current'):
-            # order is important, since 'current' could appear with other params
-            topic = URIRef(ctx.arg('current'))
-        else:
-            raise ValueError("no topic")
-        return imageSet.ImageSet(ctx, graph, topic, **kw)
+        return imageSet.ImageSet(ctx, graph, inevow.IRequest(ctx).uri)
 
     def child_events(self, ctx):
         import search

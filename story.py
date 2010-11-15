@@ -10,7 +10,7 @@ from genshi.template import TemplateLoader
 from genshi.output import XHTMLSerializer
 from rdflib import RDFS
 from urls import localSite
-from imageSet import starFilter
+from imageurl import starFilter
 from oneimage import photoCreated
 import networking, access
 loader = TemplateLoader(".", auto_reload=True)

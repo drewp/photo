@@ -10,11 +10,13 @@ import logging, random, urllib, time, datetime
 from dateutil.tz import tzlocal
 from rdflib import URIRef, Namespace, RDF, Literal
 import restkit
-from nevow import inevow
+from nevow import inevow, url
 import auth
 from genshi.template import TemplateLoader
 from genshi.output import XHTMLSerializer
 from edit import writeStatements
+from imageurl import ImageSetDesc
+from lib import print_timing
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 ACL = Namespace("http://www.w3.org/ns/auth/acl#")
@@ -110,6 +112,7 @@ def viewableViaInference(graph, uri, agent):
 
     return False
 
+@print_timing
 def viewable(graph, uri, agent):
     """
     should the resource at uri be retrievable by this agent
@@ -139,7 +142,7 @@ def agentMaySetAccessControl(agent):
     return agent in auth.superagents
 
 # belongs in another module
-def expandPhotos(graph, subject):
+def expandPhotos(graph, user, subject):
     """
     returns the set of images that this subject refers to, plus a
     short description of the set
@@ -149,16 +152,11 @@ def expandPhotos(graph, subject):
     if graph.value(subject, RDF.type) == FOAF.Image:
         return [subject], "this photo"
 
-    if 0: # from old version
-        # security- make sure this is not making some bad request
-        setJs = getPage('http://localhost:8086/'+ctx.arg('allInSet').lstrip('/'),
-                              headers={'Accept' : 'application/json'})
-        uris = jsonlib.read(setJs)['photos']
-        print "setting", uris
-
-    if subject == URIRef("http://example.com/wholeset"):
-        return [subject], "these 51 photos"
-
+    #URIRef('http://photo.bigasterisk.com/set?current=http%3A%2F%2Fphoto.bigasterisk.com%2Femail%2F2010-11-15%2FP1010194.JPG&dir=http%3A%2F%2Fphoto.bigasterisk.com%2Femail%2F2010-11-15%2F')
+    pics = ImageSetDesc(graph, user, subject).photos()
+    if pics:
+        return pics, "these %s photos" % len(pics)
+    
     raise NotImplementedError("expandPhotos on %r" % subject)
 
 def agentCanSeeAllPhotos(graph, agent, photos):
@@ -193,7 +191,7 @@ def accessControlWidget(graph, agent, subject):
     if not agentMaySetAccessControl(agent):
         return ""
 
-    photos, groupDesc = expandPhotos(graph, subject)
+    photos, groupDesc = expandPhotos(graph, agent, subject)
 
     tmpl = loader.load("aclwidget.html")
 

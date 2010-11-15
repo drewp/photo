@@ -1,6 +1,10 @@
-import urllib
+import urllib, logging
 from rdflib import URIRef
+
 SITE = "http://photo.bigasterisk.com/"
+
+log = logging.getLogger()
+
 
 def localSite(url):
     if url.startswith('/'):
@@ -26,3 +30,4 @@ def absoluteSite(url):
 def photoUri(filename):
     assert filename.startswith('/my/pic/')
     return URIRef(SITE + urllib.quote(filename[len("/my/pic/"):]))
+
