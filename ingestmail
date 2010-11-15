@@ -60,7 +60,7 @@ def main():
         (uri, DC.created, Literal(msg.date.replace(tzinfo=tzlocal()))),
         (uri, DC.date, Literal(msg.date.replace(tzinfo=tzlocal()).date())),
     ]
-
+    errs = []
     for filename, content in attachments:
         outDir = "/my/pic/email/%s" % msgDate
         if not os.path.isdir(outDir):
@@ -72,6 +72,12 @@ def main():
         img = uriOfFilename(rootUri=URIRef(SITE.rstrip('/')),
                             root='/my/pic',
                             filename=outPath)
+        try:
+            writeExcl(outPath, content)
+        except OSError, e:
+            errs.append(e)
+            log.error(e)
+            continue
 
         stmts.extend([
             (uri, DC['hasPart'], img),
@@ -80,11 +86,14 @@ def main():
             ])
 
         log.info("  described new image: %s", img)
-        writeExcl(outPath, content)
 
 
     ctx = SITE['fromEmail/%s' % uri[4:]] # (already quoted above)
     graph.add(*stmts, **{'context' : ctx})
     log.info("added %s statements about %s to context %s", len(stmts), uri, ctx)
+
+    if errs:
+        log.error("Some files could not be written: %s" % errs)
+        raise errs[0]
 
 main()
