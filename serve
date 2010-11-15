@@ -19,7 +19,7 @@ print "rdflib", rdflib.__version__
 from rdflib.Graph import ConjunctiveGraph
 from rdflib import Namespace, RDF, RDFS, Literal, Variable, URIRef
 sys.path.append("/my/proj/sparqlhttp")
-from sparqlhttp.dictquery import Graph2
+from sparqlhttp.graph2 import SyncGraph
 import auth, networking
 import access
 log = logging.getLogger()
@@ -314,8 +314,8 @@ initNs = dict(
         acl=Namespace("http://www.w3.org/ns/auth/acl#"),
     )
 
-if 0:
-    graph = Graph2(ConjunctiveGraph(), initNs=initNs)
+if 1:
+    graph = SyncGraph('sesame', networking.graphRepoRoot()+'/photo', initNs=initNs)
 else:
     from remotesparql import RemoteSparql
     graph = RemoteSparql(networking.graphRepoRoot(), "photo", initNs=initNs)
