@@ -237,16 +237,21 @@ def addAccess(graph, user, agent, accessTo):
     subgraph = URIRef('http://photo.bigasterisk.com/update/%f' % time.time())
     graph.add(stmts, context=subgraph)
     log.info("wrote new auth %s to subgraph %s" % (auth, subgraph))
-    
-def removeAccess(graph, user, agent, accessTo):
-    if not agentMaySetAccessControl(user):
-        raise ValueError("user is not allowed to set access controls")
 
+def legacyRemove(graph, agent, accessTo):
     if graph.queryd("ASK { ?photo pho:viewableBy ?agent . }",
                     initBindings={'photo' : accessTo, 'agent' : agent}):
         stmt = (accessTo, PHO.viewableBy, agent)
         log.info("removing %s", stmt)
         graph.remove([stmt])
+        return True
+    return False    
+    
+def removeAccess(graph, user, agent, accessTo):
+    if not agentMaySetAccessControl(user):
+        raise ValueError("user is not allowed to set access controls")
+
+    if legacyRemove(graph, agent, accessTo):
         return
 
     auths = [row['auth'] for row in graph.queryd("""
