@@ -18,10 +18,9 @@ import rdflib
 print "rdflib", rdflib.__version__
 from rdflib.Graph import ConjunctiveGraph
 from rdflib import Namespace, RDF, RDFS, Literal, Variable, URIRef
-sys.path.append("/my/proj/sparqlhttp")
-from sparqlhttp.graph2 import SyncGraph
 import auth, networking
 import access
+from db import getGraph
 log = logging.getLogger()
 logging.getLogger('restkit.client').setLevel(logging.WARN)
 
@@ -291,22 +290,7 @@ setattr(Main, "child_favicon.ico", static.File("static/favicon.ico"))
 
 logging.basicConfig(level=logging.DEBUG)
 
-initNs = dict(
-        foaf=FOAF,
-        rdfs=RDFS.RDFSNS,
-        sioc=SIOC,
-        pho=PHO,
-        scot=SCOT,
-        dc=DC,
-	dcterms=DCTERMS,
-        acl=Namespace("http://www.w3.org/ns/auth/acl#"),
-    )
-
-if 1:
-    graph = SyncGraph('sesame', networking.graphRepoRoot()+'/photo', initNs=initNs)
-else:
-    from remotesparql import RemoteSparql
-    graph = RemoteSparql(networking.graphRepoRoot(), "photo", initNs=initNs)
+graph = getGraph()
 
 application = service.Application('photo')
 webServer = internet.TCPServer(8086, appserver.NevowSite(Main(graph)))
