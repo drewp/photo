@@ -16,6 +16,7 @@ $(function () {
 		   console.log("data", data);
 		   result.text(data.msg);
 		   check.attr('checked', data.agentState);
+		       // need to update the creation rows too
 	       });
 	return false;
     }

@@ -14,15 +14,16 @@ log = logging.getLogger()
 
 
 class ImageSetDesc(object): # in design phase
+    paramsAffectingSet = ['dir', 'tag', 'date', 'star']
     def __init__(self, graph, user, uriOrQuery):
         """
         uriOrQuery is like /set?tag=foo&star=only
         """
 
-        parsedUrl = url.URL.fromString(uriOrQuery)
-        params = dict(parsedUrl.queryList())
+        self.parsedUrl = url.URL.fromString(uriOrQuery)
+        params = dict(self.parsedUrl.queryList())
 
-        completeUri = SITE[parsedUrl.path]
+        completeUri = SITE[self.parsedUrl.path]
         if graph.queryd("ASK { ?img foaf:depicts ?uri }",
                          initBindings={'uri' : completeUri}):
             topic = completeUri
@@ -60,8 +61,11 @@ class ImageSetDesc(object): # in design phase
 
         starFilter(graph, params.get('star'), user, self._photos)
 
-        if self._photos and self._currentPhoto not in self._photos:
-            self._currentPhoto = self._photos[0]
+        if self._currentPhoto not in self._photos:
+            if len(self._photos) == 0:
+                self._currentPhoto = None
+            else:
+                self._currentPhoto = self._photos[0]
 
 
         if graph.contains((topic, RDF.type, PHO.DiskDirectory)):
@@ -73,6 +77,35 @@ class ImageSetDesc(object): # in design phase
 
         self.topic = topic
     
+    def canonicalSetUri(self):
+        """this page uri, but only including the params that affect
+        what pics are shown, and in a stable order. This is suitable
+        for using on authorization rules"""
+        ret = self.parsedUrl.fromString(SITE[str(self.parsedUrl).lstrip('/')])
+        ret = ret.clear()
+        for k,v in sorted(self.parsedUrl.queryList()): # isn't this a problem when new params are added?
+            if k in ['random']:
+                raise ValueError("canonical set uri is undefined for random sets")
+            if k in self.paramsAffectingSet:
+                ret = ret.add(k, v)
+        return URIRef(str(ret))
+
+    def altUrl(self, star=None):
+        """relative url with the requested change
+
+        star='only' or 'all'
+        """
+        ret = self.parsedUrl
+        if star is not None:
+            if star == 'all':
+                ret = ret.remove('star')
+            elif star == 'only':
+                ret = ret.replace('star', 'only')
+            else:
+                raise NotImplementedError
+
+        return str(ret)
+
     def photos(self):
         """
         all the photos this query resolves to
@@ -119,6 +152,8 @@ def starFilter(graph, starArg, agent, photos):
             if tagging.hasTag(graph, agent, p, SITE['tag/*']):
                 keep.append(p)
         photos[:] = keep
+    elif starArg == 'all':
+        pass
     else:
         raise NotImplementedError("star == %r" % starArg)
 
