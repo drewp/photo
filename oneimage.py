@@ -21,6 +21,7 @@ import networking, auth
 from xml.utils import iso8601
 from tagging import getTagLabels
 import access
+from oneimagequery import photoCreated
 
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 SITE = Namespace("http://photo.bigasterisk.com/")
@@ -197,33 +198,8 @@ def personAgeString(isoBirthday, photoDate):
     else:
         return "%.2f years" % (days / 365)
 
-_photoCreated = {} # uri : datetime
-def photoCreated(graph, uri):
-    """datetime of the photo's creation time. Cached for the life of
-    this process"""
-
-    try:
-        return _photoCreated[uri]
-    except KeyError:
-        pass
-    
-    photoDate = (graph.value(uri, EXIF.dateTime) or
-                 graph.value(uri, PHO.fileTime))
-    if photoDate is None:
-        raise ValueError("can't find a date for %s" % uri)
-    try:
-        sec = iso8601.parse(str(photoDate))
-    except Exception:
-        sec = iso8601.parse(str(photoDate) + '-0700')
-
-    # todo: this is losing tz unnecessarily
-    ret = datetime.datetime.fromtimestamp(sec)
-    _photoCreated[uri] = ret
-    return ret
-
-
 if __name__ == '__main__':
-
+    
     graph = RemoteSparql(networking.graphRepoRoot(), "photo",
                          initNs=dict(foaf=FOAF,
                                      rdfs=RDFS.RDFSNS,

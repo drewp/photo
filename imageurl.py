@@ -3,7 +3,7 @@ from rdflib import URIRef, Literal, Namespace, RDF
 from nevow import url
 import tagging
 from search import randomSet
-from oneimage import photoCreated
+from oneimagequery import photoCreated
 
 SITE = Namespace("http://photo.bigasterisk.com/")
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
