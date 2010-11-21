@@ -88,7 +88,7 @@ class ImageSet(rend.Page):
         self.graph, self.uri = graph, uri
         agent = getUser(ctx)
 
-        desc = ImageSetDesc(graph, agent, uri)
+        self.desc = desc = ImageSetDesc(graph, agent, uri)
         self.topic = desc.topic
         self.photos = desc.photos()
         self.setLabel = desc.label()
@@ -97,7 +97,8 @@ class ImageSet(rend.Page):
     @inlineCallbacks
     def render_picInfoJson(self, ctx, data):
         # vars for the javascript side to use
-
+        if self.currentPhoto is None:
+            returnValue("{}")
         results = yield DeferredList([
             serviceCall(ctx, 'links', self.currentPhoto),
             serviceCall(ctx, 'facts', self.currentPhoto),
@@ -191,6 +192,8 @@ class ImageSet(rend.Page):
         return networking.getLoginBar(inevow.IRequest(ctx).getHeader("cookie") or '').addCallback(T.raw)
 
     def render_aclWidget(self, ctx, data):
+        if not self.currentPhoto:
+            return ''
         import access
         reload(access)
         return T.raw(access.accessControlWidget(self.graph, getUser(ctx),
@@ -204,7 +207,7 @@ class ImageSet(rend.Page):
         req = inevow.IRequest(ctx)
         return T.raw(access.accessControlWidget(
             self.graph, getUser(ctx),
-            URIRef("http://photo.bigasterisk.com" + req.uri)))
+            self.desc.canonicalSetUri()))
         
     def render_zipSizeWarning(self, ctx, data):
         mb = 17.3 / 9 * len(self.photos)
@@ -419,12 +422,12 @@ class ImageSet(rend.Page):
         if ctx.arg('star') is None:
             return ''
         else:
-            return T.a(href=url.here.clear('star'))[ctx.tag]
+            return T.a(href=self.desc.altUrl(star='all'))[ctx.tag]
     def render_starLinkOnly(self, ctx, data):
         if ctx.arg('star') == 'only':
             return ''
         else:
-            return T.a(href=url.here.add('star', 'only'))[ctx.tag]
+            return T.a(href=self.desc.altUrl(star='only'))[ctx.tag]
     
     def photoRss(self, ctx):
         request = inevow.IRequest(ctx)

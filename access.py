@@ -20,7 +20,7 @@ from lib import print_timing
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 ACL = Namespace("http://www.w3.org/ns/auth/acl#")
-DC = Namespace("http://purl.org/dc/terms/")
+DCTERMS = Namespace("http://purl.org/dc/terms/")
 loader = TemplateLoader(".", auto_reload=True)
 serializer = XHTMLSerializer()
 log = logging.getLogger()
@@ -64,6 +64,27 @@ def viewableViaPerm(graph, uri, agent):
         return True
 
     if agent and graph.queryd("""
+       SELECT ?auth WHERE {
+         ?auth acl:agent ?agent ; acl:mode acl:Read ; acl:accessTo ?uri .
+       }
+    """, initBindings={'uri' : uri, 'agent' : agent}):
+        log.debug("ok because the user has been authorized to read the photo")
+        return True
+
+    
+    if agent and graph.queryd("""
+       SELECT ?auth WHERE {
+         { ?auth acl:agent ?agentClass . } UNION {
+           ?auth acl:agentClass ?agentClass .
+         }
+         ?auth acl:mode acl:Read ; acl:accessTo ?uri .
+         ?agent a ?agentClass .
+       }
+    """, initBindings={'uri' : uri, 'agent' : agent}):
+        log.debug("ok because the user has been authorized to read the photo")
+        return True
+
+    if agent and graph.queryd("""
         SELECT ?cls WHERE {
            ?uri foaf:depicts ?topic . 
            ?topic pho:viewableByClass ?cls .
@@ -72,6 +93,10 @@ def viewableViaPerm(graph, uri, agent):
         """, initBindings={'uri' : uri, 'agent' : agent}):
         log.debug("ok because the user is in a class who may view the photo's topic")
         return True
+
+
+    if agent:
+        pass#for pic in expansion: if viewableViaPerm(pic): ok
 
     # this capability doesn't appear in the make-public button
     topicViewableBy = set(r['vb'] for r in graph.queryd("""
@@ -149,15 +174,17 @@ def expandPhotos(graph, user, subject):
 
     subject can be a photo itself, some search query, a topic, etc
     """
+
+    # this may be redundant with what ImageSetDesc does with one photo?
     if graph.value(subject, RDF.type) == FOAF.Image:
         return [subject], "this photo"
 
     #URIRef('http://photo.bigasterisk.com/set?current=http%3A%2F%2Fphoto.bigasterisk.com%2Femail%2F2010-11-15%2FP1010194.JPG&dir=http%3A%2F%2Fphoto.bigasterisk.com%2Femail%2F2010-11-15%2F')
     pics = ImageSetDesc(graph, user, subject).photos()
-    if pics:
+    if len(pics) == 1:
+        return pics, "this photo"
+    else:
         return pics, "these %s photos" % len(pics)
-    
-    raise NotImplementedError("expandPhotos on %r" % subject)
 
 def agentCanSeeAllPhotos(graph, agent, photos):
     """
@@ -195,9 +222,14 @@ def accessControlWidget(graph, agent, subject):
 
     tmpl = loader.load("aclwidget.html")
 
-    agents = [(row['label'],
-               all(agentClassCheck(graph, row['uri'], p) for p in photos),
-               row['uri'])
+    def agentRowSetting(agent, subject):
+        if authorizations(graph, row['uri'], subject):
+            return True
+        if all(agentClassCheck(graph, row['uri'], p) for p in photos):
+            return 'inferred'
+        return False
+
+    agents = [(row['label'], agentRowSetting(row['uri'], subject), row['uri'])
               for row in interestingAclAgentsAndClasses(graph)]
 
     # i think the correct thing to list would be *previous perm
@@ -212,9 +244,22 @@ def accessControlWidget(graph, agent, subject):
         desc=groupDesc,
         about=subject,
         agents=agents,
+        describeAuthorizations=lambda agent: describeAuthorizations(graph, agent, subject),
         randomId=lambda: "id-%s" % (random.randint(0,9999999)),
         )
     return (''.join(serializer(stream))).encode('utf8')
+
+def describeAuthorizations(graph, forAgent, accessTo):
+    ret = []
+    for auth in authorizations(graph, forAgent, accessTo):
+        rows = graph.queryd("""SELECT DISTINCT ?creator ?created WHERE {
+                                 OPTIONAL { ?auth dcterms:creator ?creator }
+                                 OPTIONAL { ?auth dcterms:created ?created }
+                               }""", initBindings={'auth' : auth})
+        if not rows:
+            rows = [{}]
+        ret.append((auth, rows[0].get('creator'), rows[0].get('created')))
+    return ret
 
 def addAccess(graph, user, agent, accessTo):
     if not agentMaySetAccessControl(user):
@@ -229,8 +274,8 @@ def addAccess(graph, user, agent, accessTo):
              (auth, ACL.accessTo, accessTo),
              (auth, ACL.agent, agent),
         
-             (auth, DC.creator, user),
-             (auth, DC.created, Literal(datetime.datetime.now(tzlocal())))]
+             (auth, DCTERMS.creator, user),
+             (auth, DCTERMS.created, Literal(datetime.datetime.now(tzlocal())))]
 
     subgraph = URIRef('http://photo.bigasterisk.com/update/%f' % time.time())
     graph.add(stmts, context=subgraph)
@@ -244,6 +289,14 @@ def legacyRemove(graph, agent, accessTo):
         graph.remove([stmt])
         return True
     return False    
+
+def authorizations(graph, forAgent, accessTo):
+    return [row['auth'] for row in graph.queryd("""
+      SELECT ?auth WHERE {
+        ?auth acl:mode acl:Read ;
+          acl:accessTo ?photo ;
+          acl:agent ?agent .
+      }""", initBindings={'photo' : accessTo, 'agent' : forAgent})]
     
 def removeAccess(graph, user, agent, accessTo):
     if not agentMaySetAccessControl(user):
@@ -252,12 +305,7 @@ def removeAccess(graph, user, agent, accessTo):
     if legacyRemove(graph, agent, accessTo):
         return
 
-    auths = [row['auth'] for row in graph.queryd("""
-      SELECT ?auth WHERE {
-        ?auth acl:mode acl:Read ;
-          acl:accessTo ?photo ;
-          acl:agent ?agent .
-      }""", initBindings={'photo' : accessTo, 'agent' : agent})]
+    auths = authorizations(graph, agent, accessTo)
 
     for auth in auths:
         stmt = (auth, None, None)
