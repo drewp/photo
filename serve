@@ -205,10 +205,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
             return imageSet.RandomImage(self.graph, uri, ctx), ()
 
         if ctx.arg('edit'):
-            import imageSet
-            reload(imageSet)
-            return imageSet.ImageSet(ctx, self.graph,
-                                     inevow.IRequest(ctx).uri), ()
+            return self.child_set(ctx), ()
 
         return self.makeStoryPage(uri), ()
 
@@ -229,7 +226,12 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
     def child_set(self, ctx):
         import imageSet
         reload(imageSet)
-        return imageSet.ImageSet(ctx, graph, inevow.IRequest(ctx).uri)
+        ua = inevow.IRequest(ctx).getHeader('user-agent')
+        if 'iPad' in ua or ctx.arg('tablet') == '1':
+            cls = imageSet.ImageSetTablet
+        else:
+            cls = imageSet.ImageSet
+        return cls(ctx, graph, inevow.IRequest(ctx).uri)
 
     def child_events(self, ctx):
         import search

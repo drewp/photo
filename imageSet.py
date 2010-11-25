@@ -125,10 +125,14 @@ class ImageSet(rend.Page):
                 
     def otherImageHref(self, ctx, img):
         href = url.here.add("current", img)
-        for topicKey in ['dir', 'tag', 'date', 'random', 'seed', 'star', 'edit']:
+        for topicKey in ['dir', 'tag', 'date', 'random', 'seed', 'star', 'edit', 'tablet']:
             if ctx.arg(topicKey):
                 href = href.add(topicKey, ctx.arg(topicKey))
         return href
+
+    def render_standardSite(self, ctx, data):
+        return T.a(href=self.otherImageHref(ctx, self.currentPhoto).replace('tablet', '0'))[
+            "Standard site"]
 
     def render_storyModeUrl(self, ctx, data):
         return url.here.clear('edit')
@@ -475,6 +479,9 @@ def serviceCall(ctx, name, uri):
                                       urllib.quote(uri, safe=''))),
             headers={'x-foaf-agent' : str(getUser(ctx)),
                        }).addCallback(endTime)
+
+class ImageSetTablet(ImageSet):
+    docFactory = loaders.xmlfile("tablet.html")
           
 class RandomImage(rend.Page):
     """redirect to any image with this topic.

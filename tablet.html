@@ -1,0 +1,92 @@
+<!DOCTYPE html> 
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:n="http://nevow.com/ns/nevow/0.1"> 
+  <head> 
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" /> 
+    <meta http-equiv="x-ua-compatible" content="ie=edge" /> 
+    <title>bigasterisk photo</title> 
+    <meta name="apple-mobile-web-app-capable" content="yes" /> 
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" /> 
+    <link rel="stylesheet" href="static/slablet/assets/stylesheets/master.css" /> 
+    <script src="static/slablet/assets/javascripts/iscroll.js"></script> 
+    <script src="static/slablet/assets/javascripts/jquery.js"></script> 
+    <script src="static/slablet/assets/javascripts/master.js"></script> 
+  </head> 
+  <body> 
+    <div id="main" class="abs"> 
+      <div class="abs header_upper chrome_dark"> 
+	<span class="float_left button" id="button_navigation"> Navigation </span> 
+	<a href="#" class="float_left button"> Back </a> 
+	<a href="#" class="float_right button"> Sign out </a> 
+	Page Title Here
+      </div> 
+      <div class="abs header_lower chrome_dark"> 
+	<a href="#" class="icon icon_refresh"></a> 
+	<a href="#" class="icon icon_redo"></a> 
+	<a href="#" class="icon icon_loopback"></a> 
+	<a href="#" class="icon icon_squiggle"></a> 
+	<a href="#" class="icon icon_shuffle"></a> 
+	<a href="#" class="icon icon_magnifying_glass"></a> 
+	<a href="#" class="icon icon_map_marker"></a> 
+	<a href="#" class="icon icon_chat"></a> 
+	<a href="#" class="icon icon_chat2"></a> 
+	<a href="#" class="icon icon_medical"></a> 
+	<a href="#" class="icon icon_clock"></a> 
+	<a href="#" class="icon icon_eye"></a> 
+	<a href="#" class="icon icon_target"></a> 
+	<a href="#" class="icon icon_tag"></a> 
+	<a href="#" class="icon icon_tags"></a> 
+	
+      </div> 
+      <div id="main_content" class="abs"> 
+	<div id="main_content_inner"> 
+	  <h1> 
+	    Main Content
+	  </h1> 
+
+	  <img width="500" height="300" alt="Mark and Stephanie" n:render="featured"/>
+
+	  <hr /> 
+	  <p> 
+	    Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+	  </p> 
+	</div> 
+      </div> 
+      <div class="abs footer_lower chrome_dark"> 
+	<a href="#" class="float_left button"> Foo </a> 
+	<a href="#" class="icon icon_bird float_right"></a> 
+	<a n:render="standardSite">Standard version</a>
+	<n:invisible n:render="loginWidget"/>
+      </div> 
+    </div> 
+    <div id="sidebar" class="abs"> 
+      <span id="nav_arrow"></span> 
+      <div class="abs header_upper chrome_dark"> 
+	App Name
+      </div> 
+      <form action="" class="abs header_lower chrome_dark"> 
+	<input type="search" id="q" name="q" placeholder="Search..." /> 
+      </form> 
+      <div id="sidebar_content" class="abs"> 
+	<div id="sidebar_content_inner"> 
+	  <ul id="sidebar_menu"> 
+	    <li id="sidebar_menu_home" class="active"> 
+	      <a href="#"><span class="abs"></span>Home</a> 
+	    </li> 
+
+	    <div><n:invisible n:render="setAclWidget"/></div>
+	    <div>Switch to <n:invisible n:render="starLinkAll">all</n:invisible> <n:invisible n:render="starLinkOnly">starred only</n:invisible></div>
+	    <n:invisible n:render="sequence" n:data="photosInSet">
+	      <li n:pattern="item">
+		<n:invisible n:render="thumb"/>
+	      </li>
+	    </n:invisible>
+	  </ul>
+	</div> 
+      </div> 
+      <div class="abs footer_lower chrome_dark"> 
+	<a href="#" class="icon icon_gear2 float_left"></a> 
+	<span class="float_right gutter_right">Some descriptive text here</span> 
+      </div> 
+    </div> 
+  </body> 
+</html>
