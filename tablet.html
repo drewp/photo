@@ -7,9 +7,22 @@
     <meta name="apple-mobile-web-app-capable" content="yes" /> 
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" /> 
     <link rel="stylesheet" href="static/slablet/assets/stylesheets/master.css" /> 
+    <n:invisible n:render="bestJqueryLink"/>
+
     <script src="static/slablet/assets/javascripts/iscroll.js"></script> 
-    <script src="static/slablet/assets/javascripts/jquery.js"></script> 
+
     <script src="static/slablet/assets/javascripts/master.js"></script> 
+
+    <script type="text/javascript" src="/static/tag.js" ></script>
+    <script type="text/javascript" src="/static/aclwidget.js" ></script>
+    <script type="text/javascript" n:render="prevNextJs"/>
+    <script type="text/javascript">
+      var picInfo = <n:invisible n:render="picInfoJson"/>;
+      var preloadImg = "<n:invisible n:render="nextImagePreload"/>";
+      <n:invisible n:render="tagListJs"/>
+    </script>
+    <script type="text/javascript" src="/static/imageSet.js" ></script>
+
   </head> 
   <body> 
     <div id="main" class="abs"> 
@@ -17,7 +30,12 @@
 	<span class="float_left button" id="button_navigation"> Navigation </span> 
 	<a href="#" class="float_left button"> Back </a> 
 	<a href="#" class="float_right button"> Sign out </a> 
-	Page Title Here
+
+	  <n:invisible n:render="prevNextDateButtons"/>
+	  <n:invisible n:render="stepButtons"/>
+
+<n:invisible n:render="setLabel"/>
+
       </div> 
       <div class="abs header_lower chrome_dark"> 
 	<a href="#" class="icon icon_refresh"></a> 
@@ -40,7 +58,7 @@
       <div id="main_content" class="abs"> 
 	<div id="main_content_inner"> 
 	  <h1> 
-	    Main Content
+	    <n:invisible n:render="currentLabel">Mark and Stephanie play Magic [1 of 16]</n:invisible>
 	  </h1> 
 
 	  <img width="500" height="300" alt="Mark and Stephanie" n:render="featured"/>
