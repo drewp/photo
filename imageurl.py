@@ -60,6 +60,9 @@ class ImageSetDesc(object): # in design phase
             self._photos = [self._currentPhoto]
 
         starFilter(graph, params.get('star'), user, self._photos)
+        if params.get('recent', '').strip():
+            # recent=10 shows the last 10
+            self._photos = self._photos[-int(params['recent'].strip()):]
 
         if self._currentPhoto not in self._photos:
             if len(self._photos) == 0:
@@ -86,7 +89,7 @@ class ImageSetDesc(object): # in design phase
         """
         if not any(t in params for t in ['dir', 'tag', 'date', 'random']):
             return 'current'
-        return ['dir', 'tag', 'date', 'star']
+        return ['dir', 'tag', 'date', 'star', 'recent']
     
     def canonicalSetUri(self):
         """this page uri, but only including the params that affect
@@ -104,10 +107,11 @@ class ImageSetDesc(object): # in design phase
         for k,v in params:
             if k not in importantParams:
                 continue
-            ret = ret.add(k, v)
+            if v.strip():
+                ret = ret.add(k, v)
         return URIRef(str(ret))
 
-    def altUrl(self, star=None):
+    def altUrl(self, star=None, recent=None):
         """relative url with the requested change
 
         star='only' or 'all'
@@ -121,7 +125,22 @@ class ImageSetDesc(object): # in design phase
             else:
                 raise NotImplementedError
 
+        if recent is not None:
+            ret = ret.replace('recent', recent)
+            
         return str(ret)
+
+    def otherImageUrl(self, img):
+        """
+        url with this other image as the current one
+        """
+        return self.parsedUrl.replace('current', img)
+        # old, has not been reviewed
+        for topicKey in ['dir', 'tag', 'date', 'random', 'seed', 'star', 'edit', 'tablet', 'recent']:
+            if ctx.arg(topicKey):
+                href = href.add(topicKey, ctx.arg(topicKey))
+        return href
+
 
     def photos(self):
         """

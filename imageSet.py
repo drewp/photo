@@ -124,17 +124,15 @@ class ImageSet(rend.Page):
         return self.setLabel
                 
     def otherImageHref(self, ctx, img):
-        href = url.here.add("current", img)
-        for topicKey in ['dir', 'tag', 'date', 'random', 'seed', 'star', 'edit', 'tablet']:
-            if ctx.arg(topicKey):
-                href = href.add(topicKey, ctx.arg(topicKey))
-        return href
+        return self.desc.otherImageUrl(img)
 
     def render_standardSite(self, ctx, data):
         return T.a(href=self.otherImageHref(ctx, self.currentPhoto).replace('tablet', '0'))[
             "Standard site"]
 
     def render_storyModeUrl(self, ctx, data):
+        # only works on topic?edit=1 urls, not stuff like
+        # set?tag=foo. error message is poor.
         return url.here.clear('edit')
 
     def render_rssHref(self, ctx, img):
@@ -366,6 +364,15 @@ class ImageSet(rend.Page):
         return ctx.tag['var arrowPages = {prev : "',
                        self.otherImageHref(ctx, prev),'", next : "',
                        self.otherImageHref(ctx, next),'"}']
+
+    def render_recentLinks(self, ctx, data):
+        choices = []
+        for opt in [10, 50, 100]:
+            url = self.desc.altUrl(recent=str(opt))
+            choices.append(T.a(href=url)[opt])
+        choices.append(T.a(href=self.desc.altUrl(recent=''))['all'])
+        return ['show only the ', [[c, ' '] for c in choices],
+                ' most recent of these']
 
     def render_actionsAllowed(self, ctx, data):
         """should the actions section be displayed"""
