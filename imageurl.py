@@ -19,28 +19,11 @@ class ImageSetDesc(object): # in design phase
         """
         uriOrQuery is like /set?tag=foo&star=only
         """
-
+        self.graph = graph
         self.parsedUrl = url.URL.fromString(uriOrQuery)
         params = dict(self.parsedUrl.queryList())
 
-        completeUri = SITE[self.parsedUrl.path]
-        if graph.queryd("ASK { ?img foaf:depicts ?uri }",
-                         initBindings={'uri' : completeUri}):
-            topic = completeUri
-        else:  
-            if 'dir' in params:
-                topic = URIRef(params['dir'])
-            elif 'tag' in params:
-                topic = URIRef('http://photo.bigasterisk.com/tag/%s' % params['tag'])
-            elif 'date' in params:
-                topic = Literal(params['date'], datatype=XS.date)
-            elif 'random' in params:
-                topic = PHO.randomSet
-            elif 'current' in params:
-                # order is important, since 'current' could appear with other params
-                topic = URIRef(params['current'])
-            else:
-                raise ValueError("no topic; %r" % uriOrQuery)
+        topic = self.determineTopic(graph, params)
         
         if topic == PHO.randomSet:
             self._photos = [r['pic'] for r in
@@ -70,15 +53,37 @@ class ImageSetDesc(object): # in design phase
             else:
                 self._currentPhoto = self._photos[0]
 
-
-        if graph.contains((topic, RDF.type, PHO.DiskDirectory)):
-            self.setLabel = ["directory ", graph.value(topic, PHO.filename)]
-        elif isinstance(topic, Literal):
-            self.setLabel = topic
-        else:
-            self.setLabel = graph.label(topic)
-
         self.topic = topic
+
+    @print_timing
+    def determineTopic(self, graph, params):
+        completeUri = SITE[self.parsedUrl.path]
+        if graph.queryd("ASK { ?img foaf:depicts ?uri }",
+                         initBindings={'uri' : completeUri}):
+            topic = completeUri
+        else:  
+            if 'dir' in params:
+                topic = URIRef(params['dir'])
+            elif 'tag' in params:
+                topic = URIRef('http://photo.bigasterisk.com/tag/%s' % params['tag'])
+            elif 'date' in params:
+                topic = Literal(params['date'], datatype=XS.date)
+            elif 'random' in params:
+                topic = PHO.randomSet
+            elif 'current' in params:
+                # order is important, since 'current' could appear with other params
+                topic = URIRef(params['current'])
+            else:
+                raise ValueError("no topic; %r" % params)
+        return topic
+
+    def determineLabel(self, graph, topic):
+        if graph.contains((topic, RDF.type, PHO.DiskDirectory)):
+            return ["directory ", graph.value(topic, PHO.filename)]
+        elif isinstance(topic, Literal):
+            return topic
+        else:
+            return graph.label(topic)
 
     def paramsAffectingSet(self, params):
         """
@@ -106,6 +111,8 @@ class ImageSetDesc(object): # in design phase
         
         for k,v in params:
             if k not in importantParams:
+                continue
+            if (k,v) == ('star', 'all'): # generalize to all default vals?
                 continue
             if v.strip():
                 ret = ret.add(k, v)
@@ -135,12 +142,6 @@ class ImageSetDesc(object): # in design phase
         url with this other image as the current one
         """
         return self.parsedUrl.replace('current', img)
-        # old, has not been reviewed
-        for topicKey in ['dir', 'tag', 'date', 'random', 'seed', 'star', 'edit', 'tablet', 'recent']:
-            if ctx.arg(topicKey):
-                href = href.add(topicKey, ctx.arg(topicKey))
-        return href
-
 
     def photos(self):
         """
@@ -163,6 +164,8 @@ class ImageSetDesc(object): # in design phase
         e.g. 'DSC_9993.JPG', 'sometagname', '2005-11-12', 'the foo
         directory', 'random choices'.
         """
+        if not hasattr(self, 'setLabel'):
+            self.setLabel = self.determineLabel(self.graph, self.topic)
         return self.setLabel
     
     def storyModeUrl(self):
@@ -183,7 +186,7 @@ class ImageSetDesc(object): # in design phase
 
 def starFilter(graph, starArg, agent, photos):
     """culls from your list"""
-    if starArg is None:
+    if starArg is None or starArg == 'all':
         pass
     elif starArg == 'only':
         keep = []
@@ -191,8 +194,6 @@ def starFilter(graph, starArg, agent, photos):
             if tagging.hasTag(graph, agent, p, SITE['tag/*']):
                 keep.append(p)
         photos[:] = keep
-    elif starArg == 'all':
-        pass
     else:
         raise NotImplementedError("star == %r" % starArg)
 

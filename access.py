@@ -142,6 +142,7 @@ def agentImageSetCheck(graph, agent, photo):
      }
     """, initBindings={'agent' : agent}):
         maySee = row['access']
+        log.debug("%r can see %r - is the pic in that set?", agent, maySee)
         try:
             imgSet = ImageSetDesc(graph, agent, maySee)
         except ValueError:
@@ -156,7 +157,9 @@ def viewableViaInference(graph, uri, agent):
     viewable for some reason that can't be removed here
     """
 
-    # not final; just matching the old logic
+    # not final; just matching the old logic. Oops- this fast one gets
+    # checked after some really slow queries. But that's ok; I get a
+    # better taste of the slowness of the site this way
     if agent in auth.superagents:
         log.debug("ok, agent %r is in superagents", agent)
         return True

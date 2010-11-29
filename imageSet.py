@@ -91,7 +91,6 @@ class ImageSet(rend.Page):
         self.desc = desc = ImageSetDesc(graph, agent, uri)
         self.topic = desc.topic
         self.photos = desc.photos()
-        self.setLabel = desc.label()
         self.currentPhoto = desc.currentPhoto()
         
     @inlineCallbacks
@@ -121,7 +120,7 @@ class ImageSet(rend.Page):
         returnValue(ret)
         
     def render_setLabel(self, ctx, data):
-        return self.setLabel
+        return self.desc.label()
                 
     def otherImageHref(self, ctx, img):
         return self.desc.otherImageUrl(img)
