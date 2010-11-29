@@ -13,7 +13,7 @@ from twisted.internet.defer import inlineCallbacks, returnValue, Deferred
 from nevow import appserver, inevow, url
 from nevow import loaders, rend, static, tags as T
 from xml.utils import iso8601
-from photos import Full, thumb, sizes
+from photos import Full, thumb, sizes, getSize
 import rdflib
 print "rdflib", rdflib.__version__
 from rdflib.Graph import ConjunctiveGraph
@@ -52,6 +52,24 @@ class ImagePage(rend.Page):
     docFactory = loaders.stan(T.html[T.body[
         'page', T.directive("large"),
         ]])
+
+def getRequestedSize(ctx):
+    return sizes.get(ctx.arg('size'), 250)
+
+class ImageSizeResponse(rend.Page):
+    """
+    just gets the size of the image. You can still pass a size=large
+    type of param
+    """
+    def __init__(self, graph, uri):
+        self.graph, self.uri = graph, uri
+
+    def renderHTTP(self, ctx):
+        # needs vis check to avoid leaking img existence and size
+        size = getRequestedSize(ctx)
+        w, h = getSize(self.uri, size)
+        inevow.IRequest(ctx).setHeader('Content-type', 'application/json')
+        return jsonlib.dumps({'width' : w, 'height' : h})
 
 class StaticCached(static.Data):
     """
@@ -114,14 +132,15 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         elif lastSegment == 'tags': args = networking.serviceHost, 9043, '/tags'
         elif lastSegment == 'page':
             return ImagePage(graph, uri)
+        elif lastSegment == 'size':
+            return ImageSizeResponse(graph, uri)
         else:
             raise NotImplementedError()
 
         return ReverseProxyResource(*args)
 
     def imageResource(self, uri, ctx):
-        reqSize = ctx.arg('size')
-        size = sizes.get(reqSize, 250)
+        size = getRequestedSize(ctx)
 
         log.debug("need thumb for %r", uri)
         # this ought to return a redirect to a static error image when it breaks
@@ -160,7 +179,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         if segments[0] in myPicSubdirs:
             if segments[-1] in ['facts', 'page', 'links', 'comments',
                                 'histogram', 'tags', 'description',
-                                'sizes', 'access']:
+                                'sizes', 'access', 'size']:
                 # danger, user data!
                 uri = SITE[urllib.quote('/'.join(segments[:-1]))]
                 return self.subresource(segments[-1], uri, ctx, request), []

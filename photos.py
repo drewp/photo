@@ -6,6 +6,7 @@ import os, hashlib, time, random, string, subprocess, urllib, re, logging
 from twisted.python.util import sibpath
 from StringIO import StringIO
 import Image
+from lib import print_timing
 
 log = logging.getLogger()
 
@@ -46,6 +47,10 @@ def thumb(localURL, maxSize=100):
     jpg = _resizeAndSave(localPath, thumbPath, maxSize, localURL)
     return jpg.getvalue(), time.time()
 
+def getSize(localURL, maxSize):
+    # this could probably get a ton faster if the sizes were in a db
+    jpg, mtime = thumb(localURL, maxSize)
+    return Image.open(StringIO(jpg)).size
 
 def justCache(url, sizes, grid=False, gridLogDir='/dev/null'):
     todo = []

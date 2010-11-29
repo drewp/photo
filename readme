@@ -78,6 +78,11 @@ http://photo.bigasterisk.com/description?q=
 
 http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG
 http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG?size=full
+http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/size?size=full
+  -> {'width' : 800, 'height' : 600}
+  this is used for stuffing <img> tag dimensions, for example. It's
+  kept as a separate request in case all the image store moves to a
+  new implementation
 http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/page
   redir to the page, with uri=?? param
 http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/comments
@@ -92,6 +97,7 @@ http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/tags
   PUT to replace
 http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/description
 http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/sizes
+  i forget the point. summarizes all the sizes? see /size
 http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/access -> permissions
   POST users who can see, users who can write comments and make alts
 http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/alt -> cropped/etc
