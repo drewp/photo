@@ -117,6 +117,9 @@ class ImageSetDesc(object): # in design phase
         a single photo from this set, can be selected by the URI
         """
         return self._currentPhoto
+
+    def includesPhoto(self, uri):
+        return uri in self._photos
     
     def label(self):
         """

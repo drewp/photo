@@ -56,7 +56,13 @@ def viewableViaPerm(graph, uri, agent):
 
     if agent and graph.queryd("""
         SELECT ?cls WHERE {
-           ?uri pho:viewableBy ?cls .
+           {
+             ?uri pho:viewableBy ?cls .
+           } UNION {
+             ?auth acl:accessTo ?uri ;
+               acl:agent ?cls ;
+               acl:mode acl:Read .
+           }
            ?agent a ?cls .
         }
         """, initBindings={'uri' : uri, 'agent' : agent}):
@@ -96,7 +102,10 @@ def viewableViaPerm(graph, uri, agent):
 
 
     if agent:
-        pass#for pic in expansion: if viewableViaPerm(pic): ok
+        imgSet = agentImageSetCheck(graph, agent, uri)
+        if imgSet is not None:
+            log.debug("ok because user has permission to see %r", imgSet)
+            return True
 
     # this capability doesn't appear in the make-public button
     topicViewableBy = set(r['vb'] for r in graph.queryd("""
@@ -111,6 +120,36 @@ def viewableViaPerm(graph, uri, agent):
         return True
 
     return False
+
+@print_timing
+def agentImageSetCheck(graph, agent, photo):
+    """
+    does this agent (or one of its classes) have permission to
+    view some imageset that (currently) includes the image?
+
+    returns an imageset URI or None
+    """
+    
+    for row in graph.queryd("""
+     SELECT DISTINCT ?access WHERE {
+       ?auth acl:mode acl:Read ; acl:accessTo ?access .
+       {
+         ?auth acl:agent ?agent
+       } UNION {
+         { ?auth acl:agentClass ?agentClass . } UNION { ?auth acl:agent ?agentClass . }
+         ?agent a ?agentClass .
+       }
+     }
+    """, initBindings={'agent' : agent}):
+        maySee = row['access']
+        try:
+            imgSet = ImageSetDesc(graph, agent, maySee)
+        except ValueError:
+            # includes permissions for things that aren't photos at all
+            continue
+        if imgSet.includesPhoto(photo):
+            return maySee
+    return None
 
 def viewableViaInference(graph, uri, agent):
     """
