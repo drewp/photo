@@ -134,7 +134,7 @@ def agentImageSetCheck(graph, agent, photo):
      SELECT DISTINCT ?access WHERE {
        ?auth acl:mode acl:Read ; acl:accessTo ?access .
        {
-         ?auth acl:agent ?agent
+         ?auth acl:agent ?agent .
        } UNION {
          { ?auth acl:agentClass ?agentClass . } UNION { ?auth acl:agent ?agentClass . }
          ?agent a ?agentClass .

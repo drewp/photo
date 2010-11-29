@@ -52,7 +52,7 @@ def randomSet(graph, n=3, foafUser=None, seed=None):
             SELECT DISTINCT ?pic ?filename WHERE {
               ?pic dc:date ?d .
               ?pic a foaf:Image;
-                   pho:filename ?filename
+                   pho:filename ?filename .
             }""", initBindings={Variable('d') : d})
         if not allPicsThatDay:
             continue
