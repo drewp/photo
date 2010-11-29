@@ -41,8 +41,9 @@ img.not-current {
     margin: 2px;
 } 
 img.current {
-    border: 2px solid #ffc;
+    border: 4px solid #ffc;
     padding: 1px;
+    margin: -1px;
 }
 img#preload {
     display: none;
