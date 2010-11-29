@@ -180,11 +180,11 @@ class ImageSet(rend.Page):
 
         imgStatements = [(img, FOAF.depicts, newUri)
                          for img in self.photos[i1:i2+1]]
-
+        if (ctx.arg('label') or '').strip():
+            imgStatements.append((newUri, RDFS.label, Literal(ctx.arg('label'))))
         writeStatements([
             (newUri, RDF.type, URIRef(ctx.arg('rdfClass'))),
             #(newUri, DC.created, Literal now
-            (newUri, RDFS.label, Literal(ctx.arg('label'))),
             ] + imgStatements)
 
         return jsonlib.dumps({
