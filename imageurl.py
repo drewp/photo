@@ -4,6 +4,7 @@ from nevow import url
 import tagging
 from search import randomSet
 from oneimagequery import photoCreated
+from lib import print_timing
 
 SITE = Namespace("http://photo.bigasterisk.com/")
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
@@ -14,7 +15,6 @@ log = logging.getLogger()
 
 
 class ImageSetDesc(object): # in design phase
-    paramsAffectingSet = ['dir', 'tag', 'date', 'star']
     def __init__(self, graph, user, uriOrQuery):
         """
         uriOrQuery is like /set?tag=foo&star=only
@@ -76,6 +76,17 @@ class ImageSetDesc(object): # in design phase
             self.setLabel = graph.label(topic)
 
         self.topic = topic
+
+    def paramsAffectingSet(self, params):
+        """
+        only some params affect what images are in the set (as opposed
+        to other viewing mode stuff), but this set of params is
+        tricky. E.g. if all you have is 'current', then current
+        affects the set. Normally it doesn't.
+        """
+        if not any(t in params for t in ['dir', 'tag', 'date', 'random']):
+            return 'current'
+        return ['dir', 'tag', 'date', 'star']
     
     def canonicalSetUri(self):
         """this page uri, but only including the params that affect
@@ -83,11 +94,17 @@ class ImageSetDesc(object): # in design phase
         for using on authorization rules"""
         ret = self.parsedUrl.fromString(SITE[str(self.parsedUrl).lstrip('/')])
         ret = ret.clear()
-        for k,v in sorted(self.parsedUrl.queryList()): # isn't this a problem when new params are added?
-            if k in ['random']:
-                raise ValueError("canonical set uri is undefined for random sets")
-            if k in self.paramsAffectingSet:
-                ret = ret.add(k, v)
+
+        params = sorted(self.parsedUrl.queryList())
+        keys = [k for k,v in params]
+        if 'random' in keys:
+            raise ValueError("canonical set uri is undefined for random sets")
+        importantParams = self.paramsAffectingSet(keys)
+        
+        for k,v in params:
+            if k not in importantParams:
+                continue
+            ret = ret.add(k, v)
         return URIRef(str(ret))
 
     def altUrl(self, star=None):
@@ -160,7 +177,7 @@ def starFilter(graph, starArg, agent, photos):
     else:
         raise NotImplementedError("star == %r" % starArg)
 
-
+@print_timing
 def photosWithTopic(graph, uri):
     """photos can be related to uri in a variety of ways: foaf:depicts,
     dc:date, etc"""
