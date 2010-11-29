@@ -196,7 +196,7 @@ def personAgeString(isoBirthday, photoDate):
     if days / 30 < 12:
         return "%.1f months" % (days / 30)
     else:
-        return "%.2f years" % (days / 365)
+        return "%.1f years" % (days / 365)
 
 if __name__ == '__main__':
     
