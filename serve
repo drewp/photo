@@ -174,7 +174,13 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         if 1:
             request.setHost('photo.bigasterisk.com', 80)
 
-        uri = SITE[urllib.quote('/'.join(segments))]
+        uriSuffix = urllib.quote('/'.join(segments))
+        # if you paste a url from a browser to another one, the first
+        # one might have been sending %3A while the second one will
+        # start sending :
+        # This might be a chrome-only issue: http://code.google.com/p/chromium/issues/detail?id=64732
+        uriSuffix = uriSuffix.replace(':', '%3A')
+        uri = SITE[uriSuffix]
 
         if segments[0] in myPicSubdirs:
             if segments[-1] in ['facts', 'page', 'links', 'comments',
