@@ -82,7 +82,7 @@ def renderPage(graph, topic, foafUser, cookie):
     
     stream = tmpl.generate(
         rows=rows,
-        title=graph.value(topic, RDFS.label),
+        title=graph.value(topic, RDFS.label, any=True),
         localSite=localSite,
         loginBar=Markup(networking.getLoginBarSync(cookie)),
         accessControl=Markup(access.accessControlWidget(graph, foafUser, topic).decode('utf8')),
