@@ -12,7 +12,7 @@ download from flickr
 ocr and search, like http://norman.walsh.name/2009/11/01/evernote
 """
 from __future__ import division
-import logging, zipfile, datetime, jsonlib, urllib, random, time, traceback
+import logging, zipfile, datetime, jsonlib, urllib, random, time, traceback, simplejson
 from StringIO import StringIO
 from nevow import loaders, rend, tags as T, inevow, url
 from rdflib import Namespace, Variable, URIRef, RDF, RDFS, Literal
@@ -94,7 +94,7 @@ class ImageSet(rend.Page):
         self.currentPhoto = desc.currentPhoto()
         
     @inlineCallbacks
-    def render_picInfoJson(self, ctx, data):
+    def picInfoJson(self, ctx):
         # vars for the javascript side to use
         if self.currentPhoto is None:
             returnValue("{}")
@@ -110,13 +110,13 @@ class ImageSet(rend.Page):
                 log.error(traceback.format_exc())
                 return jsonlib.write({'error' : str(e)})
 
-        ret = jsonlib.write(dict(
+        ret = T.raw(jsonlib.write(dict(
             relCurrentPhotoUri=localSite(self.currentPhoto),
             currentPhotoUri=self.currentPhoto,
             links=readOrError(results[0][1]),
             facts=readOrError(results[1][1]),
             tags=readOrError(results[2][1]),
-            ))
+            )))
         returnValue(ret)
         
     def render_setLabel(self, ctx, data):
@@ -340,7 +340,8 @@ class ImageSet(rend.Page):
         _, nextImg = self.prevNext()
         if nextImg is None:
             return ''
-        return [localSite(nextImg), "?size=large"]
+        # must always return a string, for json encoding below
+        return localSite(nextImg) + "?size=large"
 
     def render_zipUrl(self, ctx, data):
         return [self.topic, "?archive=zip"]
@@ -352,17 +353,9 @@ class ImageSet(rend.Page):
     def render_otherSizeLinks(self, ctx, data):
         if self.currentPhoto is None:
             return ''
-        
         return [[T.a(href=[localSite(self.currentPhoto), "?size=", s])[
             str(sizes[s]) if sizes[s] != Full else "Original"], " "]
                 for s in 'medium', 'large', 'screen', 'full']
-
-    def render_prevNextJs(self, ctx, data):
-        prev, next = self.prevNext()
-        
-        return ctx.tag['var arrowPages = {prev : "',
-                       self.otherImageHref(ctx, prev),'", next : "',
-                       self.otherImageHref(ctx, next),'"}']
 
     def render_recentLinks(self, ctx, data):
         choices = []
@@ -412,9 +405,9 @@ class ImageSet(rend.Page):
         return T.button(onclick="sflyUpload()")["Upload to ShutterFly"]
 
     @print_timing
-    def render_tagListJs(self, ctx, data):
+    def tagList(self):
         freqs = tagging.getTagsWithFreqs(self.graph)
-        return "var allTags=" + jsonlib.dumps(freqs.keys()) + ";"
+        return freqs.keys()
 
     def render_bestJqueryLink(self, ctx, data):
         req = inevow.IRequest(ctx)
@@ -438,6 +431,33 @@ class ImageSet(rend.Page):
             return ''
         else:
             return T.a(href=self.desc.altUrl(star='only'))[ctx.tag]
+
+
+    def render_pageJson(self, ctx, data):
+        prev, next = self.prevNext()
+
+        picInfo = self.picInfoJson(ctx)
+        arrowPages = T.raw(simplejson.dumps({
+            "prev" : str(self.otherImageHref(ctx, prev)),
+            "next" : str(self.otherImageHref(ctx, next))}))
+        preloadImg = T.raw(simplejson.dumps(
+            self.render_nextImagePreload(ctx, data)))
+
+        agent = getUser(ctx)
+        if agent is not None and tagging.allowedToWrite(self.graph, URIRef(agent)):
+            allTags = T.raw(simplejson.dumps(self.tagList()))
+        else:
+            allTags = T.raw(simplejson.dumps([]))
+        
+        return T.script(type="text/javascript")[
+            T.raw("""
+            // <![CDATA[
+            var picInfo = """), picInfo,";",
+            "var arrowPages = ", arrowPages, ";",
+            "var preloadImg = ", preloadImg, ";",
+            "var allTags = ", allTags, ";",
+            T.raw("""
+            // ]]>""")]
     
     def photoRss(self, ctx):
         request = inevow.IRequest(ctx)
