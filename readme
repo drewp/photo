@@ -124,4 +124,22 @@ http://photo.bigasterisk.com/selection
   so you don't have to make a sel and go to /selection
 
 
+-----------------------------------------------
 
+re-notice all the files in this dir:
+
+for x (`pwd`/*) { curl -d file=`urlquote $x` http://bang:9042/ }
+
+
+-----------------------------------------------
+video stabilization:
+http://public.hronopik.de/vid.stab/features.php?lang=en copied newest one into /usr/lib/transcode
+
+measurement:
+transcode -J stabilize=shakiness=8:accuracy=12:show=1,preview -i CIMG0045.mp4 -y null,null -o dummy
+
+naive corners
+transcode -J transform=smoothing=10:crop=1:optzoom=0:interpol=3:sharpen=0 -i CIMG0045.mp4 -y xvid4 -o stable0045.mp4
+
+zoom and leave-background
+transcode -J transform=smoothing=10:crop=0:optzoom=1:interpol=3:sharpen=0 -i CIMG0045.mp4 -y xvid4 -o stable0045.mp4
