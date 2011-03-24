@@ -20,6 +20,9 @@ PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 SITE = Namespace("http://photo.bigasterisk.com/")
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 
+imageExtensions = ('.jpg', '.gif', '.jpeg')
+videoExtensions = ('.mp4',)
+
 def uriOfFilename(rootUri, root, filename):
     prefix = root.rstrip('/')
     if not filename.startswith(prefix):
@@ -28,7 +31,10 @@ def uriOfFilename(rootUri, root, filename):
     return URIRef(rootUri + urllib.quote(relFile))
 
 def filenameIsImage(filename):
-    for ext in ['.jpg', '.gif', '.jpeg']:
+    """
+     or a video
+    """
+    for ext in imageExtensions + videoExtensions:
         if filename.lower().endswith(ext):
             return True
     return False
@@ -61,12 +67,17 @@ class ScanFs(object):
             return fileUri
         
         dirUri = self.addDir(os.path.dirname(filename))
+        ctx = URIRef("http://photo.bigasterisk.com/scan/fs")
         self.graph.add([
             (fileUri, RDF.type, FOAF.Image),
             (fileUri, PHO.inDirectory, dirUri),
             (fileUri, PHO.filename, Literal(filename)),
             (fileUri, PHO.basename, Literal(os.path.basename(filename)))],
-                       context=URIRef("http://photo.bigasterisk.com/scan/fs"))
+                       context=ctx)
+
+        if filename.endswith('.mp4'):
+            self.graph.add([(fileUri, RDF.type, PHO.Video)], context=ctx)
+
         log.info("added pic %s" % filename)
         return fileUri
 

@@ -266,9 +266,14 @@ class ImageSet(rend.Page):
             cls = "not-current"
             wrap = lambda x: T.a(href=self.otherImageHref(ctx, data))[x]
 
+        if self.graph.contains((data, RDF.type, PHO.Video)):
+            cls += " video"
+            _wrap = wrap
+            wrap = lambda x: _wrap([x, T.div(class_="ovl")])
+
         # if we think the client already has the thumb in-cache, it is
         # poor to use delaysrc here.
-        return T.span[wrap(T.img(class_=cls,
+        return T.span(class_=cls)[wrap(T.img(
                                  #src="/static/loading.jpg",
                                  src=[thisThumbSrc, "?size=thumb"]
                                  ))]
@@ -278,9 +283,12 @@ class ImageSet(rend.Page):
             return ''
         currentLocal = localSite(self.currentPhoto)
         _, next = self.prevNext()
-        return T.a(href=self.otherImageHref(ctx, next))[
-            T.img(src=[currentLocal, "?size=large"],
-                  alt=self.graph.label(self.currentPhoto))]
+        if self.graph.contains((self.currentPhoto, RDF.type, PHO.Video)):
+            return T.Tag('video')(src=[currentLocal, "?size=video2"], controls="1", preload="1", width="600", height="450")
+        else:
+            return T.a(href=self.otherImageHref(ctx, next))[
+                T.img(src=[currentLocal, "?size=large"],
+                      alt=self.graph.label(self.currentPhoto))]
 
     def render_stepButtons(self, ctx, data):
         p, n = self.prevNext()

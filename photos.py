@@ -2,21 +2,23 @@
 depends on exiftool program from libimage-exiftool-perl ubuntu package
 """
 from __future__ import division
-import os, hashlib, time, random, string, subprocess, urllib, re, logging
+import os, hashlib, time, random, string, subprocess, urllib, re, logging, tempfile
 from twisted.python.util import sibpath
 from StringIO import StringIO
 import Image
 from lib import print_timing
-
+from scanFs import videoExtensions
 log = logging.getLogger()
 
 class Full(object): pass
+class Video2(object): "half-size video"
 
 sizes = {'thumb' : 75,
-        'medium' : 250,
-        'large' : 600,
-        'screen' : 1000,
-        'full' : Full}
+         'medium' : 250,
+         'large' : 600,
+         'screen' : 1000,
+         'video2' : Video2,
+         'full' : Full}
 
 tmpSuffix = ".tmp" + ''.join([random.choice(string.letters) for c in range(5)])
 """
@@ -27,9 +29,19 @@ uses 'exiftool', from ubuntu package libimage-exiftool-perl
 def thumb(localURL, maxSize=100):
     """returns jpeg data, mtime
 
+    if maxSize is Video, then you get webm data instead
+
     I forget what's 'local' about localURL. it's just the photo's main URI.
     """
     localPath = _localPath(localURL)
+
+    if localPath.endswith(videoExtensions):
+        if maxSize is Video2:
+            return encodedVideo(localPath)
+        elif maxSize is Full:
+            raise NotImplementedError
+        else:
+            return videoThumbnail(localPath, maxSize)
     
     if maxSize is Full:
         return jpgWithoutExif(localPath), os.path.getmtime(localPath)
@@ -46,6 +58,28 @@ def thumb(localURL, maxSize=100):
 
     jpg = _resizeAndSave(localPath, thumbPath, maxSize, localURL)
     return jpg.getvalue(), time.time()
+
+def encodedVideo(localPath):
+    """returns full webm binary + time. does its own caching"""
+    h = hashlib.md5(localPath + "?size=video2").hexdigest()
+    videoOut = '/var/cache/photo/video/%s/%s.webm' % (h[:2], h[2:])
+    try:
+        f = open(videoOut)
+    except IOError:
+        pass
+    else:
+        return f.read(), os.path.getmtime(videoOut)
+
+    _makeDirToThumb(videoOut)
+    subprocess.call(['/my/site/photo/encodevideo', localPath, videoOut])
+    return open(videoOut).read(), os.path.getmtime(videoOut)
+    
+    
+def videoThumbnail(localPath, maxSize):
+    # this is not caching yet but it should
+    tf = tempfile.NamedTemporaryFile()
+    subprocess.call(['/usr/bin/ffmpegthumbnailer', '-i', localPath, '-o', tf.name, '-c', 'jpeg', '-s', str(maxSize)])
+    return open(tf.name).read(), time.time() # todo
 
 def getSize(localURL, maxSize):
     # this could probably get a ton faster if the sizes were in a db

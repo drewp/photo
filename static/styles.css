@@ -16,6 +16,14 @@ h1 {
 h2 {
     font-size: 105%;
 }
+.video .ovl {
+    background: url("/static/vidplay.png") no-repeat scroll 22px 10px rgba(0, 0, 0, 0.5);
+    height: 56px;
+    left: 3px;
+    position: absolute;
+    top: -17px;
+    width: 74px;
+}
 a {
     color: #ccf;
 } 
@@ -34,13 +42,19 @@ div.intro {
 div.featured {
 
 }
-img.not-current, img.current {
+#featuredPic {
+    text-align: center;
+}
+#featuredPic video {
+
+}
+span.not-current img, span.current img {
 vertical-align: middle;
 }
-img.not-current {
+span.not-current img {
     margin: 2px;
 } 
-img.current {
+span.current img {
     border: 4px solid #ffc;
     padding: 1px;
     margin: -1px;
@@ -80,7 +94,7 @@ div#comments {
 div.tagging {
     width: 350px;
     background: #031;
-    padding: 2px;
+    padding: 8px;
 }
 div.tagging div:nth-child(1) {
     height: 3.3em;

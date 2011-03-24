@@ -83,6 +83,7 @@ def onChange(filename):
         log.info("scanFs and scanExif on %r", filename)
         picUri = scanFs.fileChanged(filename)
         if picUri is not None:
+            # this will fail on videos (though i wish i could get the Pre metadata out of them)
             scanExif.addPic(picUri)
             # todo: freshen thumbs here too? that should be on a lower
             # priority queue than getting the exif/file data

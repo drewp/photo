@@ -218,7 +218,7 @@ def expandPhotos(graph, user, subject):
     """
 
     # this may be redundant with what ImageSetDesc does with one photo?
-    if graph.value(subject, RDF.type) == FOAF.Image:
+    if graph.contains((subject, RDF.type, FOAF.Image)):
         return [subject], "this photo"
 
     #URIRef('http://photo.bigasterisk.com/set?current=http%3A%2F%2Fphoto.bigasterisk.com%2Femail%2F2010-11-15%2FP1010194.JPG&dir=http%3A%2F%2Fphoto.bigasterisk.com%2Femail%2F2010-11-15%2F')

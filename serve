@@ -145,8 +145,10 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         log.debug("need thumb for %r", uri)
         # this ought to return a redirect to a static error image when it breaks
         jpg, mtime = thumb(uri, size)
-
-        return StaticCached(jpg, "image/jpeg", mtime)
+        ct = "image/jpeg"
+        if graph.contains((uri, RDF.type, PHO.Video)):
+            ct = "video/webm"
+        return StaticCached(jpg, ct, mtime)
 
     def nonViewable(self, request):
         """
