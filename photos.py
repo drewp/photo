@@ -59,7 +59,7 @@ def thumb(localURL, maxSize=100):
     jpg = _resizeAndSave(localPath, thumbPath, maxSize, localURL)
     return jpg.getvalue(), time.time()
 
-def encodedVideo(localPath):
+def encodedVideo(localPath, _return=True):
     """returns full webm binary + time. does its own caching"""
     h = hashlib.md5(localPath + "?size=video2").hexdigest()
     videoOut = '/var/cache/photo/video/%s/%s.webm' % (h[:2], h[2:])
@@ -68,17 +68,22 @@ def encodedVideo(localPath):
     except IOError:
         pass
     else:
+        if not _return:
+            return
         return f.read(), os.path.getmtime(videoOut)
 
     _makeDirToThumb(videoOut)
-    subprocess.call(['/my/site/photo/encodevideo', localPath, videoOut])
+    tmpOut = videoOut+tmpSuffix+'.webm'
+    subprocess.check_call(['/my/site/photo/encodevideo', localPath, tmpOut])
+    os.rename(tmpOut, videoOut)
+    if not _return:
+        return
     return open(videoOut).read(), os.path.getmtime(videoOut)
-    
-    
+
 def videoThumbnail(localPath, maxSize):
     # this is not caching yet but it should
     tf = tempfile.NamedTemporaryFile()
-    subprocess.call(['/usr/bin/ffmpegthumbnailer', '-i', localPath, '-o', tf.name, '-c', 'jpeg', '-s', str(maxSize)])
+    subprocess.check_call(['/usr/bin/ffmpegthumbnailer', '-i', localPath, '-o', tf.name, '-c', 'jpeg', '-s', str(maxSize)])
     return open(tf.name).read(), time.time() # todo
 
 def getSize(localURL, maxSize):
@@ -87,6 +92,17 @@ def getSize(localURL, maxSize):
     return Image.open(StringIO(jpg)).size
 
 def justCache(url, sizes, grid=False, gridLogDir='/dev/null'):
+    """
+    if it's a video, we automatically add video2 size
+    """
+
+    localPath = _localPath(url)
+    if localPath.endswith(videoExtensions):
+        justCacheVideo(url)
+    else:
+        justCachePhoto(url, sizes, grid, gridLogDir)
+
+def justCachePhoto(url, sizes, grid, gridLogDir):
     todo = []
     for size in sizes:
         thumbPath = _thumbPath(url, size)
@@ -111,6 +127,10 @@ def justCache(url, sizes, grid=False, gridLogDir='/dev/null'):
             _makeDirToThumb(thumbPath)
             localPath = _localPath(url)
             _resizeAndSave(localPath, thumbPath, size, url)
+
+def justCacheVideo(url):
+    localPath = _localPath(url)
+    encodedVideo(localPath, _return=False)
 
 def _safeSgeJobName(s):
     return re.sub(r'[^a-zA-Z0-9\.]+', '_', s)

@@ -20,9 +20,11 @@ import subprocess, random, time, optparse, logging
 from photos import justCache
 from urls import photoUri
 from picdirs import picSubDirs
+from scanFs import imageExtensions, videoExtensions
 
 parser = optparse.OptionParser()
 parser.add_option("--quick", action="store_true", help="only scan a few files")
+parser.add_option("--pat", help="only scan files with this substring")
 parser.add_option("-d", action="store_true", help="debug logs")
 parser.add_option("--grid", action="store_true", help="run resizes as jobs on SGE grid")
 opts, args = parser.parse_args()
@@ -33,25 +35,32 @@ logging.basicConfig(level=logging.DEBUG if opts.d else logging.INFO)
 cmd = ["/usr/bin/find"]
 cmd += picSubDirs(quick=opts.quick)
 cmd += "-regextype posix-egrep -name .xvpics -prune -type f -o".split()
-cmd += ['(', '-iregex', r'.*\.(jpg|jpeg|png|tif|tiff)', ')']
+cmd += ['(', '-iregex',
+        r'.*\.(%s)' % '|'.join(e.strip('.') for e in imageExtensions + videoExtensions), ')']
 log.debug(repr(cmd))
 files = [f.strip() for f in subprocess.Popen(cmd,
                  stdout=subprocess.PIPE).communicate()[0].splitlines()]
 
-reportStep = 300
+if opts.pat:
+    print "found %s files, reducing to pattern" % len(files)
+    files = [f for f in files if opts.pat in f]
+
+reportStep = 5
 lastReportStart = time.time()
+lastReportFiles = 0
 for i, filename in enumerate(files):
-    log.debug("file %s: %s", i, filename)
+    log.debug("file %s/%s: %s", i, len(files), filename)
     try:
         justCache(photoUri(filename),
                   grid=opts.grid, gridLogDir='/my/log/grid',
                   sizes=[75,250,600])
-    except IOError, e:
+    except (subprocess.CalledProcessError, IOError), e:
         log.error("  failed: %s", e)
         
-    if (i + 1) % reportStep == 0:
-        perFile = (time.time() - lastReportStart) / reportStep
+    if time.time() > lastReportStart + reportStep:
+        perFile = (time.time() - lastReportStart) / (i - lastReportFiles)
         lastReportStart = time.time()
         log.info("finished %s of %s, est %s min left" % (
             i, len(files),
             round((len(files) - i) * perFile / 60)))
+        lastReportFiles = i
