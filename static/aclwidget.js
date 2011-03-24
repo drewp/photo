@@ -13,7 +13,6 @@ $(function () {
 	result.append($('<img class="spinner" src="/static/snake-spinner.gif"/>'));
 	$.post("/aclChange", {agent: agent, accessTo: accessTo, op: op}, 
 	       function (data) {
-		   console.log("data", data);
 		   result.text(data.msg);
 		   check.attr('checked', data.agentState);
 		       // need to update the creation rows too
