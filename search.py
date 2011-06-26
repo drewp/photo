@@ -155,7 +155,11 @@ class Events(rend.Page):
             yield T.h2[graph.label(cls, default=cls)]
             rows = []
             for topic in topics:
-                localUrl = localSite(topic)
+                try:
+                    localUrl = localSite(topic)
+                except ValueError, e:
+                    log.warn("skipping topic %r: %s" % (topic, e))
+                    continue
                 lab = topicLabel(graph, topic)
                 rows.append((lab.lower(), T.div[T.a(href=localUrl)[lab]]))
             rows.sort()
