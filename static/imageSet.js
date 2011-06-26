@@ -188,6 +188,10 @@ $(function () {
     setGlobalTags(allTags);
     $("#tags").tagSuggest({});
 
+    $("#featuredPic div.nextClick").click(function () { 
+	document.location.href = $(this).attr("nextclick");
+    });
+
     $("#ajaxError").ajaxError(function (event, xhr, ajaxOptions) {
 	if (!xhr.responseText) {
 	    return;

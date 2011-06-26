@@ -286,7 +286,8 @@ class ImageSet(rend.Page):
         if self.graph.contains((self.currentPhoto, RDF.type, PHO.Video)):
             return T.Tag('video')(src=[currentLocal, "?size=video2"], controls="1", preload="1", width="600", height="450")
         else:
-            return T.a(href=self.otherImageHref(ctx, next))[
+            return T.div(class_="nextClick",
+                         nextclick=self.otherImageHref(ctx, next))[
                 T.img(src=[currentLocal, "?size=large"],
                       alt=self.graph.label(self.currentPhoto))]
 
@@ -355,6 +356,9 @@ class ImageSet(rend.Page):
         return [self.topic, "?archive=zip"]
 
     def render_link(self, ctx, data):
+        if self.graph.contains((self.currentPhoto, RDF.type, PHO.Video)):
+            return ['<video width="600" height="450" controls="1" preload="1" '
+                    'src="', self.currentPhoto, '?size=video2"></video>']
         src = [self.currentPhoto, '?size=large']
         return '<img src="', T.a(href=src)[src], '"/>'
 

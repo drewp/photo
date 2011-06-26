@@ -208,3 +208,6 @@ span.result {
     box-shadow: 4px 7px 10px #000000;
     -webkit-box-shadow: 4px 7px 10px #000000;
 }
+#featuredPic div.nextClick {
+   cursor:pointer;
+}
