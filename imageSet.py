@@ -30,6 +30,7 @@ import tagging, networking
 import auth
 from access import getUser, accessControlWidget
 from lib import print_timing
+from scanFs import videoExtensions
 log = logging.getLogger()
 PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 SITE = Namespace("http://photo.bigasterisk.com/")
@@ -350,7 +351,13 @@ class ImageSet(rend.Page):
         if nextImg is None:
             return ''
         # must always return a string, for json encoding below
-        return localSite(nextImg) + "?size=large"
+        preloadSize = "large"
+        if nextImg.lower().endswith(videoExtensions):
+            # sloppy; this should use the presence of "a pho:Video" in the graph.
+            # also, i'm still stuffing this in an img tag, which may
+            # or may not trigger a convert or load
+            preloadSize = "video2"
+        return localSite(nextImg) + "?size=" + preloadSize
 
     def render_zipUrl(self, ctx, data):
         return [self.topic, "?archive=zip"]

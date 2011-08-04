@@ -21,7 +21,7 @@ SITE = Namespace("http://photo.bigasterisk.com/")
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 
 imageExtensions = ('.jpg', '.gif', '.jpeg')
-videoExtensions = ('.mp4',)
+videoExtensions = ('.mp4','.avi')
 
 def uriOfFilename(rootUri, root, filename):
     prefix = root.rstrip('/')
@@ -64,6 +64,11 @@ class ScanFs(object):
         if (self.graph.contains((fileUri, RDF.type, FOAF.Image)) and
             self.graph.contains((fileUri, PHO.filename, None))):
             #log.debug("seen %s" % filename)
+
+            # this return needs to be turned off if you're trying to
+            # reread files already in the graph. Or you could just zap
+            # the :scan/fs context and do them all again
+            
             return fileUri
         
         dirUri = self.addDir(os.path.dirname(filename))
@@ -75,7 +80,7 @@ class ScanFs(object):
             (fileUri, PHO.basename, Literal(os.path.basename(filename)))],
                        context=ctx)
 
-        if filename.endswith('.mp4'):
+        if filename.lower().endswith(videoExtensions):
             self.graph.add([(fileUri, RDF.type, PHO.Video)], context=ctx)
 
         log.info("added pic %s" % filename)

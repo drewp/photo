@@ -35,7 +35,7 @@ def thumb(localURL, maxSize=100):
     """
     localPath = _localPath(localURL)
 
-    if localPath.endswith(videoExtensions):
+    if localPath.lower().endswith(videoExtensions):
         if maxSize is Video2:
             return encodedVideo(localPath)
         elif maxSize is Full:
@@ -72,6 +72,7 @@ def encodedVideo(localPath, _return=True):
             return
         return f.read(), os.path.getmtime(videoOut)
 
+    # this could start a second conversion while the first is going on!
     _makeDirToThumb(videoOut)
     tmpOut = videoOut+tmpSuffix+'.webm'
     subprocess.check_call(['/my/site/photo/encodevideo', localPath, tmpOut])
@@ -97,7 +98,7 @@ def justCache(url, sizes, grid=False, gridLogDir='/dev/null'):
     """
 
     localPath = _localPath(url)
-    if localPath.endswith(videoExtensions):
+    if localPath.lower().endswith(videoExtensions):
         justCacheVideo(url)
     else:
         justCachePhoto(url, sizes, grid, gridLogDir)
