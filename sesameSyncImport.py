@@ -108,38 +108,37 @@ if quick:
     onChange('/my/pic/phonecam/dt-2009-07-16/CIMG0074.jpg')
     onChange('/my/pic/digicam/dl-2009-07-20/DSC_0092.JPG')
  
-class FileChanged(object):
-    def GET(self):
-        return '''<html><body>
+class FileChanged(cyclone.web.RequestHandler):
+    def get(self):
+        self.write('''<html><body>
         <form method="post" action="">Report a changed file: <input name="file" size="100"/> <input type="submit"/></form>
         <form method="post" action="all"><input type="submit" value="rescan all files (slow)"/></form>
         </body></html>
-        '''
+        ''')
         
-    def POST(self):
-        fileArg = web.input()['file']
+    def post(self):
+        fileArg = self.get_argument("file")
         if not fileArg:
             raise ValueError("missing file")
         onChange(fileArg)
-        return 'ok\n'
+        self.write('ok\n')
         
-class AllChanged(object):
-    def POST(self):
+class AllChanged(cyclone.web.RequestHandler):
+    def post(self):
         allFiles(subdirs, onChange)
-        return 'ok\n'
+        self.write('ok\n')
 
-urls = (r'/', FileChanged,
-        r'/all', AllChanged,
-        )
+class Application(cyclone.web.Application):
+    def __init__(self):
+        handlers = [
+            (r"/", FileChanged),
+            (r"/all", AllChanged),
+        ]
+        cyclone.web.Application.__init__(self, handlers)
 
+if __name__ == '__main__':
+    from twisted.python import log as twlog
+    twlog.startLogging(sys.stdout)
 
-app = web.application(urls, globals(), autoreload=False)
-
-def errorToUser():
-    return web.webapi._InternalError(traceback.format_exc())
-app.internalerror = errorToUser
-
-application = app.wsgifunc()
-
-# run with spawn -p 9042 --processes=1 --threads=0 sesameSyncImport.application
-
+    reactor.listenTCP(9042, Application())
+    reactor.run()
