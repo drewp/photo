@@ -40,30 +40,16 @@ def filenameAttempts(filename, outDir):
         outPath = os.path.join(outDir, outFilename)
         yield outPath
 
-def main():
-    #f = open("/my/mail/drewp/cur/1283804816.32729_0.bang:2,S")
-    msg = maillib.Message.from_file(sys.stdin)
+def getGraph():
+    return RemoteSparql(networking.graphRepoRoot(),
+                        "photo",
+                        initNs=dict(foaf=FOAF,
+                                    rdfs=RDFS.RDFSNS,
+                                    pho=PHO))
 
-    attachments = [(f, c) for f, c in msg.attachments()
-                   if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif'))]
-    if not attachments:
-        log.info("no attachments with image extensions")
-        raise SystemExit(0)
-
-    graph = RemoteSparql(networking.graphRepoRoot(),
-                         "photo",
-                         initNs=dict(foaf=FOAF,
-                                     rdfs=RDFS.RDFSNS,
-                                     pho=PHO))
-
-    uri = URIRef("mid:" + urllib.quote(msg.headers['Message-ID'].strip('<>')))
-
-    msgDate = msg.date.date().isoformat()
-    now = Literal(datetime.datetime.now(tzlocal()))
-
-    sesameImport = restkit.Resource("http://bang:9042/")
+def emailStatements(uri, msg):
     sender = URIRef("mailto:" + msg.sender[1]) # quote?
-    stmts = [
+    return [
         (uri, RDF.type, PHO['Email']),
         (uri, DC.creator, sender),
         (sender, RDFS.label, Literal(msg.sender[1])),
@@ -71,6 +57,27 @@ def main():
         (uri, DC.created, Literal(msg.date.replace(tzinfo=tzlocal()))),
         (uri, DC.date, Literal(msg.date.replace(tzinfo=tzlocal()).date())),
     ]
+
+def findAttachments(msg):
+    return [(f, c) for f, c in msg.attachments()
+            if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif'))]
+
+def ingest(fileObj, mock=False):
+    #f = open("/my/mail/drewp/cur/1283804816.32729_0.bang:2,S")
+    msg = maillib.Message.from_file(fileObj)
+
+    attachments = findAttachments(msg)
+    if not attachments:
+        log.info("no attachments with image extensions")
+        return
+
+    uri = URIRef("mid:" + urllib.quote(msg.headers['Message-ID'].strip('<>')))
+
+    msgDate = msg.date.date().isoformat()
+    now = Literal(datetime.datetime.now(tzlocal()))
+
+    sesameImport = restkit.Resource("http://bang:9042/", timeout=5)
+    stmts = emailStatements(uri, msg)
     errs = []
     for filename, content in attachments:
         outDir = "/my/pic/email/%s" % msgDate
@@ -85,8 +92,9 @@ def main():
                 log.info("already wrote this to %s" % outPath)
             else:
                 try:
-                    writeExcl(outPath, content)
-                    # jhead -autorot might be good to run on the result
+                    if not mock:
+                        writeExcl(outPath, content)
+                        # jhead -autorot might be good to run on the result
                 except OSError, e:
                     log.error(e)
                     continue # next suffix attempt
@@ -98,18 +106,26 @@ def main():
                 ])
 
             log.info("  described new image: %s", img)
-            sesameImport.post(file=outPath)
+            if not mock:
+                log.debug("  post to sesameImport")
+                sesameImport.post(file=outPath)
             break
         else:
             errs.append(e)
             
 
     ctx = SITE['fromEmail/%s' % uri[4:]] # (already quoted above)
-    graph.add(*stmts, **{'context' : ctx})
+    graph = getGraph()
+    if not mock:
+        graph.add(*stmts, **{'context' : ctx})
     log.info("added %s statements about %s to context %s", len(stmts), uri, ctx)
 
     if errs:
         log.error("Some files could not be written: %s" % errs)
         raise errs[0]
 
-main()
+def main():
+    ingest(sys.stdin)
+
+if __name__ == '__main__':
+    main()
