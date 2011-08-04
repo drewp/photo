@@ -8,19 +8,17 @@ from twisted.application import internet, service
 from twisted.python.util import sibpath
 from twisted.web import http
 from twisted.web.proxy import ReverseProxyResource
-from twisted.web.client import getPage
-from twisted.internet.defer import inlineCallbacks, returnValue, Deferred
 from nevow import appserver, inevow, url
 from nevow import loaders, rend, static, tags as T
 from xml.utils import iso8601
-from photos import Full, thumb, sizes, getSize
+from photos import getSize, getRequestedSize
 import rdflib
 print "rdflib", rdflib.__version__
-from rdflib.Graph import ConjunctiveGraph
-from rdflib import Namespace, RDF, RDFS, Literal, Variable, URIRef
+from rdflib import Namespace, RDF, URIRef
 import auth, networking
 import access
 from db import getGraph
+
 log = logging.getLogger()
 logging.getLogger('restkit.client').setLevel(logging.WARN)
 
@@ -53,9 +51,6 @@ class ImagePage(rend.Page):
         'page', T.directive("large"),
         ]])
 
-def getRequestedSize(ctx):
-    return sizes.get(ctx.arg('size'), 250)
-
 class ImageSizeResponse(rend.Page):
     """
     just gets the size of the image. You can still pass a size=large
@@ -71,31 +66,6 @@ class ImageSizeResponse(rend.Page):
         inevow.IRequest(ctx).setHeader('Content-type', 'application/json')
         return jsonlib.dumps({'width' : w, 'height' : h})
 
-class StaticCached(static.Data):
-    """
-    from http://twistedmatrix.com/pipermail/twisted-web/2005-March/001358.html
-    """
-    def __init__(self, data, mime, mtime):
-        self.mtime = mtime
-        static.Data.__init__(self, data, mime)
-    def renderHTTP(self, ctx):
-        request = inevow.IRequest(ctx)
-        request.setLastModified(self.mtime)
-        request.setHeader('Cache-Control', 'max-age=604800')
-        # flickr uses an even longer maxage, and puts on a Expires:
-        # Mon, 28 Jul 2014 23:30:00 GMT, and then they have a squid
-        # cache providing the image
-
-        # For public requests, it would be nice to omit this so a
-        # cache can give the image to two listeners. 
-        # Note that this header is the only thing 'securing'
-        # non-public requests, and it has to work with trusted
-        # intermediate caches that aren't reachable by users, which is
-        # unrealistic security.
-        request.setHeader('Vary', 'Cookie')      
-
-        return static.Data.renderHTTP(self, ctx)
-
 class Main(rend.Page):
     docFactory = loaders.stan(T.html[T.body[
 
@@ -106,10 +76,6 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
     
     def __init__(self, graph):
         self.graph = graph
-
-    def viewable(self, uri,  ctx):
-        agent = access.getUser(ctx)
-        return access.viewable(self.graph, uri, agent)
 
     def subresource(self, lastSegment, uri, ctx, request):
         """uri is some image, lastSegment is like /comments. This
@@ -131,45 +97,14 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         elif lastSegment == 'links': args = networking.serviceHost, 9043, '/links'
         elif lastSegment == 'tags': args = networking.serviceHost, 9043, '/tags'
         elif lastSegment == 'page':
-            return ImagePage(graph, uri)
+            return ImagePage(self.graph, uri)
         elif lastSegment == 'size':
-            return ImageSizeResponse(graph, uri)
+            return ImageSizeResponse(self.graph, uri)
         else:
             raise NotImplementedError()
 
         return ReverseProxyResource(*args)
 
-    def imageResource(self, uri, ctx):
-        size = getRequestedSize(ctx)
-
-        log.debug("need thumb for %r", uri)
-        # this ought to return a redirect to a static error image when it breaks
-        jpg, mtime = thumb(uri, size)
-        ct = "image/jpeg"
-        if graph.contains((uri, RDF.type, PHO.Video)):
-            ct = "video/webm"
-        return StaticCached(jpg, ct, mtime)
-
-    def nonViewable(self, request):
-        """
-        this shouldn't reveal whether the image was real or not-- just
-        that there's nothing you can get to at your access level.
-        """
-        accept = request.getHeader('accept')
-        ua = request.getHeader('user-agent')
-
-        if (accept.split(',')[0].startswith('image/') or
-            # http://code.google.com/p/chromium/issues/detail?id=63173
-            ('Chromium' in ua and accept == '*/*')):
-            log.info("failing with image")
-            return open("static/noaccess.png").read()
-        
-        request.setHeader('WWW-Authenticate', 'Basic realm="topsecret"')
-        request.setResponseCode(http.UNAUTHORIZED)
-        #request.setResponseCode(http.FORBIDDEN)
-        log.info("failing with text")
-        # todo: login prompt if they weren't logged in; apology if they were
-        return "Authentication required."        
 
     def locateChild(self, ctx, segments):
         request = inevow.IRequest(ctx)
@@ -193,7 +128,16 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
                 return self.subresource(segments[-1], uri, ctx, request), []
 
             if self.graph.contains((uri, RDF.type, FOAF['Image'])):
-                return self.imageChild(ctx, uri)
+                # if we get here, then the routing failed to send us
+                # to the other server. Maybe redir to a path that is
+                # more obviously routable?
+
+                if ctx.arg('page'): # old; use {img}/page now
+                    return ImagePage(self.graph, uri), ()
+
+                raise NotImplementedError(
+                    "request for %r routed to incorrect backend service. "
+                    "Check nginx_route.conf rules" % uri)
             
         if segments[0] in ['2003', '2004', '2005', '2006', '2007', 
                            '2008', '2009', '2010', '2011', '2012']:
@@ -206,24 +150,6 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
             print "uri %r not a searchable set" % uri
 
         return rend.Page.locateChild(self, ctx, segments)
-
-    def imageChild(self, ctx, uri):
-        """
-
-        
-        proxy openid; now compare that header to the allowed viewers. if header is missing or empty, that becomes the 'anonymous' user. other openids are just URIRefs in the graph, and you have to be able to get from the viewableBy link to that URIRef (via any number of groups)
-
-        in the url, take a tag to show. Display a checkbutton of whether the current image has that tag. Take key input to toggle the button. Post button changes as graph edits. click on the tag to go to an imageset of that tag.
-        """
-        if not self.viewable(uri, ctx):
-            request = inevow.IRequest(ctx)
-            return self.nonViewable(request), ()
-
-        if ctx.arg('page'): # old; use {img}/page now
-            return ImagePage(graph, uri), ()
-
-        return self.imageResource(uri, ctx), ()
-        
 
     def topicChild(self, ctx, uri):
         if ctx.arg('random'):
@@ -244,7 +170,8 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
                 req = inevow.IRequest(ctx)
                 req.setHeader('Content-Type', 'application/xhtml+xml')
                 cookie = inevow.IRequest(ctx).getHeader("cookie") or ''
-                req.write(story.renderPage(graph, topic, access.getUser(ctx), 
+                req.write(story.renderPage(self.graph, topic,
+                                           access.getUser(ctx), 
                                            cookie))
                 req.finish()
                 return ''
@@ -258,17 +185,17 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
             cls = imageSet.ImageSetTablet
         else:
             cls = imageSet.ImageSet
-        return cls(ctx, graph, inevow.IRequest(ctx).uri)
+        return cls(ctx, self.graph, inevow.IRequest(ctx).uri)
 
     def child_events(self, ctx):
         import search
         reload(search)
-        return search.Events(ctx, graph)
+        return search.Events(ctx, self.graph)
 
     def child_browse(self, ctx):
         import browse
         reload(browse)
-        return browse.FileBrowse(ctx, graph)
+        return browse.FileBrowse(ctx, self.graph)
 
     def child_edit(self, ctx, _name="Edit"):
         req = inevow.IRequest(ctx)
@@ -278,7 +205,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         
         import edit
         reload(edit)
-        return getattr(edit, _name)(ctx, graph)
+        return getattr(edit, _name)(ctx, self.graph)
 
     def child_edit2(self, ctx):
         return self.child_edit(ctx, _name="Edit2")
@@ -296,10 +223,10 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         accessTo = URIRef(ctx.arg('accessTo'))
         op = ctx.arg('op')
         if op == 'allow':
-            access.addAccess(graph, user, agent, accessTo)
+            access.addAccess(self.graph, user, agent, accessTo)
             return returnJson({"msg" : "added", "agentState":True})
         elif op == 'deny':
-            access.removeAccess(graph, user, agent, accessTo)
+            access.removeAccess(self.graph, user, agent, accessTo)
             return returnJson({"msg" : "removed", "agentState":False})
         else:
             raise NotImplementedError("op: %r" % op)
@@ -322,5 +249,5 @@ logging.basicConfig(level=logging.DEBUG)
 graph = getGraph()
 
 application = service.Application('photo')
-webServer = internet.TCPServer(8086, appserver.NevowSite(Main(graph)))
+webServer = internet.TCPServer(8031, appserver.NevowSite(Main(graph)))
 webServer.setServiceParent(application)

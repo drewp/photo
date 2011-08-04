@@ -20,6 +20,11 @@ sizes = {'thumb' : 75,
          'video2' : Video2,
          'full' : Full}
 
+
+def getRequestedSize(ctx):
+    return sizes.get(ctx.arg('size'), 250)
+
+
 tmpSuffix = ".tmp" + ''.join([random.choice(string.letters) for c in range(5)])
 """
 uses 'exiftool', from ubuntu package libimage-exiftool-perl

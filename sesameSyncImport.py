@@ -3,7 +3,8 @@ import sys
 sys.path.insert(0, "/my/proj/sparqlhttp")
 from sparqlhttp.graph2 import SyncGraph
 from remotesparql import RemoteSparql
-import os, logging, time, web, traceback
+import os, logging, time, cyclone.web
+from twisted.internet import reactor
 from rdflib import Namespace, RDFS
 from sparqlhttp.syncimport import SyncImport, IMP
 from _xmlplus.utils import iso8601
