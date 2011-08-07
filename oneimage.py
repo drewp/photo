@@ -206,6 +206,7 @@ if __name__ == '__main__':
                                      rdf=RDF.RDFNS,
                                      exif=EXIF,
                                      scot=SCOT,
+                                     dcterms=Namespace("http://purl.org/dc/terms/"),
                                      pho=PHO))
 
     urls = (r'/', "index",

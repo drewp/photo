@@ -54,13 +54,13 @@ XS = Namespace("http://www.w3.org/2001/XMLSchema#")
 @print_timing
 def photoDate(graph, img):
     for q in [
-        """SELECT ?d ?label WHERE {
+        """SELECT ?d WHERE {
              ?img dc:date ?d .
            }""",
-        """SELECT ?d ?label WHERE {
+        """SELECT ?d WHERE {
              ?img dcterms:date ?d .
            }""",
-        """SELECT ?d ?label WHERE {
+        """SELECT ?d WHERE {
              ?email a pho:Email ; dcterms:created ?d ; dcterms:hasPart ?img .
            }""",
         

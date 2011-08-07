@@ -17,7 +17,12 @@ def photoCreated(graph, uri):
          UNION { ?uri pho:fileTime ?t }
        } ORDER BY ?t LIMIT 1""", initBindings={'uri' : uri}))
     if not rows:
-        raise ValueError("can't find a date for %s" % uri)
+
+        rows = graph.queryd("""SELECT ?t WHERE {
+             ?email a pho:Email ; dcterms:created ?t ; dcterms:hasPart ?uri .
+           }""", initBindings={'uri' : uri})
+        if not rows:
+            raise ValueError("can't find a date for %s" % uri)
     
     photoDate = rows[0]['t']
 

@@ -61,7 +61,11 @@ class ImageSetDesc(object): # in design phase
         if graph.queryd("ASK { ?img foaf:depicts ?uri }",
                          initBindings={'uri' : completeUri}):
             topic = completeUri
-        else:  
+        elif graph.queryd("ASK { ?img a foaf:Image }",
+                          initBindings={'img' : completeUri}):
+            topic = completeUri
+        else:
+            log.debug("topic from params: %r", params)
             if 'dir' in params:
                 topic = URIRef(params['dir'])
             elif 'tag' in params:
