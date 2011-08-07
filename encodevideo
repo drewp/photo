@@ -2,7 +2,7 @@
 
 # <input video> <output.webm>
 
-import sys, subprocess
+import sys, subprocess, os
 inPath, outPath = sys.argv[1:]
 
 if inPath.endswith(".mp4"):
@@ -21,7 +21,7 @@ elif inPath.endswith(".AVI"):
         "-ar", "44000", # per http://ffmpeg-users.933282.n4.nabble.com/ffmpeg-fails-to-create-webm-content-if-audio-bitrate-is-less-than-44K-td2303313.html
         "-s", "320x212"]
     
-LOGBASE="/tmp/vid"
+LOGBASE="/tmp/vid-%s" % os.getpid()
 
 subprocess.check_call(['/usr/local/bin/ffmpeg', '-pass', '1', '-passlogfile', LOGBASE] + ARGS + ['-an', '-f', 'rawvideo', '-y', '/dev/null'])
 subprocess.check_call(['/usr/local/bin/ffmpeg', '-pass', '2', '-passlogfile', LOGBASE] + ARGS + ['-acodec', 'libvorbis', '-y', outPath])
