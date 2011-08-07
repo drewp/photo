@@ -62,7 +62,7 @@ def findAttachments(msg):
     return [(f, c) for f, c in msg.attachments()
             if f.lower().endswith(('.jpg', '.jpeg', '.png', '.gif'))]
 
-def ingest(fileObj, mock=False):
+def ingest(fileObj, mock=False, newImageCb=lambda uri: None):
     #f = open("/my/mail/drewp/cur/1283804816.32729_0.bang:2,S")
     msg = maillib.Message.from_file(fileObj)
 
@@ -106,6 +106,10 @@ def ingest(fileObj, mock=False):
                 ])
 
             log.info("  described new image: %s", img)
+            try:
+                newImageCb(img)
+            except Exception, e:
+                log.error("newImageCb failed on %r: %s" % (img, e))
             if not mock:
                 log.debug("  post to sesameImport")
                 sesameImport.post(file=outPath)
