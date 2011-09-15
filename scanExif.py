@@ -10,17 +10,12 @@ also: http://svn.foaf-project.org/foaftown/geo/photos/old/geoloc_media.pl
 """
 from __future__ import division
 from decimal import Decimal
-from rdflib import Namespace, Literal, RDF, URIRef
+from rdflib import Literal, URIRef
 import subprocess, logging, os, datetime
 from xml.etree import ElementTree
-from dateutil.tz import tzlocal, tzutc
+from dateutil.tz import tzlocal
 from xml.parsers.expat import ExpatError
-
-PHO = Namespace("http://photo.bigasterisk.com/0.1/")
-DC = Namespace("http://purl.org/dc/elements/1.1/")
-XS = Namespace("http://www.w3.org/2001/XMLSchema#")
-EXIF = Namespace("http://www.kanzaki.com/ns/exif#")
-WGS = Namespace("http://www.w3.org/2003/01/geo/wgs84_pos#")
+from ns import PHO, DC, XS, EXIF, WGS, RDF
 
 log = logging.getLogger('scanExif')
 log.setLevel(logging.DEBUG)

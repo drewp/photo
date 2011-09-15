@@ -14,11 +14,9 @@ filename [img]    [add column]
 """
 from twisted.python.util import sibpath
 import datetime
-from rdflib import URIRef, Namespace, Variable, Literal, Graph
+from rdflib import URIRef, Variable, Literal, Graph
 from nevow import rend, loaders, tags as T, inevow, json, url
 from urls import localSite
-
-PHO = Namespace("http://photo.bigasterisk.com/0.1/")
 
 def picsInDirectory(graph, dirUri):
     for row in graph.queryd(

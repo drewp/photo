@@ -13,22 +13,16 @@ GET /ariDateAge?img=http://photo... -> for ari photos
 the fetching of the resized images is still over in serve
 """
 from __future__ import division
-import web, sys, json, datetime, cgi, time, logging, urllib
+import web, sys, json, time, logging, urllib
 from web.contrib.template import render_genshi
-from rdflib import Namespace, RDFS, URIRef, RDF, Variable
+from rdflib import URIRef, Variable
 from remotesparql import RemoteSparql
 import networking, auth
 from xml.utils import iso8601
 from tagging import getTagLabels
 import access
 from oneimagequery import photoCreated
-
-PHO = Namespace("http://photo.bigasterisk.com/0.1/")
-SITE = Namespace("http://photo.bigasterisk.com/")
-FOAF = Namespace("http://xmlns.com/foaf/0.1/")
-EXIF = Namespace("http://www.kanzaki.com/ns/exif#")
-SCOT = Namespace("http://scot-project.org/scot/ns#")
-DC = Namespace("http://purl.org/dc/elements/1.1/")
+from ns import PHO, FOAF, EXIF, SCOT, DC, RDFS, RDF, DCTERMS, ACL
 
 log = logging.getLogger()
 render = render_genshi('.', auto_reload=True)
@@ -206,7 +200,7 @@ if __name__ == '__main__':
                                      rdf=RDF.RDFNS,
                                      exif=EXIF,
                                      scot=SCOT,
-                                     dcterms=Namespace("http://purl.org/dc/terms/"),
+                                     dcterms=DCTERMS,
                                      pho=PHO))
 
     urls = (r'/', "index",

@@ -5,15 +5,11 @@ requests for photos and videos are routed to this server
 import urllib, os, logging, sys
 from nevow import rend, inevow, static, appserver
 from twisted.web import http
-from twisted.python import log as twlog
 from twisted.internet import reactor
-from rdflib import Namespace, RDF
 from photos import thumb, getRequestedSize
 from db import getGraph
 import access
-
-SITE = Namespace("http://photo.bigasterisk.com/")
-PHO = Namespace("http://photo.bigasterisk.com/0.1/")
+from ns import RDF, SITE, PHO
 
 log = logging.getLogger()
 
@@ -134,6 +130,7 @@ if __name__ == '__main__':
     site = appserver.NevowSite(Main(graph))
 
     # turn this on for a log line per request
+    #from twisted.python import log as twlog
     #twlog.startLogging(sys.stdout)
     
     reactor.listenTCP(int(sys.argv[1]), site)

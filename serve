@@ -14,22 +14,15 @@ from xml.utils import iso8601
 from photos import getSize, getRequestedSize
 import rdflib
 print "rdflib", rdflib.__version__
-from rdflib import Namespace, RDF, URIRef
+from rdflib import URIRef
 import auth, networking
 import access
 from db import getGraph
+from ns import PHO, SITE, FOAF, SIOC, DC, DCTERMS, SCOT, XS, RDF
 
 log = logging.getLogger()
 logging.getLogger('restkit.client').setLevel(logging.WARN)
 
-PHO = Namespace("http://photo.bigasterisk.com/0.1/")
-SITE = Namespace("http://photo.bigasterisk.com/")
-FOAF = Namespace("http://xmlns.com/foaf/0.1/")
-SIOC = Namespace("http://rdfs.org/sioc/ns#")
-DC = Namespace("http://purl.org/dc/elements/1.1/")
-DCTERMS = Namespace("http://purl.org/dc/terms/")
-SCOT = Namespace("http://scot-project.org/scot/ns#")
-XS = Namespace("http://www.w3.org/2001/XMLSchema#")
 
 
 myPicSubdirs = [d for d in os.listdir("/my/pic") if d != "~thumb"]

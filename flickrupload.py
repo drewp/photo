@@ -17,12 +17,12 @@ import web, time, logging, os
 import flickrapi
 import restkit, tempfile, json
 from rdflib.Graph import Graph
-from rdflib import Namespace, URIRef, Literal
+from rdflib import URIRef, Literal
 from xml.utils import iso8601
 from photos import sizes
 from edit import writeStatements
-PHO = Namespace("http://photo.bigasterisk.com/0.1/")
-DCTERMS = Namespace("http://purl.org/dc/terms/")
+from ns import PHO, DCTERMS
+
 log = logging.getLogger()
 
 def fetchImageToTempfile(uri, size, cookie):

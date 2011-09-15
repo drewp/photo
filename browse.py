@@ -10,11 +10,8 @@ fs scanner needs to make this:
 
 """
 from nevow import rend, loaders, json
-from rdflib import Namespace, URIRef, RDF, Variable
-
-PHO = Namespace("http://photo.bigasterisk.com/0.1/")
-SITE = Namespace("http://photo.bigasterisk.com/")
-FOAF = Namespace("http://xmlns.com/foaf/0.1/")
+from rdflib import URIRef, RDF, Variable
+from ns import PHO, FOAF
 
 class FileBrowse(rend.Page):
     docFactory = loaders.xmlfile("fileBrowse.html")

@@ -15,17 +15,13 @@ import datetime, os, logging, sys, urllib, restkit
 from dateutil.tz import tzlocal
 from remotesparql import RemoteSparql
 import networking
-from rdflib import Namespace, RDFS, URIRef, Literal, RDF
+from rdflib import URIRef, Literal
 from scanFs import uriOfFilename
+from ns import PHO, SITE, FOAF, DCTERMS, RDFS, RDF
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 logging.getLogger("restkit.client").setLevel(logging.WARN)
-
-PHO = Namespace("http://photo.bigasterisk.com/0.1/")
-SITE = Namespace("http://photo.bigasterisk.com/")
-FOAF = Namespace("http://xmlns.com/foaf/0.1/")
-DC = Namespace("http://purl.org/dc/terms/")
 
 def writeExcl(path, content):
     log.info("writing %r", path)
@@ -58,11 +54,11 @@ def emailStatements(uri, msg):
     
     return [
         (uri, RDF.type, PHO['Email']),
-        (uri, DC.creator, sender),
+        (uri, DCTERMS.creator, sender),
         (sender, RDFS.label, Literal(msg.sender[1])),
         (sender, FOAF.name, Literal(msg.sender[0])),
-        (uri, DC.created, Literal(created)),
-        (uri, DC.date, Literal(created.date())),
+        (uri, DC.created, Literal(msg.date.replace(tzinfo=tzlocal()))),
+        (uri, DC.date, Literal(msg.date.replace(tzinfo=tzlocal()).date())),
     ]
 
 def findAttachments(msg):
@@ -107,7 +103,7 @@ def ingest(fileObj, mock=False, newImageCb=lambda uri: None):
                     continue # next suffix attempt
 
             stmts.extend([
-                (uri, DC['hasPart'], img),
+                (uri, DCTERMS['hasPart'], img),
                 (img, PHO['filenameInEmail'], Literal(filename)),
                 (img, PHO['emailReadTime'], now),
                 ])

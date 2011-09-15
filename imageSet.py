@@ -15,7 +15,7 @@ from __future__ import division
 import logging, zipfile, datetime, json, urllib, random, time, traceback, simplejson
 from StringIO import StringIO
 from nevow import loaders, rend, tags as T, inevow, url
-from rdflib import Namespace, Variable, URIRef, RDF, RDFS, Literal
+from rdflib import URIRef, Literal
 from zope.interface import implements
 from twisted.python.components import registerAdapter, Adapter
 from twisted.internet.defer import inlineCallbacks, returnValue, DeferredList
@@ -32,14 +32,7 @@ from access import getUser, accessControlWidget
 from lib import print_timing
 from scanFs import videoExtensions
 log = logging.getLogger()
-PHO = Namespace("http://photo.bigasterisk.com/0.1/")
-SITE = Namespace("http://photo.bigasterisk.com/")
-FOAF = Namespace("http://xmlns.com/foaf/0.1/")
-EXIF = Namespace("http://www.kanzaki.com/ns/exif#")
-SCOT = Namespace("http://scot-project.org/scot/ns#")
-DC = Namespace("http://purl.org/dc/elements/1.1/")
-DCTERMS = Namespace("http://purl.org/dc/terms/")
-XS = Namespace("http://www.w3.org/2001/XMLSchema#")
+from ns import PHO, FOAF, RDF, RDFS
 
 
 ## class StringIOView(Adapter):
@@ -206,7 +199,6 @@ class ImageSet(rend.Page):
         """
         import access
         reload(access)
-        req = inevow.IRequest(ctx)
         return T.raw(access.accessControlWidget(
             self.graph, getUser(ctx),
             self.desc.canonicalSetUri()))

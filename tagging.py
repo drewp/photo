@@ -5,11 +5,9 @@ service. Maybe tag+desc will go there too someday)
 
 import time, logging
 from xml.utils import iso8601
-from rdflib import URIRef, Literal, RDFS, Namespace, Variable, RDF
+from rdflib import URIRef, Literal, Variable
 log = logging.getLogger()
-DCTERMS = Namespace("http://purl.org/dc/terms/")
-PHO = Namespace("http://photo.bigasterisk.com/0.1/")
-SCOT = Namespace("http://scot-project.org/scot/ns#")
+from ns import RDF, RDFS, DCTERMS, PHO, SCOT
 
 _twf = None
 

@@ -7,15 +7,11 @@ mission statement.
 """
 import web, sys
 from web.contrib.template import render_genshi
-from rdflib import Namespace, RDFS, Variable, URIRef, RDF
+from rdflib import Variable, URIRef
 from remotesparql import RemoteSparql
 from public import isPublic, makePublic
 import networking
-
-PHO = Namespace("http://photo.bigasterisk.com/0.1/")
-SITE = Namespace("http://photo.bigasterisk.com/")
-FOAF = Namespace("http://xmlns.com/foaf/0.1/")
-EXIF = Namespace("http://www.kanzaki.com/ns/exif#")
+from ns import PHO, FOAF, EXIF, RDFS, RDF
 
 render = render_genshi('.', auto_reload=True)
 

@@ -1,10 +1,9 @@
 import logging
 logging.basicConfig()
 import unittest
-from rdflib import Namespace
 from db import getGraph
 from imageurl import ImageSetDesc
-SITE = Namespace("http://photo.bigasterisk.com/")
+from ns import SITE
 logging.getLogger('restkit.client').setLevel(logging.WARN)
 
 graph1 = getGraph()

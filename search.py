@@ -1,16 +1,14 @@
 import urllib, os, random, datetime, time, logging
 from nevow import rend, loaders, tags as T
-from rdflib import Namespace, Variable, Literal
+from rdflib import Variable, Literal
 from urls import localSite
 from tagging import getTagsWithFreqs, hasTags
 from isodate.isodates import date_isoformat
 from urls import photoUri
 from lib import print_timing
-
+from ns import FOAF, XS
 log = logging.getLogger()
 log.setLevel(logging.DEBUG)
-FOAF = Namespace("http://xmlns.com/foaf/0.1/")
-XS = Namespace("http://www.w3.org/2001/XMLSchema#")
 
 _datePool = []
 _datePoolCreated = None
@@ -167,7 +165,6 @@ class Events(rend.Page):
 
     @printTime
     def render_saveSets(self, ctx, data):
-        sets = set()
         for row in self.graph.queryd("""
         SELECT DISTINCT ?set ?label WHERE {
           ?img pho:saveSet ?set .

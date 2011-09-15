@@ -7,7 +7,7 @@ log = logging.getLogger('fileschanged')
 def runCallback(func, filename):
     try:
         func(filename)
-    except Exception, e:
+    except Exception:
         log.error("Error during callback for %s" % filename)
         traceback.print_exc()
    
@@ -89,7 +89,7 @@ def allFiles(topDirs, callback):
                 filename = os.path.join(root, filename)
                 try:
                     callback(filename)
-                except Exception, e:
+                except Exception:
                     log.error("Error during callback for %s" % filename)
                     traceback.print_exc()
                     

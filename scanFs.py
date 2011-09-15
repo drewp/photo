@@ -9,16 +9,11 @@ read a tree of the filesystem and write rdf about the images we find
  uri :filename basename
 
 """
-import sys, os, urllib, logging
-from rdflib.Graph import ConjunctiveGraph
-from rdflib import Namespace, RDF, URIRef, Literal
-
+import os, urllib, logging
+from rdflib import URIRef, Literal
+from ns import PHO, SITE, FOAF, RDF
 log = logging.getLogger('scanFs')
 log.setLevel(logging.DEBUG)
-
-PHO = Namespace("http://photo.bigasterisk.com/0.1/")
-SITE = Namespace("http://photo.bigasterisk.com/")
-FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 
 imageExtensions = ('.jpg', '.gif', '.jpeg')
 videoExtensions = ('.mp4','.avi')

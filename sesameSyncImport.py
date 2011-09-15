@@ -5,7 +5,6 @@ from sparqlhttp.graph2 import SyncGraph
 from remotesparql import RemoteSparql
 import os, logging, time, cyclone.web
 from twisted.internet import reactor
-from rdflib import Namespace, RDFS
 from sparqlhttp.syncimport import SyncImport, IMP
 from _xmlplus.utils import iso8601
 from scanFs import ScanFs
@@ -13,15 +12,12 @@ from scanExif import ScanExif
 from fileschanged import allFiles
 from picdirs import picSubDirs
 import networking
+from ns import PHO, FOAF, RDFS
 
 logging.basicConfig()
 log = logging.getLogger()
 log.setLevel(logging.DEBUG)
 logging.getLogger("restkit.client").setLevel(logging.WARN)
-
-PHO = Namespace("http://photo.bigasterisk.com/0.1/")
-SITE = Namespace("http://photo.bigasterisk.com/")
-FOAF = Namespace("http://xmlns.com/foaf/0.1/")
 
 class SesameSync(SyncImport):
     def allInputFiles(self):

@@ -6,21 +6,17 @@ and some other photo-site-specific things, but hopefully those can be
 removed
 """
 
-import logging, random, urllib, time, datetime
+import logging, random, time, datetime
 from dateutil.tz import tzlocal
-from rdflib import URIRef, Namespace, RDF, Literal
-import restkit
-from nevow import inevow, url
+from rdflib import URIRef, RDF, Literal
+from nevow import inevow
 import auth
 from genshi.template import TemplateLoader
 from genshi.output import XHTMLSerializer
 from edit import writeStatements
 from imageurl import ImageSetDesc
 from lib import print_timing
-PHO = Namespace("http://photo.bigasterisk.com/0.1/")
-FOAF = Namespace("http://xmlns.com/foaf/0.1/")
-ACL = Namespace("http://www.w3.org/ns/auth/acl#")
-DCTERMS = Namespace("http://purl.org/dc/terms/")
+from ns import PHO, FOAF, ACL, DCTERMS
 loader = TemplateLoader(".", auto_reload=True)
 serializer = XHTMLSerializer()
 log = logging.getLogger()

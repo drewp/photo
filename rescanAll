@@ -5,16 +5,12 @@ rebuild the <http://photo.bigasterisk.com/scan/fs> and <http://photo.bigasterisk
 import os, sys, logging
 from optparse import OptionParser
 from remotesparql import RemoteSparql
-from rdflib import Namespace, RDFS
 
 from picdirs import picSubDirs
 from scanFs import filenameIsImage, ScanFs
 from scanExif import ScanExif
 import networking
-
-PHO = Namespace("http://photo.bigasterisk.com/0.1/")
-SITE = Namespace("http://photo.bigasterisk.com/")
-FOAF = Namespace("http://xmlns.com/foaf/0.1/")
+from ns import PHO, SITE, FOAF, RDFS
 
 def goodDirNames(names):
     ret = []

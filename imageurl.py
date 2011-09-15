@@ -1,15 +1,11 @@
 import logging, datetime
-from rdflib import URIRef, Literal, Namespace, RDF
+from rdflib import URIRef, Literal, RDF
 from nevow import url
 import tagging
 from search import randomSet
 from oneimagequery import photoCreated
 from lib import print_timing
-
-SITE = Namespace("http://photo.bigasterisk.com/")
-PHO = Namespace("http://photo.bigasterisk.com/0.1/")
-XS = Namespace("http://www.w3.org/2001/XMLSchema#")
-FOAF = Namespace("http://xmlns.com/foaf/0.1/")
+from ns import SITE, PHO, XS
 
 log = logging.getLogger()
 
