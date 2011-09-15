@@ -12,7 +12,7 @@ download from flickr
 ocr and search, like http://norman.walsh.name/2009/11/01/evernote
 """
 from __future__ import division
-import logging, zipfile, datetime, jsonlib, urllib, random, time, traceback, simplejson
+import logging, zipfile, datetime, json, urllib, random, time, traceback, simplejson
 from StringIO import StringIO
 from nevow import loaders, rend, tags as T, inevow, url
 from rdflib import Namespace, Variable, URIRef, RDF, RDFS, Literal
@@ -106,12 +106,12 @@ class ImageSet(rend.Page):
 
         def readOrError(js):
             try:
-                return jsonlib.read(js)
+                return json.read(js)
             except Exception, e:
                 log.error(traceback.format_exc())
-                return jsonlib.write({'error' : str(e)})
+                return json.write({'error' : str(e)})
 
-        ret = T.raw(jsonlib.write(dict(
+        ret = T.raw(json.write(dict(
             relCurrentPhotoUri=localSite(self.currentPhoto),
             currentPhotoUri=self.currentPhoto,
             links=readOrError(results[0][1]),
@@ -166,7 +166,7 @@ class ImageSet(rend.Page):
         return ret
 
     def jsonContent(self):
-        return jsonlib.write({'photos' : self.photos})
+        return json.write({'photos' : self.photos})
 
     def postTagRange(self, ctx):
         # security?
@@ -185,7 +185,7 @@ class ImageSet(rend.Page):
             #(newUri, DC.created, Literal now
             ] + imgStatements)
 
-        return jsonlib.dumps({
+        return json.dumps({
             "msg": "tagged %s images: <a href=\"%s\">view your new set</a>" %
             (len(imgStatements), newUri)
             })
@@ -552,7 +552,7 @@ class RandomImage(rend.Page):
         # header.
         if req.getHeader('X-Requested-With') == 'XMLHttpRequest':
             req.setHeader('content-type', 'application/json')
-            return jsonlib.dumps({'Location' : str(newUrl)})
+            return json.dumps({'Location' : str(newUrl)})
         
         req.redirect(newUrl)
         return ''

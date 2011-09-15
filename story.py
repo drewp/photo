@@ -1,7 +1,7 @@
 """
 story view
 """
-import urllib, time, restkit, logging, jsonlib, hashlib
+import urllib, time, restkit, logging, json, hashlib
 from imageSet import photosWithTopic
 from lib import print_timing
 from genshi import Markup
@@ -33,7 +33,7 @@ def sizeAttrs_by_http(foafUser, uri, sizeName):
     innerUri = uri.replace('http://photo.bigasterisk.com/', '/') + '/size'
     site = restkit.Resource('http://bang:8086/')
     # restkit.get would hang in this twisted process
-    return jsonlib.loads(site.get(path=innerUri, size=sizeName,
+    return json.loads(site.get(path=innerUri, size=sizeName,
                                   headers={'x-foaf-agent' : foafUser}
                                   ).body_string())
 
@@ -59,7 +59,7 @@ def renderPage(graph, topic, foafUser, cookie):
         if not rows or rows[-1]['date'] != date:
             rows.append(dict(type='date', date=date))
 
-        facts = jsonlib.read(syncServiceCall('facts', photo, foafUser))
+        facts = json.read(syncServiceCall('facts', photo, foafUser))
         factLines = [l for l in facts['factLines']
                      if not l.startswith("Picture taken ")]
         factLines = [l for l in factLines if l not in knownFacts]

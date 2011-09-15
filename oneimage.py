@@ -13,7 +13,7 @@ GET /ariDateAge?img=http://photo... -> for ari photos
 the fetching of the resized images is still over in serve
 """
 from __future__ import division
-import web, sys, jsonlib, datetime, cgi, time, logging, urllib
+import web, sys, json, datetime, cgi, time, logging, urllib
 from web.contrib.template import render_genshi
 from rdflib import Namespace, RDFS, URIRef, RDF, Variable
 from remotesparql import RemoteSparql
@@ -38,7 +38,7 @@ class viewPerm(object):
         i = web.input()
         uri = URIRef(i['img'])
         web.header('Content-type', 'application/json')
-        return jsonlib.dumps({"viewableBy" :
+        return json.dumps({"viewableBy" :
                     "public" if access.isPublic(graph, uri) else "superuser"})
         
     def POST(self):
@@ -95,7 +95,7 @@ class facts(object):
 
         # 'used in this blog entry'        
 
-        return jsonlib.write({'factLines' : lines, 
+        return json.write({'factLines' : lines, 
                               'created' : created.isoformat()})
 
 class links(object):
@@ -143,7 +143,7 @@ class links(object):
 
         # taken near xxxxx
 
-        return jsonlib.write({'links' : links.items()})
+        return json.write({'links' : links.items()})
 
 from tagging import getTags, saveTags
 
@@ -153,7 +153,7 @@ class tags(object):
         img = URIRef(web.input()['uri'])
         user = URIRef(web.ctx.environ['HTTP_X_FOAF_AGENT'])
         web.header("Content-Type", "text/json")
-        return jsonlib.dumps(getTags(graph, user, img))
+        return json.dumps(getTags(graph, user, img))
 
     def PUT(self):
         i = web.input()
@@ -165,7 +165,7 @@ class tags(object):
                  tagString=i.get('tags', ''),
                  desc=i.get('desc', ''))
         web.header("Content-Type", "text/json")
-        return jsonlib.dumps(getTags(graph, user, img))
+        return json.dumps(getTags(graph, user, img))
 
         
 
@@ -181,7 +181,7 @@ class stats(object):
 
         d = graph.value(uri, EXIF.dateTime)
 
-        return jsonlib.dumps({"date" : d,
+        return json.dumps({"date" : d,
                              
                               })
 

@@ -1,5 +1,5 @@
 from __future__ import division
-import sys, os, urllib, logging, jsonlib
+import sys, os, urllib, logging, json
 
 # for rdflib
 sys.path.insert(0, "/my/proj/ffg/lib/rdflib/build/lib.linux-i686-2.5/")
@@ -64,7 +64,7 @@ class ImageSizeResponse(rend.Page):
         size = getRequestedSize(ctx)
         w, h = getSize(self.uri, size)
         inevow.IRequest(ctx).setHeader('Content-type', 'application/json')
-        return jsonlib.dumps({'width' : w, 'height' : h})
+        return json.dumps({'width' : w, 'height' : h})
 
 class Main(rend.Page):
     docFactory = loaders.stan(T.html[T.body[
@@ -236,7 +236,7 @@ def returnJson(d):
         def renderHTTP(self, ctx):
             req = inevow.IRequest(ctx)
             req.setHeader('Content-Type', 'application/json')
-            req.write(jsonlib.write(d))
+            req.write(json.write(d))
             req.finish()
             return ''
     return ret()

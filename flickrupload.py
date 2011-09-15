@@ -15,7 +15,7 @@ Returns json:
 """
 import web, time, logging, os
 import flickrapi
-import restkit, tempfile, jsonlib
+import restkit, tempfile, json
 from rdflib.Graph import Graph
 from rdflib import Namespace, URIRef, Literal
 from xml.utils import iso8601
@@ -114,7 +114,7 @@ class upload(object):
             ])
 
 
-        return jsonlib.dumps(ret)
+        return json.dumps(ret)
 
 urls = (r'/', 'index',
         r'/upload', 'upload')
