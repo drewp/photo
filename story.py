@@ -47,7 +47,9 @@ def sizeAttrs(foafUser, uri, sizeName):
 @print_timing
 def renderPage(graph, topic, foafUser, cookie):
     photos = photosWithTopic(graph, topic)
-    starFilter(graph, 'only', 'someagent', photos)
+    filtered = starFilter(graph, 'only', foafUser, photos)
+    if filtered:
+        photos = filtered 
     
     tmpl = loader.load("story.html")
 
@@ -55,9 +57,13 @@ def renderPage(graph, topic, foafUser, cookie):
     knownFacts = set()
     commentJs = '1'
     for photo in photos:
-        date = photoCreated(graph, photo).date()
-        if not rows or rows[-1]['date'] != date:
-            rows.append(dict(type='date', date=date))
+        try:
+            date = photoCreated(graph, photo).date()
+        except ValueError:
+            date = None
+        else:
+            if not rows or rows[-1]['date'] != date:
+                rows.append(dict(type='date', date=date))
 
         facts = json.loads(syncServiceCall('facts', photo, foafUser))
         factLines = [l for l in facts['factLines']
@@ -94,10 +100,13 @@ def renderPage(graph, topic, foafUser, cookie):
 def findDateRange(graph, photos):
     dates = set()
     for p in photos:
-        dt = photoCreated(graph, p)
-        dates.add(dt.date())
+        try:
+            dt = photoCreated(graph, p)
+            dates.add(dt.date())
+        except ValueError:
+            pass
     if not dates:
-        return "(no dates)"
+        return "(no photos with dates)"
     lo = min(dates)
     hi = max(dates)
     if lo == hi:

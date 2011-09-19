@@ -44,25 +44,29 @@ class viewPerm(object):
 
 class facts(object):
     def GET(self):
+        web.header("content-type", "application/json")
         img = URIRef(web.input()['uri'])
 
         # check security
 
+        ret = {}
         lines = []
         now = time.time()
 
         try:
             created = photoCreated(graph, img)
+            ret['created'] = created.isoformat()
             sec = time.mktime(created.timetuple())
         except ValueError:
-            return ''
+            created = sec = None
 
-        ago = int((now - sec) / 86400)
-        if ago < 365:
-            ago = '; %s days ago' % ago
-        else:
-            ago = ''
-        lines.append("Picture taken %s%s" % (created.isoformat(' '), ago))
+        if sec is not None:
+            ago = int((now - sec) / 86400)
+            if ago < 365:
+                ago = '; %s days ago' % ago
+            else:
+                ago = ''
+            lines.append("Picture taken %s%s" % (created.isoformat(' '), ago))
 
         allDepicts = [row['who'] for row in
                       graph.queryd(
@@ -71,27 +75,27 @@ class facts(object):
 
         allTags = getTagLabels(graph, "todo", img)
 
-        for who, tag, birthday in [
-            (URIRef("http://photo.bigasterisk.com/2008/person/apollo"),
-            'apollo',
-             '2008-07-22'),
-            ] + auth.birthdays:
-            try:
-                if (who in allDepicts or tag in allTags):
-                    name = graph.value(
-                        who, FOAF.name, default=graph.label(
-                            who, default=tag))
+        if created is not None:
+            for who, tag, birthday in [
+                (URIRef("http://photo.bigasterisk.com/2008/person/apollo"),
+                'apollo',
+                 '2008-07-22'),
+                ] + auth.birthdays:
+                try:
+                    if (who in allDepicts or tag in allTags):
+                        name = graph.value(
+                            who, FOAF.name, default=graph.label(
+                                who, default=tag))
 
-                    lines.append("%s is %s old. " % (
-                        name, personAgeString(birthday, created.isoformat())))
-            except Exception, e:
-                log.error("%s birthday failed: %s" % (who, e))
+                        lines.append("%s is %s old. " % (
+                            name, personAgeString(birthday, created.isoformat())))
+                except Exception, e:
+                    log.error("%s birthday failed: %s" % (who, e))
 
+        ret['factLines'] = lines 
 
         # 'used in this blog entry'        
-
-        return json.dumps({'factLines' : lines, 
-                              'created' : created.isoformat()})
+        return json.dumps(ret)
 
 class links(object):
     """images and other things related to this one"""

@@ -40,7 +40,7 @@ class ImageSetDesc(object): # in design phase
             log.info("featuring one pic")
             self._photos = [self._currentPhoto]
 
-        starFilter(graph, params.get('star'), user, self._photos)
+        self._photos = starFilter(graph, params.get('star'), user, self._photos)
         if params.get('recent', '').strip():
             # recent=10 shows the last 10
             self._photos = self._photos[-int(params['recent'].strip()):]
@@ -187,15 +187,15 @@ class ImageSetDesc(object): # in design phase
     # methods to make alternate urls of this set with some other params applied
 
 def starFilter(graph, starArg, agent, photos):
-    """culls from your list"""
+    """agent is needed (someday) to look up star tags"""
     if starArg is None or starArg == 'all':
-        pass
+        return photos
     elif starArg == 'only':
         keep = []
         for p in photos:
             if tagging.hasTag(graph, agent, p, SITE['tag/*']):
                 keep.append(p)
-        photos[:] = keep
+        return keep
     else:
         raise NotImplementedError("star == %r" % starArg)
 
