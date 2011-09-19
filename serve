@@ -163,12 +163,13 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
     def makeStoryPage(self, topic):
         import story
         reload(story)
+        g = self.graph
         class ret(rend.Page):
             def renderHTTP(self, ctx):
                 req = inevow.IRequest(ctx)
                 req.setHeader('Content-Type', 'application/xhtml+xml')
                 cookie = inevow.IRequest(ctx).getHeader("cookie") or ''
-                req.write(story.renderPage(self.graph, topic,
+                req.write(story.renderPage(g, topic,
                                            access.getUser(ctx), 
                                            cookie))
                 req.finish()

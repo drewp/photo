@@ -1,7 +1,7 @@
 #!/usr/bin/python2.6
 import boot
 from sparqlhttp.graph2 import SyncGraph
-import os, time, cyclone.web
+import os, time, cyclone.web, sys
 from twisted.internet import reactor
 from sparqlhttp.syncimport import SyncImport, IMP
 from _xmlplus.utils import iso8601
