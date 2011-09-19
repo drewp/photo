@@ -11,6 +11,7 @@ from photos import thumb, getRequestedSize
 from db import getGraph
 import access
 from ns import RDF, SITE, PHO
+from urls import absSiteHost
 
 log = boot.log
 
@@ -47,7 +48,7 @@ class Main(rend.Page):
     def locateChild(self, ctx, segments):
         request = inevow.IRequest(ctx)
         if 1:
-            request.setHost('photo.bigasterisk.com', 80)
+            request.setHost(*absSiteHost)
 
         uriSuffix = urllib.quote('/'.join(segments))
         # if you paste a url from a browser to another one, the first

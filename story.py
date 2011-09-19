@@ -30,7 +30,7 @@ def syncServiceCall(name, photoUri, foafUser, **moreParams):
     return response.body_string()
 
 def sizeAttrs_by_http(foafUser, uri, sizeName):
-    innerUri = uri.replace('http://photo.bigasterisk.com/', '/') + '/size'
+    innerUri = localSite(uri) + '/size'
     site = restkit.Resource('http://bang:8086/')
     # restkit.get would hang in this twisted process
     return json.loads(site.get(path=innerUri, size=sizeName,

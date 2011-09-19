@@ -28,7 +28,7 @@ class ImagePage(rend.Page):
     def renderHTTP(self, ctx):
         # i don't have this page made up yet; just use imageset.py
         req = inevow.IRequest(ctx)
-        req.redirect('http://photo.bigasterisk.com/set?current='+urllib.quote(self.uri, safe=''))
+        req.redirect(absoluteSite('/set?current='+urllib.quote(self.uri, safe='')))
         return ''
 
     def render_large(self, ctx, data):
@@ -107,7 +107,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
     def locateChild(self, ctx, segments):
         request = inevow.IRequest(ctx)
         if 1:
-            request.setHost('photo.bigasterisk.com', 80)
+            request.setHost(*absSiteHost)
 
         uriSuffix = urllib.quote('/'.join(segments))
         # if you paste a url from a browser to another one, the first

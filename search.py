@@ -198,7 +198,7 @@ class Events(rend.Page):
                 T.a(href=['/set?',
                           urllib.urlencode(dict(date=randRow['date'],
                                                 current=current))])[
-                    T.img(src=[current, '?size=medium']),
+                    T.img(src=[localSite(current), '?size=medium']),
                     ],
                 T.div[tags],
                 T.div[depicts],

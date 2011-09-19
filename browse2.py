@@ -11,7 +11,7 @@ from rdflib import Variable, URIRef
 from remotesparql import RemoteSparql
 from public import isPublic, makePublic
 import networking
-from ns import PHO, FOAF, EXIF, RDFS, RDF
+from ns import PHO, FOAF, EXIF, RDFS, RDF, SITE
 
 render = render_genshi('.', auto_reload=True)
 
@@ -25,7 +25,7 @@ graph = RemoteSparql(networking.graphRepoRoot(), "photo",
 class index(object):
     def GET(self):
         i = web.input()
-        topDir = URIRef(i.get('dir', '') or 'http://photo.bigasterisk.com/')
+        topDir = URIRef(i.get('dir', '') or SITE)
 
         return render.browse2_index(
             subdirs=graph.queryd("""

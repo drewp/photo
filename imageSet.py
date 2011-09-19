@@ -528,6 +528,7 @@ def serviceCall(ctx, name, uri):
     uri. user credentials are passed on
     """
     t1 = time.time()
+    log.debug("serviceCall: %s %s", name, uri)
     def endTime(result):
         log.info("service call %r in %.01f ms", name, 1000 * (time.time() - t1))
         return result
