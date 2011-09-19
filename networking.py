@@ -27,3 +27,13 @@ def serviceUrl(name):
         'tags' : 'http://%s:9043/tags' % serviceHost,
         'comments' : 'http://%s:%s%s' % commentProxy(),
         }[name]
+
+def jqueryLink(forwardedFor):
+    if not forwardedFor or forwardedFor.startswith(('127.0.0.1', '10.1', '192.168')):
+        # if local wifi users got routed through my squid cache,
+        # this would be unnecessary, as I would have a local cache
+        # of the google copy
+        return "/static/jquery-1.4.2.min.js"
+    else:
+        return "http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"
+

@@ -1,0 +1,67 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:py="http://genshi.edgewall.org/">
+  <head>
+    <link rel="Stylesheet" type="text/css" href="/static/styles.css?v4" media="all" />
+    <title>${title}</title>
+    <script type="text/javascript" src="${bestJqueryLink}"/>
+  </head>
+  <body>
+    <div id="ajaxError" style="display:none"/>
+    
+    <h1>${greet}</h1>
+    
+    <div id="featuredPic">
+      <div>${featuredImg}</div>
+    </div>
+    
+    <div class="loginRow">${loginWidget}</div>
+    <!--
+    <div class="actions" py:if="actionsAllowed">
+      <h2>Actions</h2>
+
+    </div>
+    <div class="actions">
+      <h2>Links</h2>
+      <div class="ac">
+	More images:
+	<ul id="related">
+	</ul>
+      </div>
+
+      <div class="ac">Sizes: <span py:for="o in otherSizeLinks"><a href="${o['uri']}">${o['name']}</a></span></div>
+      <div class="ac">
+	<div>Link to this image: </div>
+	<div style="font-size: 60%"><a href="${link}">${link}</a></div>
+      </div>
+
+    </div>
+
+    <table id="t1">
+      <tr>
+	<td>
+	  <div id="facts">
+	    <ul>
+	    </ul>
+ 	  </div>
+	</td>
+
+	<td>
+	  <div class="tagging">
+	    <div>Tags: <span id="starTag"/> <input type="text" id="tags"/> </div>
+	    <div>Description: <textarea id="desc"></textarea></div>
+	    <div py:if="allowedToWriteMeta"><button id="saveMeta">save</button> <span id="saveStatus"/></div>
+	  </div>
+	</td>
+	<td>
+	  <div id="commentsFade">
+	    <div id="comments"></div>
+          </div>
+	</td>
+      </tr>
+    </table>
+    <script type="text/javascript" src="/static/tag.js" ></script>
+    <script type="text/javascript" src="/static/aclwidget.js" ></script>
+    
+    ${pageJson}
+-->
+  </body>
+</html>

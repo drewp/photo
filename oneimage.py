@@ -16,15 +16,17 @@ from __future__ import division
 import web, sys, json, time, logging, urllib
 from web.contrib.template import render_genshi
 from rdflib import URIRef, Variable
-from remotesparql import RemoteSparql
-import networking, auth
+import auth
 from xml.utils import iso8601
 from tagging import getTagLabels
 import access
 from oneimagequery import photoCreated
-from ns import PHO, FOAF, EXIF, SCOT, DC, RDFS, RDF, DCTERMS, ACL
+from ns import PHO, FOAF, EXIF, SCOT, DC
+import db
 
 log = logging.getLogger()
+logging.getLogger("restkit.client").setLevel(logging.WARN)
+logging.getLogger("restkit.conn").setLevel(logging.WARN)
 render = render_genshi('.', auto_reload=True)
 
 class viewPerm(object):
@@ -194,14 +196,7 @@ def personAgeString(isoBirthday, photoDate):
 
 if __name__ == '__main__':
     
-    graph = RemoteSparql(networking.graphRepoRoot(), "photo",
-                         initNs=dict(foaf=FOAF,
-                                     rdfs=RDFS.RDFSNS,
-                                     rdf=RDF.RDFNS,
-                                     exif=EXIF,
-                                     scot=SCOT,
-                                     dcterms=DCTERMS,
-                                     pho=PHO))
+    graph = db.getGraph()
 
     urls = (r'/', "index",
             r'/facts', 'facts',

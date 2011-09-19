@@ -84,7 +84,9 @@ http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/size?size=full
   kept as a separate request in case all the image store moves to a
   new implementation
 http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/page
-  redir to the page, with uri=?? param
+  the main browsing page (maybe redir)
+http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/single
+  simpler page with just this pic
 http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/comments
   POST
 http://photo.bigasterisk.com/phonecam/CIMG_1001.JPG/links -> sets that it's in

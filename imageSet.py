@@ -12,7 +12,7 @@ download from flickr
 ocr and search, like http://norman.walsh.name/2009/11/01/evernote
 """
 from __future__ import division
-import logging, zipfile, datetime, json, urllib, random, time, traceback, simplejson
+import logging, zipfile, datetime, json, urllib, random, time, traceback, simplejson, restkit
 from StringIO import StringIO
 from nevow import loaders, rend, tags as T, inevow, url
 from rdflib import URIRef, Literal
@@ -27,8 +27,8 @@ from imageurl import ImageSetDesc, photosWithTopic
 from edit import writeStatements
 from search import nextDateWithPics
 import tagging, networking
-import auth
-from access import getUser, accessControlWidget
+import auth, access
+from access import getUser
 from lib import print_timing
 from scanFs import videoExtensions
 log = logging.getLogger()
@@ -419,6 +419,28 @@ class ImageSet(rend.Page):
     def render_sflyUploadButton(self, ctx, data):
         return T.button(onclick="sflyUpload()")["Upload to ShutterFly"]
 
+    def render_publicShareButton(self, ctx, data):
+        if self.currentPhoto is None:
+            return ''
+
+        def hasShortUrl(longUri):
+            try:
+                r = restkit.Resource('http://plus:8099/').get('shortLinkTest', long=longUri)
+            except restkit.ResourceNotFound:
+                return None
+            return 'http://plus:8030/shortener/follow/%s' % (
+                json.loads(r.body_string())['short'])
+
+        # not absoluteSite() here, since i didn't want to make
+        # separate shortener entries for test sites and the real one
+        target = self.currentPhoto+"/single"
+        if access.viewable(self.graph, self.currentPhoto,
+                           URIRef("http://example.com/acl/public")):
+            short = hasShortUrl(target)
+            if short:
+                return T.a(href=short)["Public share link"]
+        return T.button(onclick="makePublicShare()")["Make public share link"]
+
     @print_timing
     def tagList(self):
         freqs = tagging.getTagsWithFreqs(self.graph)
@@ -427,14 +449,7 @@ class ImageSet(rend.Page):
     def render_bestJqueryLink(self, ctx, data):
         req = inevow.IRequest(ctx)
         ip = req.getHeader('x-forwarded-for')
-        if ip and ip.startswith(('10.1', '192.168')):
-            # if local wifi users got routed through my squid cache,
-            # this would be unnecessary, as I would have a local cache
-            # of the google copy
-            src = "/static/jquery-1.4.2.min.js"
-        else:
-            src = "http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"
-        return T.script(type='text/javascript', src=src)
+        return T.script(type='text/javascript', src=networking.jqueryLink(ip))
     
     def render_starLinkAll(self, ctx, data):
         if ctx.arg('star') is None:

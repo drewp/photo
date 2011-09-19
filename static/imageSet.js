@@ -253,5 +253,21 @@ function sflyUpload() {
     alert("not implemented")
 }
 
+function makePublicShare() {
+    $.post("/aclChange", {accessTo: picInfo.currentPhotoUri, 
+			  agent: "http://example.com/acl/public", 
+			  op: "allow"}, 
+	   function (data) {
+	       
+	       // need to invalidate the ACL dropdown now
 
+	       var longUri = picInfo.currentPhotoUri+"/single";
+	       $.getJSON("/shortener/shortLink", {long: longUri}, 
+			 function (data) {
+			     $("#publicShare").html($("<a>")
+						    .attr("href", 'http://plus:8030/shortener/follow/'+data.short)
+						    .text("Public share link"));
+			 });
+	   });
+}
 

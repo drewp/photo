@@ -47,6 +47,8 @@ def thumb(localURL, maxSize=100):
             raise NotImplementedError
         else:
             return videoThumbnail(localPath, maxSize)
+    if maxSize is Video2:
+        raise NotImplementedError("maxSize=Video2 on localPath %r" % localPath)
     
     if maxSize is Full:
         return jpgWithoutExif(localPath), os.path.getmtime(localPath)
@@ -93,7 +95,7 @@ def videoThumbnail(localPath, maxSize):
     return open(tf.name).read(), time.time() # todo
 
 def getSize(localURL, maxSize):
-    # this could probably get a ton faster if the sizes were in a db
+    # this could probably get a ton faster if the sizes were in a db.
     jpg, mtime = thumb(localURL, maxSize)
     return Image.open(StringIO(jpg)).size
 
