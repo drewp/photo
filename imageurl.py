@@ -9,6 +9,8 @@ from ns import SITE, PHO, XS
 
 log = logging.getLogger()
 
+class NoSetUri(ValueError):
+    "there is no stable URI that can represent this set"
 
 class ImageSetDesc(object): # in design phase
     def __init__(self, graph, user, uriOrQuery):
@@ -106,7 +108,7 @@ class ImageSetDesc(object): # in design phase
         params = sorted(self.parsedUrl.queryList())
         keys = [k for k,v in params]
         if 'random' in keys:
-            raise ValueError("canonical set uri is undefined for random sets")
+            raise NoSetUri()
         importantParams = self.paramsAffectingSet(keys)
         
         for k,v in params:

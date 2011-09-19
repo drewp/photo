@@ -23,7 +23,7 @@ from twisted.web.client import getPage
 from isodate.isodates import parse_date, date_isoformat
 from photos import Full, thumb, sizes, getSize
 from urls import localSite, absoluteSite
-from imageurl import ImageSetDesc, photosWithTopic
+from imageurl import ImageSetDesc, photosWithTopic, NoSetUri
 from edit import writeStatements
 from search import nextDateWithPics
 import tagging, networking
@@ -197,11 +197,15 @@ class ImageSet(rend.Page):
         """
         access for the whole displayed set
         """
+        try:
+            setUri = self.desc.canonicalSetUri()
+        except NoSetUri:
+            return ''
         import access
         reload(access)
         return T.raw(access.accessControlWidget(
             self.graph, getUser(ctx),
-            self.desc.canonicalSetUri()))
+            setUri))
         
     def render_zipSizeWarning(self, ctx, data):
         mb = 17.3 / 9 * len(self.photos)
