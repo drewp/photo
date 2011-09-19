@@ -229,7 +229,7 @@ def returnJson(d):
         def renderHTTP(self, ctx):
             req = inevow.IRequest(ctx)
             req.setHeader('Content-Type', 'application/json')
-            req.write(json.write(d))
+            req.write(json.dumps(d))
             req.finish()
             return ''
     return ret()

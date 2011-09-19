@@ -99,12 +99,12 @@ class ImageSet(rend.Page):
 
         def readOrError(js):
             try:
-                return json.read(js)
+                return json.loads(js)
             except Exception, e:
                 log.error(traceback.format_exc())
-                return json.write({'error' : str(e)})
+                return json.dumps({'error' : str(e)})
 
-        ret = T.raw(json.write(dict(
+        ret = T.raw(json.dumps(dict(
             relCurrentPhotoUri=localSite(self.currentPhoto),
             currentPhotoUri=self.currentPhoto,
             links=readOrError(results[0][1]),
@@ -159,7 +159,7 @@ class ImageSet(rend.Page):
         return ret
 
     def jsonContent(self):
-        return json.write({'photos' : self.photos})
+        return json.dumps({'photos' : self.photos})
 
     def postTagRange(self, ctx):
         # security?

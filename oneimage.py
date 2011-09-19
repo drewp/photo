@@ -89,7 +89,7 @@ class facts(object):
 
         # 'used in this blog entry'        
 
-        return json.write({'factLines' : lines, 
+        return json.dumps({'factLines' : lines, 
                               'created' : created.isoformat()})
 
 class links(object):
@@ -137,7 +137,7 @@ class links(object):
 
         # taken near xxxxx
 
-        return json.write({'links' : links.items()})
+        return json.dumps({'links' : links.items()})
 
 from tagging import getTags, saveTags
 

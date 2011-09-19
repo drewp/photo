@@ -59,7 +59,7 @@ def renderPage(graph, topic, foafUser, cookie):
         if not rows or rows[-1]['date'] != date:
             rows.append(dict(type='date', date=date))
 
-        facts = json.read(syncServiceCall('facts', photo, foafUser))
+        facts = json.loads(syncServiceCall('facts', photo, foafUser))
         factLines = [l for l in facts['factLines']
                      if not l.startswith("Picture taken ")]
         factLines = [l for l in factLines if l not in knownFacts]
