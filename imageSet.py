@@ -21,7 +21,7 @@ from twisted.python.components import registerAdapter, Adapter
 from twisted.internet.defer import inlineCallbacks, returnValue, DeferredList
 from twisted.web.client import getPage
 from isodate.isodates import parse_date, date_isoformat
-from photos import Full, thumb, sizes
+from photos import Full, thumb, sizes, getSize
 from urls import localSite, absoluteSite
 from imageurl import ImageSetDesc, photosWithTopic
 from edit import writeStatements
@@ -279,9 +279,13 @@ class ImageSet(rend.Page):
         if self.graph.contains((self.currentPhoto, RDF.type, PHO.Video)):
             return T.Tag('video')(src=[currentLocal, "?size=video2"], controls="1", preload="1", width="600", height="450")
         else:
+            size = getSize(self.currentPhoto, sizes["large"])
+            marg = (600 - 2 - size[0]) // 2
             return T.div(class_="nextClick",
                          nextclick=self.otherImageHref(ctx, next))[
                 T.img(src=[currentLocal, "?size=large"],
+                      width=size[0], height=size[1],
+                      style="margin: 0 %spx" % marg,
                       alt=self.graph.label(self.currentPhoto))]
 
     def render_stepButtons(self, ctx, data):

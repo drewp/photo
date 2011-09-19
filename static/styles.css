@@ -144,10 +144,11 @@ cursor: pointer;
 .steps { 
     text-align: center;
     font-size: 80%;
+    line-height: 25px;
 }
 .steps a {
     font-size: 30px;
-    line-height: 14px;
+    padding: 0 6px;
     text-decoration: none;
     vertical-align: top;
 }
