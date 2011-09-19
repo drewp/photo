@@ -2,6 +2,7 @@
 """
 rebuild the <http://photo.bigasterisk.com/scan/fs> and <http://photo.bigasterisk.com/scan/exif> graphs from the filesystem
 """
+import boot
 import os, sys, logging
 from optparse import OptionParser
 from remotesparql import RemoteSparql
@@ -11,6 +12,7 @@ from scanFs import filenameIsImage, ScanFs
 from scanExif import ScanExif
 import networking
 from ns import PHO, SITE, FOAF, RDFS
+log = boot.log
 
 def goodDirNames(names):
     ret = []
@@ -52,8 +54,6 @@ def main(opts):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-    logging.getLogger('restkit.client').setLevel(logging.WARN)
     parser = OptionParser()
     parser.add_option("--quick", action="store_true", help="only look at a few files")
     parser.add_option("--drop", action="store_true", help="remove old fs and exif graphs before writing")

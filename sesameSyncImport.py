@@ -1,9 +1,7 @@
 #!/usr/bin/python2.6
-import sys
-sys.path.insert(0, "/my/proj/sparqlhttp")
+import boot
 from sparqlhttp.graph2 import SyncGraph
-from remotesparql import RemoteSparql
-import os, logging, time, cyclone.web
+import os, time, cyclone.web
 from twisted.internet import reactor
 from sparqlhttp.syncimport import SyncImport, IMP
 from _xmlplus.utils import iso8601
@@ -14,10 +12,7 @@ from picdirs import picSubDirs
 import networking
 from ns import PHO, FOAF, RDFS
 
-logging.basicConfig()
-log = logging.getLogger()
-log.setLevel(logging.DEBUG)
-logging.getLogger("restkit.client").setLevel(logging.WARN)
+log = boot.log
 
 class SesameSync(SyncImport):
     def allInputFiles(self):

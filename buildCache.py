@@ -16,6 +16,7 @@ testing? use this to remove the last 24h of thumbs:
   find /my/pic/~thumb -mtime -1 -type f -delete
 """
 
+import boot
 import subprocess, time, optparse, logging
 from multiprocessing import Pool, Queue, Process
 from photos import justCache
@@ -70,8 +71,9 @@ if __name__ == '__main__':
     parser.add_option("--grid", action="store_true", help="run resizes as jobs on SGE grid")
     opts, args = parser.parse_args()
 
-    log = logging.getLogger()
-    logging.basicConfig(level=logging.DEBUG if opts.d else logging.INFO)
+    log = boot.log
+    if not opts.d:
+        log.setLevel(logging.INFO)
 
     files = findFiles(opts)
 

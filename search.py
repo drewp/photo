@@ -8,7 +8,6 @@ from urls import photoUri
 from lib import print_timing
 from ns import FOAF, XS
 log = logging.getLogger()
-log.setLevel(logging.DEBUG)
 
 _datePool = []
 _datePoolCreated = None

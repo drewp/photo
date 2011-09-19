@@ -9,6 +9,7 @@ for x (/my/mail/drewp/.newphoto/cur/*) { cat $x | ./ingestmail }
 associate metadata about the email with the images
 """
 
+import boot
 import maillib
 
 import datetime, os, logging, sys, urllib, restkit
@@ -19,9 +20,8 @@ from rdflib import URIRef, Literal
 from scanFs import uriOfFilename
 from ns import PHO, SITE, FOAF, DCTERMS, RDFS, RDF
 
-logging.basicConfig(level=logging.INFO)
-log = logging.getLogger()
-logging.getLogger("restkit.client").setLevel(logging.WARN)
+log = boot.log
+log.setLevel(logging.INFO)
 
 def writeExcl(path, content):
     log.info("writing %r", path)

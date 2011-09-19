@@ -11,14 +11,11 @@ it right away, we only send a message about the dir. Annoying!
 
 """
 
+import boot
 from fileschanged import fileschanged
 from restkit import Resource
 from picdirs import picSubDirs
-import logging
-logging.basicConfig()
-log = logging.getLogger()
-log.setLevel(logging.DEBUG)
-logging.getLogger('restkit.client').setLevel(logging.INFO)
+log = boot.log
 
 syncImportEndpoint = Resource("http://bang:9042/") # should be a PSHB hub
 

@@ -1,5 +1,3 @@
-import sys
-sys.path.append("/my/proj/sparqlhttp")
 from sparqlhttp.graph2 import SyncGraph
 
 import networking

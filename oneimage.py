@@ -13,7 +13,8 @@ GET /ariDateAge?img=http://photo... -> for ari photos
 the fetching of the resized images is still over in serve
 """
 from __future__ import division
-import web, sys, json, time, logging, urllib
+import boot
+import web, sys, json, time, urllib
 from web.contrib.template import render_genshi
 from rdflib import URIRef, Variable
 import auth
@@ -24,9 +25,7 @@ from oneimagequery import photoCreated
 from ns import PHO, FOAF, EXIF, SCOT, DC
 import db
 
-log = logging.getLogger()
-logging.getLogger("restkit.client").setLevel(logging.WARN)
-logging.getLogger("restkit.conn").setLevel(logging.WARN)
+log = boot.log
 render = render_genshi('.', auto_reload=True)
 
 class viewPerm(object):

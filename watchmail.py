@@ -4,11 +4,12 @@
 watch new files in photoIncoming mail folder; ingest them and move
 them to photoIncoming.done
 """
-import path, logging, cyclone.web, time, restkit
+import boot
+import path, cyclone.web, time, restkit
 from twisted.internet import reactor, task
 from ingestmail import ingest
 
-logging.basicConfig(level=logging.DEBUG)
+log = boot.log
 
 class Poller(object):
     def __init__(self):

@@ -2,7 +2,8 @@
 requests for photos and videos are routed to this server
 
 """
-import urllib, os, logging, sys
+import boot
+import urllib, os, sys
 from nevow import rend, inevow, static, appserver
 from twisted.web import http
 from twisted.internet import reactor
@@ -11,7 +12,7 @@ from db import getGraph
 import access
 from ns import RDF, SITE, PHO
 
-log = logging.getLogger()
+log = boot.log
 
 class StaticCached(static.Data):
     """

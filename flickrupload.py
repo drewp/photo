@@ -13,7 +13,8 @@ Returns json:
   {flickrUrl: 'http://www.flickr.com/photos/12345/12345'}
 
 """
-import web, time, logging, os
+import boot
+import web, time, os, logging
 import flickrapi
 import restkit, tempfile, json
 from rdflib.Graph import Graph
@@ -23,7 +24,7 @@ from photos import sizes
 from edit import writeStatements
 from ns import PHO, DCTERMS
 
-log = logging.getLogger()
+log = boot.log
 
 def fetchImageToTempfile(uri, size, cookie):
     tf = tempfile.NamedTemporaryFile()
@@ -121,7 +122,6 @@ urls = (r'/', 'index',
 app = web.application(urls, globals())
 
 if __name__ == '__main__':
-    logging.basicConfig()
     log.setLevel(logging.INFO)
     app.run()
 
