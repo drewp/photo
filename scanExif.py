@@ -60,6 +60,7 @@ class ScanExif(object):
             stmts.extend(self.positionStatements(uri, vals))
             stmts.extend(self.exposureStatements(uri, vals))
 
+        #self.graph.remove([(uri, None, None)]) # used to flush some stmts
         self.graph.add(stmts,
              context=URIRef("http://photo.bigasterisk.com/scan/exif"))
         log.info("added exif from %s %s triples" % (filename, len(stmts)))
@@ -87,7 +88,8 @@ class ScanExif(object):
     
     def timeStatements(self, uri, vals):
         dateAndTime = None
-        for timeKey in ['Date_and_Time', 'Date_and_Time__original_',
+        # moved 'original' first for pics like /my/pic/digicam/ext-2011-08-11/DSCN1311.JPG
+        for timeKey in ['Date_and_Time__original_', 'Date_and_Time', 
                         'Date_and_Time__digitized_']:
             try:
                 dateAndTime = fixTime(vals[timeKey])
