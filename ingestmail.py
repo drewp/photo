@@ -57,8 +57,8 @@ def emailStatements(uri, msg):
         (uri, DCTERMS.creator, sender),
         (sender, RDFS.label, Literal(msg.sender[1])),
         (sender, FOAF.name, Literal(msg.sender[0])),
-        (uri, DC.created, Literal(msg.date.replace(tzinfo=tzlocal()))),
-        (uri, DC.date, Literal(msg.date.replace(tzinfo=tzlocal()).date())),
+        (uri, DCTERMS.created, Literal(created)),
+        (uri, DCTERMS.date, Literal(created.date())),
     ]
 
 def findAttachments(msg):
