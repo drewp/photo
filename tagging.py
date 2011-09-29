@@ -45,13 +45,12 @@ def saveTags(graph, foafUser, img, tagString, desc):
         "SELECT ?g WHERE { GRAPH ?g { ?img pho:tagString ?any } }",
         initBindings={Variable("img") : img})]
         
-    graph.add(*stmts, **{'context' : subgraph})
+    graph.add(stmts, context=subgraph)
     log.info("Wrote tag data to %s" % subgraph)
-    graph.add(*tagDefs, **{'context' :
-                           URIRef('http://photo.bigasterisk.com/tagDefs')})
+    graph.add(tagDefs, context=URIRef('http://photo.bigasterisk.com/tagDefs'))
 
     for c in prevContexts:
-        graph.remove((None, None, None), context=c)
+        graph.remove([(None, None, None)], context=c)
 
 def getTagLabels(graph, foafUser, img):
     # check user read perms

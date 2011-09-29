@@ -124,7 +124,7 @@ def ingest(fileObj, mock=False, newImageCb=lambda uri: None):
     ctx = SITE['fromEmail/%s' % uri[4:]] # (already quoted above)
     graph = getGraph()
     if not mock:
-        graph.add(*stmts, **{'context' : ctx})
+        graph.add(stmts, context=ctx)
     log.info("added %s statements about %s to context %s", len(stmts), uri, ctx)
 
     if errs:
