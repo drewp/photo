@@ -14,6 +14,9 @@ def getLoginBarSync(cookie=''):
 def graphRepoRoot():
     return "http://%s:8080/openrdf-sesame/repositories" % serviceHost
 
+def shortenerRoot():
+    return "http://%s:9079/" % serviceHost
+
 def commentProxy():
     return serviceHost, 9031, "/comments"
 

@@ -429,7 +429,8 @@ class ImageSet(rend.Page):
 
         def hasShortUrl(longUri):
             try:
-                r = restkit.Resource('http://plus:8099/').get('shortLinkTest', long=longUri)
+                r = restkit.Resource(networking.shortenerRoot()
+                                     ).get('shortLinkTest', long=longUri)
             except restkit.ResourceNotFound:
                 return None
             return 'http://plus:8030/shortener/follow/%s' % (
@@ -438,8 +439,7 @@ class ImageSet(rend.Page):
         # not absoluteSite() here, since i didn't want to make
         # separate shortener entries for test sites and the real one
         target = self.currentPhoto+"/single"
-        if access.viewable(self.graph, self.currentPhoto,
-                           URIRef("http://example.com/acl/public")):
+        if access.viewable(self.graph, self.currentPhoto, FOAF.Agent):
             short = hasShortUrl(target)
             if short:
                 return T.a(href=short)["Public share link"]
