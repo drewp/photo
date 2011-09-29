@@ -50,6 +50,13 @@ def viewableViaPerm(graph, uri, agent):
         log.debug("ok, graph has an authorization for :friends")
         return True
 
+    # spec wants me to use agentClass on this, but I've already
+    # screwed that up elsewhere, so it will take new triples to make
+    # the old data compatible
+    if graph.queryd("ASK { [ acl:agent foaf:Agent ; acl:mode acl:Read ; acl:accessTo ?photo ] .}", initBindings={'photo' : uri}):
+        log.debug("ok, graph has an authorization for foaf:Agent ('the public')")
+        return True
+
     if agent and graph.queryd("""
         SELECT ?cls WHERE {
            {
@@ -357,7 +364,7 @@ def removeAccess(graph, user, agent, accessTo):
 
 # older
 def isPublic(graph, uri):
-    return graph.contains((uri, PHO.viewableBy, PHO.friends))
+    return viewable(graph, uri, FOAF.Agent)
 
 def makePublic(uri):
     return makePublics([uri])

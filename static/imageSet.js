@@ -255,7 +255,7 @@ function sflyUpload() {
 
 function makePublicShare() {
     $.post("/aclChange", {accessTo: picInfo.currentPhotoUri, 
-			  agent: "http://example.com/acl/public", 
+			  agent: "http://xmlns.com/foaf/0.1/Agent", 
 			  op: "allow"}, 
 	   function (data) {
 	       

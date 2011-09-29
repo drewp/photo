@@ -29,6 +29,7 @@ from search import nextDateWithPics
 import tagging, networking
 import auth, access
 from access import getUser
+from shorturl import hasShortUrl
 from lib import print_timing
 from scanFs import videoExtensions
 log = logging.getLogger()
@@ -423,27 +424,19 @@ class ImageSet(rend.Page):
     def render_sflyUploadButton(self, ctx, data):
         return T.button(onclick="sflyUpload()")["Upload to ShutterFly"]
 
+    @inlineCallbacks
     def render_publicShareButton(self, ctx, data):
         if self.currentPhoto is None:
-            return ''
-
-        def hasShortUrl(longUri):
-            try:
-                r = restkit.Resource(networking.shortenerRoot()
-                                     ).get('shortLinkTest', long=longUri)
-            except restkit.ResourceNotFound:
-                return None
-            return 'http://bigast.com/_%s' % (
-                json.loads(r.body_string())['short'])
+            returnValue('')
 
         # not absoluteSite() here, since i didn't want to make
         # separate shortener entries for test sites and the real one
         target = self.currentPhoto+"/single"
         if access.viewable(self.graph, self.currentPhoto, FOAF.Agent):
-            short = hasShortUrl(target)
+            short = (yield hasShortUrl(target))
             if short:
-                return T.a(href=short)["Public share link"]
-        return T.button(onclick="makePublicShare()")["Make public share link"]
+                returnValue(T.a(href=short)["Public share link"])
+        returnValue(T.button(onclick="makePublicShare()")["Make public share link"])
 
     @print_timing
     def tagList(self):
