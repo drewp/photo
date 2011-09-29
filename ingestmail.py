@@ -49,13 +49,20 @@ def getGraph():
 
 def emailStatements(uri, msg):
     sender = URIRef("mailto:" + msg.sender[1]) # quote?
+
+    # i think this is doing double-timezone offsets
+    created = msg.date.replace(tzinfo=tzlocal())
+
+# Date: Sat, 06 Aug 2011 20:57:57 -0700
+# became 2011-08-07T03:57:57-07:00
+    
     return [
         (uri, RDF.type, PHO['Email']),
         (uri, DC.creator, sender),
         (sender, RDFS.label, Literal(msg.sender[1])),
         (sender, FOAF.name, Literal(msg.sender[0])),
-        (uri, DC.created, Literal(msg.date.replace(tzinfo=tzlocal()))),
-        (uri, DC.date, Literal(msg.date.replace(tzinfo=tzlocal()).date())),
+        (uri, DC.created, Literal(created)),
+        (uri, DC.date, Literal(created.date())),
     ]
 
 def findAttachments(msg):
