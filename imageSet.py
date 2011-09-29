@@ -133,6 +133,7 @@ class ImageSet(rend.Page):
         href = self.otherImageHref(ctx, img)
         return href.remove('current').add('rss', '1')
 
+    @print_timing
     def renderHTTP(self, ctx):
         req = inevow.IRequest(ctx)
 

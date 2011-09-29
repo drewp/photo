@@ -201,6 +201,7 @@ $(function () {
     });
 
     $("#tags").focus();
+    $(document).scrollTop(0);
 });
 
 function imageLinkListElem(kind, uri, label) {
