@@ -265,7 +265,7 @@ function makePublicShare() {
 	       $.getJSON("/shortener/shortLink", {long: longUri}, 
 			 function (data) {
 			     $("#publicShare").html($("<a>")
-						    .attr("href", 'http://plus:8030/shortener/follow/'+data.short)
+						    .attr("href", 'http://bigast.com/_'+data.short)
 						    .text("Public share link"));
 			 });
 	   });

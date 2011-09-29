@@ -433,7 +433,7 @@ class ImageSet(rend.Page):
                                      ).get('shortLinkTest', long=longUri)
             except restkit.ResourceNotFound:
                 return None
-            return 'http://plus:8030/shortener/follow/%s' % (
+            return 'http://bigast.com/_%s' % (
                 json.loads(r.body_string())['short'])
 
         # not absoluteSite() here, since i didn't want to make
