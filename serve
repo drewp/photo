@@ -88,16 +88,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         elif lastSegment == 'size':
             return ImageSizeResponse(self.graph, uri)
         elif lastSegment == 'single':
-            import sharesingle
-            reload(sharesingle)
-            p = sharesingle.ShareSingle(self.graph, uri)
-            class wrap(rend.Page):
-                def renderHTTP(self, ctx):
-                    r = inevow.IRequest(ctx)
-                    r.setHeader('Content-type', 'application/xhtml+xml')
-                    return p.render(r.getHeader("cookie") or '',
-                                    r.getHeader("x-forwarded-for") or '')
-            return wrap()
+            args = networking.serviceHost, 8037, '/single'
         else:
             raise NotImplementedError()
 
