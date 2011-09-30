@@ -285,7 +285,10 @@ class ImageSet(rend.Page):
         if self.graph.contains((self.currentPhoto, RDF.type, PHO.Video)):
             return T.Tag('video')(src=[currentLocal, "?size=video2"], controls="1", preload="1", width="600", height="450")
         else:
-            size = getSize(self.currentPhoto, sizes["large"])
+            try:
+                size = getSize(self.currentPhoto, sizes["large"])
+            except (ValueError, IOError):
+                size = (0,0)
             marg = (600 - 2 - size[0]) // 2
             return T.div(class_="nextClick",
                          nextclick=self.otherImageHref(ctx, next))[

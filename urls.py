@@ -1,4 +1,4 @@
-import urllib, logging
+import urllib, logging, os
 from ns import SITE
 
 log = logging.getLogger()
@@ -11,7 +11,9 @@ def localSite(url):
         return url[len(SITE)-1:]
     raise ValueError("%s not on site" % url)
 
-absSiteHost = "photo.bigasterisk.com", 80
+absSiteHost = (
+    os.environ.get("PHOTO_SITE_HOST", "photo.bigasterisk.com"),
+    int(os.environ.get("PHOTO_SITE_PORT", "80")))
 
 def absoluteSite(url):
     """

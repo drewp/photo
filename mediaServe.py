@@ -5,6 +5,7 @@ requests for photos and videos are routed to this server
 import boot
 import urllib, os, sys
 from nevow import rend, inevow, static, appserver
+from rdflib import URIRef
 from twisted.web import http
 from twisted.internet import reactor
 from photos import thumb, getRequestedSize
@@ -102,7 +103,11 @@ class Main(rend.Page):
         return self.imageResource(uri, ctx), ()
         
     def viewable(self, uri,  ctx):
-        agent = access.getUser(ctx)
+        if os.environ.get('PHOTO_FORCE_LOGIN', ''):
+            agent = URIRef(os.environ['PHOTO_FORCE_LOGIN'])
+        else:
+            agent = access.getUser(ctx)
+            
         return access.viewable(self.graph, uri, agent)
 
     def nonViewable(self, request):

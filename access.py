@@ -6,7 +6,7 @@ and some other photo-site-specific things, but hopefully those can be
 removed
 """
 
-import logging, random, time, datetime
+import logging, random, time, datetime, os
 from dateutil.tz import tzlocal
 from rdflib import URIRef, RDF, Literal
 from nevow import inevow
@@ -22,6 +22,8 @@ serializer = XHTMLSerializer()
 log = logging.getLogger()
 
 def getUser(ctx):
+    if os.environ.get('PHOTO_FORCE_LOGIN', ''):
+        return URIRef(os.environ['PHOTO_FORCE_LOGIN'])
     agent = inevow.IRequest(ctx).getHeader('x-foaf-agent')
     if agent is None:
         return None

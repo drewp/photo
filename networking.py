@@ -1,7 +1,8 @@
+import os
 from twisted.web.client import getPage
 from restkit import request
 
-serviceHost = 'bang'
+serviceHost = os.environ.get('PHOTO_SERVICE_HOST', 'bang')
 
 def getLoginBar(cookie=''):
     return getPage("http://%s:9023/_loginBar" % serviceHost,
