@@ -5,14 +5,9 @@
 @prefix pers: <http://photo.bigasterisk.com/2007/person/> .
 @prefix dc: <http://purl.org/dc/terms/> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix fr: <http://bigasterisk.com/foaf/> .
 
-pers:matthew a foaf:Person;
-  foaf:name "Matthew Rehrer" .
+:AgentsForAclUi rdfs:comment "agents and agent classes of this class will be presented in the ACL UI" .
+:friends a :AgentsForAclUi .
+foaf:Agent a :AgentsForAclUi .
 
-place:home a :Place;
- rdfs:label "home" .
-
-<http://bigasterisk.com/foaf.rdf#drewp> foaf:name "Drew Perttula" .
-<http://bigasterisk.com/kelsi/foaf.rdf#kelsi> foaf:name "Kelsi Perttula" .
-
-<http://photo.bigasterisk.com/2009/place/changingTable> :viewableBy :friends .
