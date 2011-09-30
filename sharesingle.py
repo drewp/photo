@@ -1,3 +1,4 @@
+import boot
 import web
 from genshi import Markup
 from genshi.template import TemplateLoader
@@ -8,6 +9,7 @@ from oneimagequery import photoCreated
 import db
 from ns import SITE
 
+log = boot.log
 loader = TemplateLoader(".", auto_reload=True)
 serializer = XHTMLSerializer()
 
