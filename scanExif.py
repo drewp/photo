@@ -20,6 +20,9 @@ from ns import PHO, DC, XS, EXIF, WGS, RDF
 log = logging.getLogger('scanExif')
 log.setLevel(logging.DEBUG)
 
+def quotientNoExponent(n, d):
+    return "{0:f}".format(Decimal(n) / Decimal(d))
+
 class ScanExif(object):
     def __init__(self, graph):
         """Takes sparqlhttp.graph2.SyncGraph"""
@@ -142,8 +145,12 @@ class ScanExif(object):
         stmts = []
         if 'Exposure_Time' in vals:
             n, d = map(Decimal, vals['Exposure_Time'].split(' ')[0].split('/'))
-            stmts.append((uri, EXIF['exposureTime'], 
-                          Literal(n/d, datatype=XS.decimal)))
+            if d/n > 10000:
+                pass # bogus, e.g. from Palm Pre
+            else:
+                stmts.append((uri, EXIF['exposureTime'], 
+                              Literal(quotientNoExponent(n, d),
+                                      datatype=XS.decimal)))
         return stmts
 
 
