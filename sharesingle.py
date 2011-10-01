@@ -1,4 +1,5 @@
 import boot
+from rdflib import URIRef
 import web
 from genshi import Markup
 from genshi.template import TemplateLoader
@@ -25,9 +26,8 @@ class ShareSingle(object):
     in. It has already been determined that this user may see this
     image.
     """
-    def GET(self, relImageUri):
-        uri = SITE[relImageUri]
-        print "abs", uri
+    def GET(self):
+        uri = URIRef(web.input()['uri'])
         size = photos.getSize(uri, photos.sizes["screen"])
 
         try:
@@ -59,7 +59,7 @@ class ShareSingle(object):
 graph = db.getGraph()
 app = web.application((
     r'/', 'Index',
-    r'/(.*)/single', 'ShareSingle',
+    r'/single', 'ShareSingle',
     ), globals())
 application = app.wsgifunc()
 
