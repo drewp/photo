@@ -74,10 +74,7 @@ class ImageSet(rend.Page):
         self.graph, self.uri = graph, uri
         agent = getUser(ctx)
 
-        self.desc = desc = ImageSetDesc(graph, agent, uri)
-        self.topic = desc.topic
-        self.photos = desc.photos()
-        self.currentPhoto = desc.currentPhoto()
+        self.desc = ImageSetDesc(graph, agent, uri)
 
     @print_timing
     def renderHTTP(self, ctx):
@@ -104,7 +101,7 @@ class ImageSet(rend.Page):
 
             return self.archiveZip(ctx)
 
-        ret = View(self.graph, self.topic, self.desc,
+        ret = View(self.graph, self.desc,
                    params=dict(date=ctx.arg('date'), star=ctx.arg('star')),
                    cookie=req.getHeader("cookie") or '',
                    agent=getUser(ctx),
@@ -116,11 +113,10 @@ class ImageSet(rend.Page):
 class View(pystache.view.View):
     template_name = "imageSet"
 
-    def __init__(self, graph, topic, desc, params, cookie, agent,
+    def __init__(self, graph, desc, params, cookie, agent,
                  openidProxyHeader, forwardedFor):
         pystache.view.View.__init__(self)
         self.graph = graph
-        self.topic = topic
         self.desc = desc
         self.params, self.cookie, self.agent = params, cookie, agent
         self.openidProxyHeader = openidProxyHeader
@@ -128,7 +124,7 @@ class View(pystache.view.View):
 
     def title(self):
         # why not setLabel?
-        return self.graph.label(self.topic)
+        return self.graph.label(self.desc.topic)
         
     def bestJqueryLink(self):
         return networking.jqueryLink(self.forwardedFor)
@@ -144,7 +140,7 @@ class View(pystache.view.View):
         return url.here.clear('edit')
 
     def intro(self):
-        intro = self.graph.value(self.topic, PHO['intro'])
+        intro = self.graph.value(self.desc.topic, PHO['intro'])
         if intro is not None:
             intro = intro.replace(r'\n', '\n') # rdflib parse bug?
             return {'html' : intro}
@@ -368,7 +364,7 @@ class View(pystache.view.View):
         return [dict(thumb=flat.flatten(t)) for t in thumbs()]
 
     def zipUrl(self):
-        return self.topic + "?archive=zip"
+        return "%s?archive=zip" % self.desc.topic
     
     def zipSizeWarning(self):
         mb = 17.3 / 9 * len(self.desc.photos())
@@ -491,7 +487,7 @@ class View(pystache.view.View):
         request = inevow.IRequest(ctx)
         request.setHeader("Content-Type", "multipart/x-zip")
 
-        downloadFilename = self.topic.split('/')[-1] + ".zip"
+        downloadFilename = self.desc.topic.split('/')[-1] + ".zip"
         request.setHeader("Content-Disposition",
                           "attachment; filename=%s" %
                           downloadFilename.encode('ascii'))
@@ -520,7 +516,7 @@ class View(pystache.view.View):
         # copied from what flickr emits
         request.setHeader("Content-Type", "text/xml; charset=utf-8")
 
-        items = [T.Tag('title')["bigasterisk %s photos" % self.graph.label(self.topic)]]
+        items = [T.Tag('title')["bigasterisk %s photos" % self.graph.label(self.desc.topic)]]
         for pic in self.photos[-20:]: # no plan yet for the range. use paging i guess
             items.append(T.Tag('item')[
                 T.Tag('title')[self.graph.label(pic, default=pic.split('/')[-1])],
