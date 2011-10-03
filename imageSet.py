@@ -110,6 +110,83 @@ class ImageSet(rend.Page):
         req.setHeader("Content-Type", "application/xhtml+xml")
         return ret.encode('utf8')
 
+
+    def jsonContent(self):
+        return json.dumps({'photos' : self.photos})
+        
+    def archiveZip(self, ctx):
+        f = StringIO('')
+        zf = zipfile.ZipFile(f, 'w', zipfile.ZIP_DEFLATED)
+        for photo in self.photos:
+            data, mtime = thumb(photo, maxSize=Full)
+            zf.writestr(str(photo.split('/')[-1]), data)
+
+        zf.close()
+        request = inevow.IRequest(ctx)
+        request.setHeader("Content-Type", "multipart/x-zip")
+
+        downloadFilename = self.desc.topic.split('/')[-1] + ".zip"
+        request.setHeader("Content-Disposition",
+                          "attachment; filename=%s" %
+                          downloadFilename.encode('ascii'))
+
+        return f.getvalue()
+
+    def postTagRange(self, ctx):
+        # security?
+        
+        i1 = self.photos.index(URIRef(ctx.arg('start')))
+        i2 = self.photos.index(URIRef(ctx.arg('end')))
+
+        newUri = URIRef(ctx.arg('uri'))
+
+        imgStatements = [(img, FOAF.depicts, newUri)
+                         for img in self.photos[i1:i2+1]]
+        if (ctx.arg('label') or '').strip():
+            imgStatements.append((newUri, RDFS.label, Literal(ctx.arg('label'))))
+        writeStatements([
+            (newUri, RDF.type, URIRef(ctx.arg('rdfClass'))),
+            #(newUri, DC.created, Literal now
+            ] + imgStatements)
+
+        return json.dumps({
+            "msg": "tagged %s images: <a href=\"%s\">view your new set</a>" %
+            (len(imgStatements), newUri)
+            })
+    
+    def photoRss(self, ctx):
+        request = inevow.IRequest(ctx)
+
+        # this should be making atom!
+        # it needs to return the most recent pics, with a link to the next set!
+
+        # copied from what flickr emits
+        request.setHeader("Content-Type", "text/xml; charset=utf-8")
+
+        items = [T.Tag('title')["bigasterisk %s photos" % self.graph.label(self.desc.topic)]]
+        for pic in self.desc.photos()[-50:]: # no plan yet for the range. use paging i guess
+            items.append(T.Tag('item')[
+                T.Tag('title')[self.graph.label(pic, default=pic.split('/')[-1])],
+                T.Tag('link')[absoluteSite(pic) + '?size=screen'],
+                T.Tag('description')[
+                  '<a href="%s"><img src="%s" /></a>' %
+                  (absoluteSite(pic) + '?size=large',
+                   absoluteSite(pic) + '?size=thumb')],
+                T.Tag('media:thumbnail')(url=absoluteSite(pic) + '?size=small'),
+                T.Tag('media:content')(url=absoluteSite(pic) + '?size=screen'),
+                ])
+
+        return """<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+        <rss version="2.0" 
+          xmlns:media="http://search.yahoo.com/mrss"
+          xmlns:atom="http://www.w3.org/2005/Atom">
+            <channel>
+            """ + flat.flatten(items) + """
+            </channel>
+        </rss>
+        """
+
+
 class View(pystache.view.View):
     template_name = "imageSet"
 
@@ -447,49 +524,6 @@ class View(pystache.view.View):
         href = self.desc.otherImageUrl(self.desc.photos()[0])
         return href.remove('current').add('rss', '1')
 
-    def jsonContent(self):
-        return json.dumps({'photos' : self.photos})
-
-    def postTagRange(self, ctx):
-        # security?
-        
-        i1 = self.photos.index(URIRef(ctx.arg('start')))
-        i2 = self.photos.index(URIRef(ctx.arg('end')))
-
-        newUri = URIRef(ctx.arg('uri'))
-
-        imgStatements = [(img, FOAF.depicts, newUri)
-                         for img in self.photos[i1:i2+1]]
-        if (ctx.arg('label') or '').strip():
-            imgStatements.append((newUri, RDFS.label, Literal(ctx.arg('label'))))
-        writeStatements([
-            (newUri, RDF.type, URIRef(ctx.arg('rdfClass'))),
-            #(newUri, DC.created, Literal now
-            ] + imgStatements)
-
-        return json.dumps({
-            "msg": "tagged %s images: <a href=\"%s\">view your new set</a>" %
-            (len(imgStatements), newUri)
-            })
-        
-    def archiveZip(self, ctx):
-        f = StringIO('')
-        zf = zipfile.ZipFile(f, 'w', zipfile.ZIP_DEFLATED)
-        for photo in self.photos:
-            data, mtime = thumb(photo, maxSize=Full)
-            zf.writestr(str(photo.split('/')[-1]), data)
-
-        zf.close()
-        request = inevow.IRequest(ctx)
-        request.setHeader("Content-Type", "multipart/x-zip")
-
-        downloadFilename = self.desc.topic.split('/')[-1] + ".zip"
-        request.setHeader("Content-Disposition",
-                          "attachment; filename=%s" %
-                          downloadFilename.encode('ascii'))
-
-        return f.getvalue()
-
     def prevNext(self):
         photos = self.desc.photos()
         if self.desc.currentPhoto() is None:
@@ -502,39 +536,6 @@ class View(pystache.view.View):
     def tagList(self):
         freqs = tagging.getTagsWithFreqs(self.graph)
         return freqs.keys()   
-    
-    def photoRss(self, ctx):
-        request = inevow.IRequest(ctx)
-
-        # this should be making atom!
-        # it needs to return the most recent pics, with a link to the next set!
-
-        # copied from what flickr emits
-        request.setHeader("Content-Type", "text/xml; charset=utf-8")
-
-        items = [T.Tag('title')["bigasterisk %s photos" % self.graph.label(self.desc.topic)]]
-        for pic in self.photos[-20:]: # no plan yet for the range. use paging i guess
-            items.append(T.Tag('item')[
-                T.Tag('title')[self.graph.label(pic, default=pic.split('/')[-1])],
-                T.Tag('link')[absoluteSite(pic) + '?size=screen'],
-                T.Tag('description')[
-                  '<a href="%s"><img src="%s" /></a>' %
-                  (absoluteSite(pic) + '?size=large',
-                   absoluteSite(pic) + '?size=thumb')],
-                T.Tag('media:thumbnail')(url=absoluteSite(pic) + '?size=small'),
-                T.Tag('media:content')(url=absoluteSite(pic) + '?size=screen'),
-                ])
-
-        from nevow import flat
-        return """<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-        <rss version="2.0" 
-          xmlns:media="http://search.yahoo.com/mrss"
-          xmlns:atom="http://www.w3.org/2005/Atom">
-            <channel>
-            """ + flat.flatten(items) + """
-            </channel>
-        </rss>
-        """
 
 def serviceCall(ctx, name, uri):
     """
