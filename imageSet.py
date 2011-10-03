@@ -437,18 +437,14 @@ class View(pystache.view.View):
             # or may not trigger a convert or load
             preloadSize = "video2"
         return localSite(nextImg) + "?size=" + preloadSize
-
-########################################################
                 
-    def otherImageHref(self, ctx, img):
-        return self.desc.otherImageUrl(img)
-
+    # for tablet, incomplete
     def render_standardSite(self, ctx, data):
-        return T.a(href=self.otherImageHref(ctx, self.currentPhoto).replace('tablet', '0'))[
+        return T.a(href=self.desc.otherImageUrl(self.currentPhoto).replace('tablet', '0'))[
             "Standard site"]
 
-    def render_rssHref(self, ctx, img):
-        href = self.otherImageHref(ctx, img)
+    def rssHref(self):
+        href = self.desc.otherImageUrl(self.desc.photos()[0])
         return href.remove('current').add('rss', '1')
 
     def jsonContent(self):
