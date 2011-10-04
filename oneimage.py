@@ -209,7 +209,7 @@ if __name__ == '__main__':
             r'/tags', 'tags',
             )
 
-    app = web.application(urls, globals(), autoreload=True)
+    app = web.application(urls, globals(), autoreload=False)
 
     sys.argv.append("9043")
     app.run()
