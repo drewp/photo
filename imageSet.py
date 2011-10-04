@@ -385,29 +385,14 @@ class View(pystache.view.View):
 
     @print_timing
     def photosInSet(self):
-        uris = self.desc.photos()
-
-        @print_timing
-        def _isVideo():
-            return dict(zip(uris,
-                     fastAsk(self.graph, [(uri, RDF.type, PHO.Video)
-                                          for uri in uris])))
-        isVideo = _isVideo()
-
-        def _thumb(data):
-            return dict(thumb=dict(
-                uri=self.desc.otherImageUrl(data),
-                cls=("current" if data == self.desc.currentPhoto()
-                     else "not-current") + (" video" if isVideo[data] else ''),
-                src="%s?size=thumb" % localSite(data),
-                isVideo=isVideo[data],
-                ))
-
-        @print_timing
-        def thumbs():
-            return map(_thumb, self.desc.photos())
-
-        return thumbs()
+        desc = self.desc
+        return [dict(thumb=dict(
+            uri=desc.otherImageUrl(p),
+            cls=(("current" if p == desc.currentPhoto() else "not-current")
+                 + (" video" if desc.isVideo(p) else '')),
+            src="%s?size=thumb" % localSite(p),
+            isVideo=desc.isVideo(p)))
+                for p in desc.photos()]
 
     def zipUrl(self):
         return "%s?archive=zip" % self.desc.topic
@@ -444,11 +429,11 @@ class View(pystache.view.View):
                                         for name in ['links', 'facts', 'tags']])
 
         def readOrError(js):
-            try:
-                return json.loads(js)
-            except Exception, e:
+            if isinstance(js, Exception):
                 log.error(traceback.format_exc())
-                return {'error' : str(e)}
+                return {'error' : str(js)}
+                
+            return json.loads(js)
 
         ret = dict(
             relCurrentPhotoUri=localSite(current),
@@ -510,11 +495,15 @@ def serviceCall(ctx, name, uri):
                        }).addCallback(endTime)
 
 def serviceCallSync((agent, name, uri)):
+    """returns exceptions instead of raising them"""
     t1 = time.time()
     log.debug("serviceCall: %s %s", name, uri)
     svc = restkit.Resource(networking.serviceUrl(name))
-    rsp = svc.get(uri=uri, headers={'x-foaf-agent' : str(agent)})
-    log.info("service call %r in %.01f ms", name, 1000 * (time.time() - t1))
+    try:
+        rsp = svc.get(uri=uri, headers={'x-foaf-agent' : str(agent)})
+    except restkit.RequestFailed, e:
+        return e
+    log.info("timing: service call %r in %.01f ms", name, 1000 * (time.time() - t1))
     return rsp.body_string()
 
 class ImageSetTablet(ImageSet):

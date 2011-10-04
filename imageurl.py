@@ -31,7 +31,8 @@ class ImageSetDesc(object): # in design phase
                                         if 'seed' in params else None)]
             self.setLabel = 'random choices'
         else:
-            self._photos = photosWithTopic(graph, topic)
+            self._isVideo = {}
+            self._photos = photosWithTopic(graph, topic, self._isVideo)
         self._currentPhoto = None
         if params.get('current') is not None:
             self._currentPhoto = URIRef(params['current'])          
@@ -159,6 +160,10 @@ class ImageSetDesc(object): # in design phase
 
     def includesPhoto(self, uri):
         return uri in self._photos
+
+    def isVideo(self, uri):
+        """may KeyError for now, but this could be made to do a query"""
+        return self._isVideo[uri]
     
     def label(self):
         """
@@ -200,10 +205,13 @@ def starFilter(graph, starArg, agent, photos):
         raise NotImplementedError("star == %r" % starArg)
 
 @print_timing
-def photosWithTopic(graph, uri):
+def photosWithTopic(graph, uri, isVideo):
     """photos can be related to uri in a variety of ways: foaf:depicts,
-    dc:date, etc"""
-    q = graph.queryd("""SELECT DISTINCT ?photo WHERE {
+    dc:date, etc
+
+    we fill isVideo with uri:bool where we learn if the photo was a video
+    """
+    q = graph.queryd("""SELECT DISTINCT ?photo ?isVideo WHERE {
                                {
                                  ?photo foaf:depicts ?u .
                                } UNION {
@@ -216,6 +224,10 @@ def photosWithTopic(graph, uri):
                                  ?email a pho:Email ; dc:date ?u ; dcterms:hasPart ?photo .
                                }
                               # ?photo pho:viewableBy pho:friends .
+                               OPTIONAL {
+                                 ?photo a ?isVideo .
+                                 FILTER( ?isVideo = pho:Video ) .
+                               }
                              }""",
                           initBindings={'u' : uri})
 
@@ -224,5 +236,7 @@ def photosWithTopic(graph, uri):
             return photoCreated(graph, uri)
         except ValueError:
             return datetime.datetime(1,1,1)
+    for row in q:
+        isVideo[row['photo']] = bool(row['isVideo'])
 
     return sorted([row['photo'] for row in q], key=sortkey)
