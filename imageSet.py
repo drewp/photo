@@ -12,13 +12,10 @@ download from flickr
 ocr and search, like http://norman.walsh.name/2009/11/01/evernote
 """
 from __future__ import division
-import logging, zipfile, datetime, json, urllib, random, time, traceback, simplejson, restkit
+import logging, zipfile, datetime, json, urllib, random, time, traceback, restkit
 from StringIO import StringIO
 from nevow import loaders, rend, tags as T, inevow, url, flat
 from rdflib import URIRef, Literal
-from zope.interface import implements
-from twisted.python.components import registerAdapter, Adapter
-from twisted.internet.defer import inlineCallbacks, returnValue, DeferredList
 from twisted.web.client import getPage
 from isodate.isodates import parse_date, date_isoformat
 from photos import Full, thumb, sizes, getSize
@@ -237,34 +234,27 @@ class View(pystache.view.View):
         showingDate = self.params['date']
         if showingDate is None:
             if self.desc.currentPhoto() is None:
-                return ''
+                return None
 
             try:
                 showingDate = photoDate(self.graph, self.desc.currentPhoto())
             except ValueError:
-                return ''
+                return None
         
         dtd = parse_date(showingDate)
         try:
-            prevDate = date_isoformat(nextDateWithPics(
-                self.graph, dtd, -datetime.timedelta(days=1)))
-            prev = T.a(href='/set?date=%s' % prevDate)[
-                prevDate, T.raw(' &#8672;')]
+            prev = dict(prevDate=date_isoformat(nextDateWithPics(
+                self.graph, dtd, -datetime.timedelta(days=1))))
         except ValueError:
-            prev = ""
+            prev = None
 
         try:
-            nextDate = date_isoformat(nextDateWithPics(
-                self.graph, dtd, datetime.timedelta(days=1)))
-            next = T.a(href='/set?date=%s' % nextDate)[
-                T.raw('&#8674; '), nextDate]
+            next = dict(nextDate=date_isoformat(nextDateWithPics(
+                self.graph, dtd, datetime.timedelta(days=1))))
         except ValueError:
-            next = ""
+            next = None
             
-        return flat.flatten(T.div(class_="dateChange")[
-            prev,
-            ' change date ',
-            next])
+        return dict(prev=prev, next=next)
 
     def stepButtons(self):
         p, n = self.prevNext()
@@ -314,26 +304,17 @@ class View(pystache.view.View):
             return ''
         copy = self.graph.value(self.desc.currentPhoto(), PHO.flickrCopy)
         if copy is not None:
-            # this html is a port of the same thing in imageSet.html
-            return flat.flatten(T.span(id="flickrUpload")[T.a(href=copy)["flickr copy"]])
+            return dict(copied=dict(uri=copy))
 
         if self.openidProxyHeader is not None and URIRef(self.openidProxyHeader) in auth.superusers:
-            return flat.flatten(T.div(id="flickrUpload")[
-                T.div[T.button(onclick="flickrUpload()")['Upload to flickr']],
-                T.div[T.input(type="radio", name="size", value="large", id="ful",
-                        checked="checked"),
-                T.label(for_="ful")["large (fast)"]],
-                T.div(style="opacity: .5")[
-                T.input(type="radio", name="size", value="full size", id="fuf"),
-                T.label(for_="fuf")["full (2+ min) ",
-           T.a(href="http://www.flickr.com/help/photos/#89", style="font-size: 60%")["do not use full; flickr won't give you access to your own pic"]]]])
+            return dict(mayCopy=dict(show=True))
         
-        return ''
+        return None
 
     @print_timing
     def publicShareButton(self):
         if self.desc.currentPhoto() is None:
-            return ''
+            return None
 
         # not absoluteSite() here, since i didn't want to make
         # separate shortener entries for test sites and the real one
@@ -341,8 +322,8 @@ class View(pystache.view.View):
         if access.viewable(self.graph, self.desc.currentPhoto(), FOAF.Agent):
             short = hasShortUrlSync(target)
             if short:
-                return flat.flatten(T.a(href=short)["Public share link"])
-        return flat.flatten(T.button(onclick="makePublicShare()")["Make public share link"])
+                return dict(hasLink=dict(short=short))
+        return dict(makeLink=dict(show=True))
 
     def otherSizeLinks(self):
         if self.desc.currentPhoto() is None:
@@ -414,31 +395,19 @@ class View(pystache.view.View):
         isVideo = _isVideo()
 
         def _thumb(data):
-            thisThumbSrc = localSite(data)
-            if data == self.desc.currentPhoto():
-                cls = "current"
-                wrap = lambda x: x
-            else:
-                cls = "not-current"
-                wrap = lambda x: T.a(href=self.desc.otherImageUrl(data))[x]
-
-            if isVideo[data]:
-                cls += " video"
-                _wrap = wrap
-                wrap = lambda x: _wrap([x, T.div(class_="ovl")])
-
-            # if we think the client already has the thumb in-cache, it is
-            # poor to use delaysrc here.
-            return T.span(class_=cls)[wrap(T.img(
-                                     #src="/static/loading.jpg",
-                                     src=[thisThumbSrc, "?size=thumb"]
-                                     ))]
+            return dict(thumb=dict(
+                uri=self.desc.otherImageUrl(data),
+                cls=("current" if data == self.desc.currentPhoto()
+                     else "not-current") + (" video" if isVideo[data] else ''),
+                src="%s?size=thumb" % localSite(data),
+                isVideo=isVideo[data],
+                ))
 
         @print_timing
         def thumbs():
             return map(_thumb, self.desc.photos())
 
-        return [dict(thumb=flat.flatten(t)) for t in thumbs()]
+        return thumbs()
 
     def zipUrl(self):
         return "%s?archive=zip" % self.desc.topic
@@ -451,28 +420,16 @@ class View(pystache.view.View):
     @print_timing
     def pageJson(self):
         prev, next = self.prevNext()
+        allTags = self.tagList() if (
+            self.agent is not None and
+            tagging.allowedToWrite(self.graph, self.agent)) else []
 
-        picInfo = json.dumps(self.picInfoJson())
-        arrowPages = T.raw(simplejson.dumps({
-            "prev" : str(self.desc.otherImageUrl(prev)),
-            "next" : str(self.desc.otherImageUrl(next))}))
-        preloadImg = T.raw(simplejson.dumps(
-            self.nextImagePreload()))
-
-        if self.agent is not None and tagging.allowedToWrite(self.graph, self.agent):
-            allTags = T.raw(simplejson.dumps(self.tagList()))
-        else:
-            allTags = T.raw(simplejson.dumps([]))
-        
-        return flat.flatten(T.script(type="text/javascript")[
-            T.raw("""
-            // <![CDATA[
-            var picInfo = """), picInfo,";",
-            "var arrowPages = ", arrowPages, ";",
-            "var preloadImg = ", preloadImg, ";",
-            "var allTags = ", allTags, ";",
-            T.raw("""
-            // ]]>""")])
+        return dict(picInfo=json.dumps(self.picInfoJson()),
+                    prev=json.dumps(str(self.desc.otherImageUrl(prev))),
+                    next=json.dumps(str(self.desc.otherImageUrl(next))),
+                    preloadImg=json.dumps(self.nextImagePreload()),
+                    allTags=json.dumps(allTags),
+                    )
 
     @print_timing
     def picInfoJson(self):

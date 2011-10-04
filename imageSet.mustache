@@ -33,7 +33,17 @@
     
       <div style="width:1000px">
         <div style="float: left" id="featuredPic">
-          {{{prevNextDateButtons}}}
+          {{#prevNextDateButtons}}
+	  <div class="dateChange">
+	    {{#prev}}
+	    <a href="/set?date={{prevDate}}">{{prevDate}} &#8672;</a>
+	    {{/prev}}
+	    change date
+	    {{#next}}
+	    <a href="/set?date={{nextDate}}">&#8674; {{nextDate}}</a>
+	    {{/next}}
+	  </div>
+	  {{/prevNextDateButtons}}
     
           {{#stepButtons}}
           <div class="steps">
@@ -69,11 +79,39 @@
 	    <div class="ac aclRow">{{{aclWidget}}}</div>
 	    <div class="ac">
 	      <button onclick="sflyUpload()">Upload to ShutterFly</button>
-	      {{{uploadButton}}}
+	      {{#uploadButton}}
+	      {{#copied}}
+	      <span id="flickrUpload"><a href="{{uri}}">flickr copy</a></span>
+	      {{/copied}}
+	      {{#mayCopy}}
+	      
+	      <div id="flickrUpload">
+                <div><button onclick="flickrUpload()">Upload to flickr</button></div>
+                <div><input type="radio" name="size" value="large" id="ful"
+		checked="checked"/>
+                <label for_="ful">large (fast)</label></div>
+		
+		<div style="opacity: .5">
+		  <input type="radio" name="size" value="full size" id="fuf"/>
+		  <label for_="fuf">full (2+ min) <a href="http://www.flickr.com/help/photos/#89" style="font-size: 60%">do not use full; flickr won't give you access to your own pic</a></label>
+		</div>
+	      </div>
+
+	      {{/mayCopy}}
+	      {{/uploadButton}}
 	    </div>
 	    <!--  <div class="ac" style="opacity: .4">Email</div>
 		 <div class="ac" style="opacity: .4">Post to blog</div>-->
-	    <div class="ac" id="publicShare">{{{publicShareButton}}}</div>
+	    <div class="ac" id="publicShare">
+	      {{#publicShareButton}}
+	      {{#hasLink}}
+	      <a href="{{short}}">Public share link</a>
+	      {{/hasLink}}
+	      {{#makeLink}}
+	      <button onclick="makePublicShare()">Make public share link</button>
+	      {{/makeLink}}
+	      {{/publicShareButton}}
+	    </div>
 	    <div class="ac"><a id="debugRdf">Debug rdf</a></div>
 	    
 	  </div>
@@ -148,7 +186,15 @@
       {{!recentLinks}}}
       </div>
       {{#photosInSet}}
-      {{{thumb}}}
+      {{#thumb}}
+      <a href="{{uri}}">
+	<span class="{{cls}}"><img src="{{src}}"/>
+	{{#isVideo}}
+	<div class="ovl"/>
+	{{/isVideo}}
+	</span>
+      </a>
+      {{/thumb}}
       {{/photosInSet}}
     </div>
 
@@ -196,7 +242,16 @@
     <script type="text/javascript" src="/static/tag.js" ></script>
     <script type="text/javascript" src="/static/aclwidget.js" ></script>
    
-    {{{pageJson}}}
+    <script type="text/javascript">
+      {{#pageJson}}
+      // <![CDATA[
+      var picInfo = {{{picInfo}}};
+      var arrowPages = {prev: {{{prev}}}, next: {{{next}}} };
+      var preloadImg = {{{preloadImg}}};
+      var allTags = {{{allTags}}};
+      // ]]>
+      {{/pageJson}}
+    </script>
 
     <script type="text/javascript" src="/static/imageSet.js?v25" ></script>
 
