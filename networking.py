@@ -15,6 +15,10 @@ def getLoginBarSync(cookie=''):
 def graphRepoRoot():
     return "http://%s:8080/openrdf-sesame/repositories" % serviceHost
 
+def searchRoot():
+    return os.environ.get('PHOTO_SEARCH',
+                          "http://bang:8080/search_2.8.1-1.0.3/")
+
 def shortenerRoot():
     return "http://%s:9079/" % serviceHost
 
