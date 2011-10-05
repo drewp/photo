@@ -9,21 +9,21 @@
 
     <!-- if we're on a phone screen, things should shrink accordingly -->
    <link rel="Stylesheet" type="text/css" href="/static/styles.css?v4" media="all" />
-    <title>{{title}}</title>
+    <title id="title">{{title}}</title>
     <script type="text/javascript" src="{{bestJqueryLink}}"/>
   </head>
   <body>
     <div id="ajaxError" style="display:none"/>
-    <div>
+    <div id="topBar">
       <a href="/events">Home</a> | 
       Pictures of <span class="tag">{{setLabel}}</span> | 
       <a href="{{storyModeUrl}}">Story mode</a>
+      {{#intro}}
+      <div class="intro">{{{html}}}</div>
+      {{/intro}}
     </div>
-    {{#intro}}
-    <div class="intro">{{{html}}}</div>
-    {{/intro}}
 
-    <div class="featured">
+    <div id="featured">
       <h2>{{#currentLabel}}{{currentLabel}}{{/currentLabel}}
       {{! keep the title line taking up space so the image doesn't bounce around when there's no title}}
       {{^currentLabel}}&#160;{{/currentLabel}}
@@ -110,7 +110,6 @@
 	      {{/makeLink}}
 	      {{/publicShareButton}}
 	    </div>
-	    <div class="ac"><a id="debugRdf">Debug rdf</a></div>
 	    
 	  </div>
 	  <div class="actions">
@@ -137,7 +136,7 @@
 	      <div>Link to this image: </div>
 	      <div style="font-size: 60%">{{#link}}
 	      {{#video}}
-	      &lt;video width="600" height="450" controls="1" preload="1" src="{{uri}}"/&gt;
+	      &lt;video width="600" height="450" controls="1" preload="1" src="<a href="{{uri}}">{{uri}}</a>"/&gt;
 	      {{/video}}
 	      {{#image}}
 	      &lt;img src="<a href="{{uri}}">{{uri}}</a>"/&gt;
@@ -145,7 +144,7 @@
 	      {{/link}}
 	      </div>
 	    </div>
-
+	    <div class="ac"><a id="debugRdf">Debug rdf</a></div>
 	  </div>
 	  {{/actionsAllowed}}
 	</div>
