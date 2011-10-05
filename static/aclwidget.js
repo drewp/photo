@@ -14,8 +14,14 @@ $(function () {
 	$.post("/aclChange", {agent: agent, accessTo: accessTo, op: op}, 
 	       function (data) {
 		   result.text(data.msg);
-		   check.attr('checked', data.agentState);
+		   if (data.agentState) {
+		       check[0].checked = true;
+		       check.attr("checked", "checked");
+		   } else {
+		       check[0].checked = false;
+		       check.removeAttr("checked");
 		       // need to update the creation rows too
+		   }
 	       });
 	return false;
     }

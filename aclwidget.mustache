@@ -1,0 +1,20 @@
+<form class="aclWidget" xmlns="http://www.w3.org/1999/xhtml" about="{{about}}"> 
+  Who can see <a href="{{about}}">{{desc}}</a>: <button>&#9660;</button>
+  <div class="expandable" style="display: none">
+    <ul class="accessAgents">
+      {{#agents}}
+      <li class="{{liClass}}">
+	<input autocomplete="off" type="checkbox" {{checked}} {{disabled}}
+	       class="acl-set" about="{{uri}}" id="{{checkId}}"/> 
+	<label for="{{checkId}}">{{label}}</label>
+	<span class="result"/>
+	<div>
+	  {{#authorizations}}
+	  <div><a href="{{auth}}">(made by {{creator}} at {{created}})</a></div>
+	  {{/authorizations}}
+	</div>
+      </li>
+      {{/agents}}
+    </ul>
+  </div>
+</form>

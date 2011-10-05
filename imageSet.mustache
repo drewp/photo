@@ -6,8 +6,6 @@
     <!-- per http://www.piclens.com/lite/webmasterguide.php -->
     <link rel="alternate" 
 	  type="application/rss+xml" title="" id="gallery" href="{{rssHref}}"/>
-    <script type="text/javascript" 
-          src="http://lite.piclens.com/current/piclens.js" ></script>
 
     <!-- if we're on a phone screen, things should shrink accordingly -->
    <link rel="Stylesheet" type="text/css" href="/static/styles.css?v4" media="all" />
@@ -76,7 +74,7 @@
 	  {{#actionsAllowed}}
 	  <div class="actions">
 	    <h2>Actions</h2>
-	    <div class="ac aclRow">{{{aclWidget}}}</div>
+	    <div class="ac aclRow">{{#aclWidget}}{{> aclwidget}}{{/aclWidget}}</div>
 	    <div class="ac">
 	      <button onclick="sflyUpload()">Upload to ShutterFly</button>
 	      {{#uploadButton}}
@@ -179,7 +177,7 @@
       </tr>
     </table>
     <div class="photosInSet">
-      <div>{{{setAclWidget}}}</div>
+      <div>{{#setAclWidget}}{{> aclwidget}}{{/setAclWidget}}</div>
       <div>Switch to 
       {{#starLinkAll}}<a href="{{href}}">all</a>{{/starLinkAll}}
       {{#starLinkOnly}}<a href="{{href}}">starred only; </a>{{/starLinkOnly}}
@@ -239,8 +237,8 @@
       Download a <a rel="nofollow" href="{{zipUrl}}">.zip file of the full size images on this page</a> {{zipSizeWarning}}
     </div>
 
-    <script type="text/javascript" src="/static/tag.js" ></script>
-    <script type="text/javascript" src="/static/aclwidget.js" ></script>
+    <script type="text/javascript" src="/static/aclwidget.js?v=2"></script>
+    <script type="text/javascript" src="/static/tag.js"></script>
    
     <script type="text/javascript">
       {{#pageJson}}
@@ -253,7 +251,9 @@
       {{/pageJson}}
     </script>
 
-    <script type="text/javascript" src="/static/imageSet.js?v25" ></script>
+    <script type="text/javascript" src="/static/imageSet.js?v25"></script>
+    <script type="text/javascript" 
+          src="http://lite.piclens.com/current/piclens.js"></script>
 
     <!-- you can leave src empty and let the js set it after ajax is done,
 	 but in chrome, when the download is interrupted, it sometimes doesn't

@@ -297,7 +297,20 @@ class View(pystache.view.View):
         import access
         reload(access)
         return access.accessControlWidget(self.graph, self.agent,
-                                          self.desc.currentPhoto()).decode('utf8')
+                                          self.desc.currentPhoto())
+
+    @print_timing
+    def setAclWidget(self):
+        """
+        access for the whole displayed set
+        """
+        try:
+            setUri = self.desc.canonicalSetUri()
+        except NoSetUri:
+            return ''
+        import access
+        reload(access)
+        return access.accessControlWidget(self.graph, self.agent, setUri)
 
     def uploadButton(self):
         if self.desc.currentPhoto() is None:
@@ -345,21 +358,6 @@ class View(pystache.view.View):
     def allowedToWriteMeta(self):
         return (self.agent is not None and
                 tagging.allowedToWrite(self.graph, self.agent))
-
-    @print_timing
-    def setAclWidget(self):
-        """
-        access for the whole displayed set
-        """
-        try:
-            setUri = self.desc.canonicalSetUri()
-        except NoSetUri:
-            return ''
-        import access
-        reload(access)
-        return T.raw(access.accessControlWidget(
-            self.graph, self.agent,
-            setUri)).decode('utf8')
    
     def starLinkAll(self):
         if self.params['star'] is None:

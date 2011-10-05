@@ -261,13 +261,13 @@ def accessControlWidget(graph, agent, subject):
 
     some agents or classes might have access due to some other facts,
     so you can't turn them off from this UI.
+
+    result is a dict for interpolating to aclwidget.html
     """
     if not agentMaySetAccessControl(agent):
         return ""
 
     photos, groupDesc = expandPhotos(graph, agent, subject)
-
-    tmpl = loader.load("aclwidget.html")
 
     def agentRowSetting(agent, subject):
         if authorizations(graph, row['uri'], subject):
@@ -276,8 +276,19 @@ def accessControlWidget(graph, agent, subject):
             return 'inferred'
         return False
 
-    agents = [(row['label'], agentRowSetting(row['uri'], subject), row['uri'])
-              for row in interestingAclAgentsAndClasses(graph)]
+    agents = []
+    for row in interestingAclAgentsAndClasses(graph):
+        setting = agentRowSetting(row['uri'], subject)
+        agents.append(dict(
+            label=row['label'],
+            setting=setting,
+            uri=row['uri'],
+            liClass='inferred' if setting=='inferred' else '',
+            checked='checked="checked"' if setting else '',
+            disabled='disabled="disabled"' if setting == 'inferred' else '',
+            checkId="id-%s" % (random.randint(0,9999999)),
+            authorizations=describeAuthorizations(graph, row['uri'], subject),
+            ))
 
     # i think the correct thing to list would be *previous perm
     # settings that enabled access to these photos* so it's clear what
@@ -286,15 +297,12 @@ def accessControlWidget(graph, agent, subject):
     # give (e.g. it was one you just applied), then use the normal
     # checkbox list. For anything else, split them out and make the
     # action be 'remove perm'
-
-    stream = tmpl.generate(
+    ret = dict(
         desc=groupDesc,
         about=subject,
         agents=agents,
-        describeAuthorizations=lambda agent: describeAuthorizations(graph, agent, subject),
-        randomId=lambda: "id-%s" % (random.randint(0,9999999)),
         )
-    return (''.join(serializer(stream))).encode('utf8')
+    return ret
 
 def describeAuthorizations(graph, forAgent, accessTo):
     ret = []
@@ -305,7 +313,9 @@ def describeAuthorizations(graph, forAgent, accessTo):
                                }""", initBindings={'auth' : auth})
         if not rows:
             rows = [{}]
-        ret.append((auth, rows[0].get('creator'), rows[0].get('created')))
+        ret.append(dict(auth=auth,
+                        creator=rows[0].get('creator'),
+                        created=rows[0].get('created')))
     return ret
 
 def addAccess(graph, user, agent, accessTo):
