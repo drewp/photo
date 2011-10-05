@@ -98,15 +98,36 @@ class ImageSet(rend.Page):
 
             return self.archiveZip(ctx)
 
-        ret = View(self.graph, self.desc,
+        view = View(self.graph, self.desc,
                    params=dict(date=ctx.arg('date'), star=ctx.arg('star')),
                    cookie=req.getHeader("cookie") or '',
                    agent=getUser(ctx),
                    openidProxyHeader=req.getHeader('x-openid-proxy'),
-                   forwardedFor=req.getHeader('x-forwarded-for')).render()
+                   forwardedFor=req.getHeader('x-forwarded-for'))
+
+        if ctx.arg("jsonUpdate"):
+            req.setHeader("Content-Type", "application/json")
+            return json.dumps(self.templateData(view))
+        
         req.setHeader("Content-Type", "application/xhtml+xml")
+        ret = view.render()
         return ret.encode('utf8')
 
+    def templateData(self, view):
+        def v(keys):
+            for k in keys:
+                x = getattr(view, k)()
+                print k
+                json.dumps(x)
+            return dict((k, getattr(view, k)()) for k in keys)
+        return {
+            'topBar' : v("setLabel storyModeUrl intro".split()),
+            'featured' : v("currentLabel prevNextDateButtons stepButtons featured actionsAllowed publicShareButton related otherSizeLinks link debugRdf ".split()),
+            'featuredMeta' : v("facts allowedToWriteMeta".split()),
+            #'photosInSet' : v(" starLinkAll starLinkOnly photosInSet".split()),
+            'preload' : v(["nextImagePreload"]),
+            'pageJson' : v(["pageJson"]),
+            }
 
     def jsonContent(self):
         return json.dumps({'photos' : self.photos})
@@ -186,6 +207,7 @@ class ImageSet(rend.Page):
 
 class View(pystache.view.View):
     template_name = "imageSet"
+    template_path = "template"
 
     def __init__(self, graph, desc, params, cookie, agent,
                  openidProxyHeader, forwardedFor):
@@ -211,7 +233,7 @@ class View(pystache.view.View):
         # set?tag=foo. error message is poor.
 
         # need something on desc
-        return url.here.clear('edit')
+        return self.desc.storyModeUrl()
 
     def intro(self):
         intro = self.graph.value(self.desc.topic, PHO['intro'])
@@ -399,7 +421,8 @@ class View(pystache.view.View):
     def photosInSet(self):
         desc = self.desc
         return [dict(thumb=dict(
-            uri=desc.otherImageUrl(p),
+            link=desc.otherImageUrl(p),
+            uri=p,
             cls=(("current" if p == desc.currentPhoto() else "not-current")
                  + (" video" if desc.isVideo(p) else '')),
             src="%s?size=thumb" % localSite(p),
@@ -422,8 +445,8 @@ class View(pystache.view.View):
             tagging.allowedToWrite(self.graph, self.agent)) else []
 
         return dict(picInfo=json.dumps(self.picInfoJson()),
-                    prev=json.dumps(str(self.desc.otherImageUrl(prev))),
-                    next=json.dumps(str(self.desc.otherImageUrl(next))),
+                    prev=json.dumps(self.desc.otherImageUrl(prev)),
+                    next=json.dumps(self.desc.otherImageUrl(next)),
                     preloadImg=json.dumps(self.nextImagePreload()),
                     allTags=json.dumps(allTags),
                     )
@@ -459,11 +482,11 @@ class View(pystache.view.View):
                 
     # for tablet, incomplete
     def render_standardSite(self, ctx, data):
-        return T.a(href=self.desc.otherImageUrl(self.currentPhoto).replace('tablet', '0'))[
+        return T.a(href=url.URL.fromString(self.desc.otherImageUrl(self.currentPhoto)).replace('tablet', '0'))[
             "Standard site"]
 
     def rssHref(self):
-        href = self.desc.otherImageUrl(self.desc.photos()[0])
+        href = url.URL.fromString(self.desc.otherImageUrl(self.desc.photos()[0]))
         return href.remove('current').add('rss', '1')
 
     def prevNext(self):

@@ -1,0 +1,17 @@
+      <div>{{#setAclWidget}}{{> aclwidget}}{{/setAclWidget}}</div>
+      <div>Switch to 
+      {{#starLinkAll}}<a href="{{href}}">all</a>{{/starLinkAll}}
+      {{#starLinkOnly}}<a href="{{href}}">starred only; </a>{{/starLinkOnly}}
+      {{!recentLinks}}}
+      </div>
+      {{#photosInSet}}
+      {{#thumb}}
+      <a href="{{link}}" about="{{uri}}">
+        <span class="{{cls}}"><img src="{{src}}"/>
+        {{#isVideo}}
+        <div class="ovl"/>
+        {{/isVideo}}
+        </span>
+      </a>
+      {{/thumb}}
+      {{/photosInSet}}

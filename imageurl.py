@@ -18,7 +18,7 @@ class ImageSetDesc(object): # in design phase
         uriOrQuery is like /set?tag=foo&star=only
         """
         self.graph = graph
-        self.parsedUrl = url.URL.fromString(uriOrQuery)
+        self.parsedUrl = url.URL.fromString(uriOrQuery).remove('jsonUpdate')
         params = dict(self.parsedUrl.queryList())
 
         topic = self.determineTopic(graph, params)
@@ -144,7 +144,7 @@ class ImageSetDesc(object): # in design phase
         """
         url with this other image as the current one
         """
-        return self.parsedUrl.replace('current', img)
+        return str(self.parsedUrl.replace('current', img))
 
     def photos(self):
         """
@@ -177,7 +177,7 @@ class ImageSetDesc(object): # in design phase
     
     def storyModeUrl(self):
         """this set in story mode"""
-        raise NotImplementedError
+        return self.canonicalSetUri() + "&story=1" # todo
 
     def relatedSetLinks(self):
         """all the related ImageSetDescs, e.g. ones with the same tag, etc"""

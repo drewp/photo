@@ -1,0 +1,26 @@
+      <tr>
+        <td>
+          <div id="facts">
+            <ul>
+              {{#facts}}
+              {{#factLines}}
+              <li>{{line}}</li>
+              {{/factLines}}
+              {{/facts}}
+            </ul>
+          </div>
+        </td>
+
+        <td>
+          <div class="tagging">
+            <div>Tags: <span id="starTag"/> <input type="text" id="tags"/> </div>
+            <div>Description: <textarea id="desc"></textarea></div>
+            {{#allowedToWriteMeta}}<div><button id="saveMeta">save</button> <span id="saveStatus"/></div>{{/allowedToWriteMeta}}
+          </div>
+        </td>
+        <td>
+          <div id="commentsFade">
+            <div id="comments"></div>
+          </div>
+        </td>
+      </tr>

@@ -8,11 +8,6 @@ $(function () {
 	return s;
     }
 
-    $(".expand").click(function () {
-	$(this).next().toggle('fast');
-	return false;
-    }).next().hide();
-
     function startImagePick(msg, cb) {
 	$("#rangeState").text("Click an image to pick " + msg);
 	$("body,img").css("cursor", "crosshair");
@@ -28,24 +23,6 @@ $(function () {
 	$("#rangeState").text("");
     }
 
-    function uriFromImg(el) {
-	return 'http://photo.bigasterisk.com' + $(el).attr('src').replace(/\?.*/, "");
-    }
-
-    $("#rangeStart button").click(function() {
-	startImagePick("range start", function(picked) {
-	    $("#rangeStart .pick").text(uriFromImg(picked));
-	    $("#rangeStart img").attr("src", $(picked).attr("src"));
-	});
-    });
-
-    $("#rangeEnd button").click(function() {
-	startImagePick("range end", function(picked) {
-	    $("#rangeEnd .pick").text(uriFromImg(picked));
-	    $("#rangeEnd img").attr("src", $(picked).attr("src"));
-	});
-    });
-
     function updateTagUrl() {
 	var cls = $('#addForm select[name=class]').val();
 	var clsWord = /\/([^\/]+)$/.exec(cls)[1].toLowerCase();
@@ -57,45 +34,6 @@ $(function () {
 		      encodeURIComponent(slug(label)));
 	$('#add-uri').val(newUri);
     }
-    $("#addForm select[name=class], #addForm input[name=label]"
-     ).bind("keyup change", updateTagUrl);
-
-    $("#submitRange").click(function () {
-	$("#rangeState").text("saving...");
-	$.post(document.location + "&tagRange=1",
-	       {start: $("#rangeStart .pick").text(),
-		end: $("#rangeEnd .pick").text(),
-		rdfClass: $('#addForm select[name=class]').val(),
-		label: $("#addForm input[name=label]").val(),
-		uri: $("#addForm input[name=uri]").val()},
-	       function (data, textStatus) {
-		   $("#rangeState").html(data.msg);
-	       }, "json");
-    });
-
-    $(window).keydown(function (e) {
-	var tt = e.target.tagName;
-	if (!e.ctrlKey && (tt == 'TEXTAREA' || tt == 'INPUT')) {
-	    // no arrow key flips in the text boxes (unless you add ctrl)
-	    return true;
-	}
-	if (e.which == 37) {
-	    document.location = arrowPages.prev;
-	} else if (e.which == 39) {
-	    document.location = arrowPages.next;
-	}
-
-    });
-
-
-    $("#commentsFade").fadeTo(0, 0);
-    $.get(picInfo.relCurrentPhotoUri + "/comments",
-	  {},
-	  function (result) {
-	      $("#comments").html(result);
-	      $("#commentsFade").fadeTo(500, 1);
-	      loadDelayedImgs();
-	  }, "html");
 
     function loadDelayedImgs() {
 	$("img[delaySrc]").each(function (i, elem) {
@@ -122,12 +60,6 @@ $(function () {
 	$("#tags").val(sansStar);
     }
 
-    $("#starTag").click(function () {
-	$("#starTag").toggleClass("set");
-	tagsOrDescChanged();
-	saveTagsAndDesc();
-    });
-
     function saveTagsAndDesc() {
 	$("#saveStatus").text("");
 	$("#saveMeta").attr('disabled', true);
@@ -144,7 +76,6 @@ $(function () {
 	    dataType: "json",
 	});
     };
-    $("#saveMeta").click(saveTagsAndDesc);
 
     function tagsOrDescChanged(event) {
 	// I mean to catch any change, including mouse paste
@@ -159,34 +90,192 @@ $(function () {
 	return true;
     }
 
-    $("#tags,#desc").keypress(function(event) {
-	return tagsOrDescChanged(event);
-    });
-
     function refreshTagsAndDesc(data) {
 	setTags(data.tagString);
 	$("#desc").val(data.desc);
 	$("#saveMeta").attr("disabled", "disabled");
     }
 
-    refreshTagsAndDesc(picInfo.tags);
+    function refreshCurrentPhoto(uri) {
+        /* light up this one in the photosInSet collection */
+        $("#photosInSet > a > span.current").attr("class", "not-current");
+        $("#photosInSet > a[about='"+uri+"'] > span").attr("class", "current");
+    }
 
-    setGlobalTags(allTags);
-    $("#tags").tagSuggest({});
+    function updateSections(data) {
+	$.each(data, function (tmpl, contents) {
+            try {
+		if (tmpl == "title") {
+		    $("title").text(contents);
+                } else if (tmpl == "pageJson") {
+                    // needs to be folded into one object
+                    var d = contents.pageJson;
+                    picInfo = JSON.parse(d.picInfo);
+                    arrowPages = {prev: JSON.parse(d.prev), 
+                                  next: JSON.parse(d.next)};
+                    allTags = JSON.parse(d.allTags);
+		} else {
+		    var newHtml = Mustache.to_html(templates[tmpl], contents);
+		    // tmpl: topBar, featured, featuredMeta, photosInSet, preload, pageJson
+                    try {
+                        $("#"+tmpl).html(newHtml);
+                    } catch (e) {
+                        console.log("templating failed", tmpl, newHtml);
+                    }
+                }
+            } catch (e) {
+                console.log("outer fail", tmpl);
+            }
+	});
 
-    $("#featuredPic div.nextClick").click(function () { 
-	document.location.href = $(this).attr("nextclick");
+    }
+
+    var _preloaded = {};
+    function preloadNext() {
+        var p = $(".nextClick").attr("nextclick")
+        getNewPageContents(p, function (data) { _preloaded[p] = data });
+    }
+
+    function getNewPageContents(newPath, cb) {
+        if (_preloaded[newPath]) {
+            cb(_preloaded[newPath]);
+            return;
+        }
+	$.ajax({
+            url: newPath, 
+            // should be an Accept header (or a different resource, if
+            // we're going to do this in pieces?) but i don't have the
+            // jquery docs on the plane right now
+            data: {"jsonUpdate":"1"}, 
+            success: function (data) {
+                cb(data);
+            }
+        });
+    }
+
+    function gotoPage(newPath) {
+        getNewPageContents(newPath, function (data) {
+            updateSections(data);
+            // maybe this doesnt have to wait for the new data?
+            var loc = window.location;
+            window.history.pushState({}, document.title, 
+                                     loc.protocol + '//' + loc.host + newPath);
+            refresh.main();
+        });
+    }
+
+    var templates = {};
+    $.getJSON("/templates", function (t) {
+        templates = t.templates;
     });
 
-    $("#ajaxError").ajaxError(function (event, xhr, ajaxOptions) {
-	if (!xhr.responseText) {
-	    return;
-	}
-	$(this).show();
-	$(this).append("<p>Ajax error: "+xhr.responseText+"</p>");
-    });
 
-    $("#tags").focus();
+    var refresh = {
+        main: function () {
+
+            $(".expand").click(function () {
+	        $(this).next().toggle('fast');
+	        return false;
+            }).next().hide();
+
+            $("#rangeStart button").click(function() {
+	        startImagePick("range start", function(picked) {
+	            $("#rangeStart .pick").text(picked.closest("a").attr("about"));
+	            $("#rangeStart img").attr("src", $(picked).attr("src"));
+	        });
+            });
+
+            $("#rangeEnd button").click(function() {
+	        startImagePick("range end", function(picked) {
+	            $("#rangeEnd .pick").text(picked.closest("a").attr("about"));
+	            $("#rangeEnd img").attr("src", $(picked).attr("src"));
+	        });
+            });
+
+            $("#addForm select[name=class], #addForm input[name=label]"
+             ).bind("keyup change", updateTagUrl);
+
+            $("#submitRange").click(function () {
+	        $("#rangeState").text("saving...");
+	        $.post(document.location + "&tagRange=1",
+	               {start: $("#rangeStart .pick").text(),
+		        end: $("#rangeEnd .pick").text(),
+		        rdfClass: $('#addForm select[name=class]').val(),
+		        label: $("#addForm input[name=label]").val(),
+		        uri: $("#addForm input[name=uri]").val()},
+	               function (data, textStatus) {
+		           $("#rangeState").html(data.msg);
+	               }, "json");
+            });
+
+            $(window).keydown(function (e) {
+	        var tt = e.target.tagName;
+	        if (!e.ctrlKey && (tt == 'TEXTAREA' || tt == 'INPUT')) {
+	            // no arrow key flips in the text boxes (unless you add ctrl)
+	            return true;
+	        }
+	        if (e.which == 37) {
+	            document.location = arrowPages.prev;
+	        } else if (e.which == 39) {
+	            document.location = arrowPages.next;
+	        }
+
+            });
+
+
+            $("#commentsFade").fadeTo(0, 0);
+            $.get(picInfo.relCurrentPhotoUri + "/comments",
+	          {},
+	          function (result) {
+	              $("#comments").html(result);
+	              $("#commentsFade").fadeTo(500, 1);
+	              loadDelayedImgs();
+	          }, "html");
+
+            $("#starTag").click(function () {
+	        $("#starTag").toggleClass("set");
+	        tagsOrDescChanged();
+	        saveTagsAndDesc();
+            });
+            $("#saveMeta").click(saveTagsAndDesc);
+
+            $("#tags,#desc").keypress(function(event) {
+	        return tagsOrDescChanged(event);
+            });
+
+            refreshTagsAndDesc(picInfo.tags);
+
+            setGlobalTags(allTags);
+            $("#tags").tagSuggest({});
+
+            $("#featuredPic div.nextClick").click(function () { 
+                // i could preload this whole set of template results as well
+                // as the images inside them
+                var newPath = $(this).attr("nextclick");
+                gotoPage(newPath);
+                return false;
+            });
+
+            // should be a live bind (most of these should)
+            $("#photosInSet > a").click(function () {
+                gotoPage($(this).attr("href"));
+                return false;
+            });
+
+            $("#ajaxError").ajaxError(function (event, xhr, ajaxOptions) {
+	        if (!xhr.responseText) {
+	            return;
+	        }
+	        $(this).show();
+	        $(this).append("<p>Ajax error: "+xhr.responseText+"</p>");
+            });
+
+            $("#tags").focus();
+            refreshCurrentPhoto(picInfo.currentPhotoUri);
+            preloadNext();
+        }
+    };
+    refresh.main();
     $(document).scrollTop(0);
 });
 

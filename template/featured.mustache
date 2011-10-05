@@ -1,0 +1,129 @@
+      <h2>{{#currentLabel}}{{currentLabel}}{{/currentLabel}}
+      {{! keep the title line taking up space so the image doesn't bounce around when there's no title}}
+      {{^currentLabel}}&#160;{{/currentLabel}}
+      </h2>
+    
+      <div style="width:1000px">
+        <div style="float: left" id="featuredPic">
+          {{#prevNextDateButtons}}
+          <div class="dateChange">
+            {{#prev}}
+            <a href="/set?date={{prevDate}}">{{prevDate}} &#8672;</a>
+            {{/prev}}
+            change date
+            {{#next}}
+            <a href="/set?date={{nextDate}}">&#8674; {{nextDate}}</a>
+            {{/next}}
+          </div>
+          {{/prevNextDateButtons}}
+    
+          {{#stepButtons}}
+          <div class="steps">
+            <a href="{{p}}" title="Previous image (left arrow key)">&#11013;</a>
+            change image
+            <a href="{{n}}" title="Next image (click in the image, or press right arrow key)">&#10145;</a>
+          </div>
+          {{/stepButtons}}
+    
+          <div>
+            {{#featured}}
+
+            {{#video}}
+            <video src="{{src}}" controls="1" preload="1" width="600" height="450"/>
+            {{/video}}
+            {{#image}}
+            <div class="nextClick" nextclick="{{nextClick}}">
+              <img src="{{src}}" width="{{w}}" height="{{h}}" 
+                   style="margin: 0 {{marg}}px" alt="{{alt}}"/>
+            </div>
+            {{/image}}
+
+            {{/featured}}
+          </div>
+        </div>
+        <div style="float: left; width: 400px">          
+          {{#actionsAllowed}}
+          <div class="actions">
+            <h2>Actions</h2>
+            <div class="ac aclRow">{{#aclWidget}}{{> aclwidget}}{{/aclWidget}}</div>
+            <div class="ac">
+              <button onclick="sflyUpload()">Upload to ShutterFly</button>
+              {{#uploadButton}}
+              {{#copied}}
+              <span id="flickrUpload"><a href="{{uri}}">flickr copy</a></span>
+              {{/copied}}
+              {{#mayCopy}}
+              
+              <div id="flickrUpload">
+                <div><button onclick="flickrUpload()">Upload to flickr</button></div>
+                <div><input type="radio" name="size" value="large" id="ful"
+                checked="checked"/>
+                <label for_="ful">large (fast)</label></div>
+                
+                <div style="opacity: .5">
+                  <input type="radio" name="size" value="full size" id="fuf"/>
+                  <label for_="fuf">full (2+ min) <a href="http://www.flickr.com/help/photos/#89" style="font-size: 60%">do not use full; flickr won't give you access to your own pic</a></label>
+                </div>
+              </div>
+
+              {{/mayCopy}}
+              {{/uploadButton}}
+            </div>
+            <!--  <div class="ac" style="opacity: .4">Email</div>
+                 <div class="ac" style="opacity: .4">Post to blog</div>-->
+            <div class="ac" id="publicShare">
+              {{#publicShareButton}}
+              {{#hasLink}}
+              <a href="{{short}}">Public share link</a>
+              {{/hasLink}}
+              {{#makeLink}}
+              <button onclick="makePublicShare()">Make public share link</button>
+              {{/makeLink}}
+              {{/publicShareButton}}
+            </div>
+            
+          </div>
+          <div class="actions">
+            <h2>Links</h2>
+            <div class="ac">
+              More images:
+              <ul id="related">
+                {{#related}}
+                <li class="related-{{kind}}">
+                  {{kind}} <a href="{{uri}}">{{label}}</a>
+                </li>
+                {{/related}}
+              </ul>
+            </div>
+
+            <div class="ac">
+              <a href="javascript:PicLensLite.start();">View set as slideshow 
+              <img src="http://lite.piclens.com/images/PicLensButton.png" 
+                   alt="PicLens" width="16" height="12" border="0" 
+                   align="absmiddle" /></a>
+            </div>
+
+            <div class="ac">Sizes: 
+            {{#otherSizeLinks}}
+            <a href="{{href}}">{{label}}</a> 
+            {{/otherSizeLinks}}
+            </div>
+            <div class="ac">
+              <div>Link to this image: </div>
+              <div style="font-size: 60%">{{#link}}
+              {{#video}}
+              &lt;video width="600" height="450" controls="1" preload="1" src="<a href="{{uri}}">{{uri}}</a>"/&gt;
+              {{/video}}
+              {{#image}}
+              &lt;img src="<a href="{{uri}}">{{uri}}</a>"/&gt;
+              {{/image}}
+              {{/link}}
+              </div>
+            </div>
+            <div class="ac"><a id="debugRdf" href="{{debugRdf}}">Debug rdf</a></div>
+          </div>
+          {{/actionsAllowed}}
+        </div>
+        <div style="clear: both"/>
+      </div>
+    

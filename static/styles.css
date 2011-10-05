@@ -56,9 +56,8 @@ span.current img {
     padding: 1px;
     margin: -1px;
 }
-img#preload {
+#preload {
     display: none;
-    width: 0px;
 }
 #photosInSet span img {
     width: 75px;
@@ -171,6 +170,9 @@ cursor: pointer;
 
 div.loginRow {
     padding-left: 10px;
+}
+.loginBar {
+    float: right;
 }
 #starTag {
     display: inline-block;

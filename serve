@@ -221,6 +221,13 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         else:
             raise NotImplementedError("op: %r" % op)
 
+    def child_templates(self, ctx):
+        """big json bundle of all the templates"""
+        allTemplates = dict(
+            (n, open("template/%s.mustache" % n).read())
+            for n in "topBar featured featuredMeta photosInSet preload pageJson".split())
+        return json.dumps({"templates" : allTemplates})
+
 def returnJson(d):
     class ret(rend.Page):
         def renderHTTP(self, ctx):
