@@ -5,7 +5,7 @@
   <head>
     <!-- per http://www.piclens.com/lite/webmasterguide.php -->
     <link rel="alternate" 
-	  type="application/rss+xml" title="" id="gallery" href="{{rssHref}}"/>
+          type="application/rss+xml" title="" id="gallery" href="{{rssHref}}"/>
 
     <!-- if we're on a phone screen, things should shrink accordingly -->
    <link rel="Stylesheet" type="text/css" href="/static/styles.css?v4" media="all" />
@@ -32,16 +32,16 @@
       <div style="width:1000px">
         <div style="float: left" id="featuredPic">
           {{#prevNextDateButtons}}
-	  <div class="dateChange">
-	    {{#prev}}
-	    <a href="/set?date={{prevDate}}">{{prevDate}} &#8672;</a>
-	    {{/prev}}
-	    change date
-	    {{#next}}
-	    <a href="/set?date={{nextDate}}">&#8674; {{nextDate}}</a>
-	    {{/next}}
-	  </div>
-	  {{/prevNextDateButtons}}
+          <div class="dateChange">
+            {{#prev}}
+            <a href="/set?date={{prevDate}}">{{prevDate}} &#8672;</a>
+            {{/prev}}
+            change date
+            {{#next}}
+            <a href="/set?date={{nextDate}}">&#8674; {{nextDate}}</a>
+            {{/next}}
+          </div>
+          {{/prevNextDateButtons}}
     
           {{#stepButtons}}
           <div class="steps">
@@ -51,128 +51,128 @@
           </div>
           {{/stepButtons}}
     
-	<div>
+        <div>
 
-	{{#featured}}
+        {{#featured}}
 
-	{{#video}}
+        {{#video}}
           <video src="{{src}}" controls="1" preload="1" width="600" height="450"/>
         {{/video}}
-	{{#image}}
-	<div class="nextClick" nextclick="{{nextClick}}">
-	  <img src="{{src}}" width="{{w}}" height="{{h}}" 
-	       style="margin: 0 {{marg}}px" alt="{{alt}}"/>
-	</div>
-	{{/image}}
+        {{#image}}
+        <div class="nextClick" nextclick="{{nextClick}}">
+          <img src="{{src}}" width="{{w}}" height="{{h}}" 
+               style="margin: 0 {{marg}}px" alt="{{alt}}"/>
+        </div>
+        {{/image}}
 
-	{{/featured}}
-	</div>
-	</div>
-	<div style="float: left; width: 400px">
-	  <div class="loginRow">{{{loginWidget}}}</div>
-	  
-	  {{#actionsAllowed}}
-	  <div class="actions">
-	    <h2>Actions</h2>
-	    <div class="ac aclRow">{{#aclWidget}}{{> aclwidget}}{{/aclWidget}}</div>
-	    <div class="ac">
-	      <button onclick="sflyUpload()">Upload to ShutterFly</button>
-	      {{#uploadButton}}
-	      {{#copied}}
-	      <span id="flickrUpload"><a href="{{uri}}">flickr copy</a></span>
-	      {{/copied}}
-	      {{#mayCopy}}
-	      
-	      <div id="flickrUpload">
+        {{/featured}}
+        </div>
+        </div>
+        <div style="float: left; width: 400px">
+          <div class="loginRow">{{{loginWidget}}}</div>
+          
+          {{#actionsAllowed}}
+          <div class="actions">
+            <h2>Actions</h2>
+            <div class="ac aclRow">{{#aclWidget}}{{> aclwidget}}{{/aclWidget}}</div>
+            <div class="ac">
+              <button onclick="sflyUpload()">Upload to ShutterFly</button>
+              {{#uploadButton}}
+              {{#copied}}
+              <span id="flickrUpload"><a href="{{uri}}">flickr copy</a></span>
+              {{/copied}}
+              {{#mayCopy}}
+              
+              <div id="flickrUpload">
                 <div><button onclick="flickrUpload()">Upload to flickr</button></div>
                 <div><input type="radio" name="size" value="large" id="ful"
-		checked="checked"/>
+                checked="checked"/>
                 <label for_="ful">large (fast)</label></div>
-		
-		<div style="opacity: .5">
-		  <input type="radio" name="size" value="full size" id="fuf"/>
-		  <label for_="fuf">full (2+ min) <a href="http://www.flickr.com/help/photos/#89" style="font-size: 60%">do not use full; flickr won't give you access to your own pic</a></label>
-		</div>
-	      </div>
+                
+                <div style="opacity: .5">
+                  <input type="radio" name="size" value="full size" id="fuf"/>
+                  <label for_="fuf">full (2+ min) <a href="http://www.flickr.com/help/photos/#89" style="font-size: 60%">do not use full; flickr won't give you access to your own pic</a></label>
+                </div>
+              </div>
 
-	      {{/mayCopy}}
-	      {{/uploadButton}}
-	    </div>
-	    <!--  <div class="ac" style="opacity: .4">Email</div>
-		 <div class="ac" style="opacity: .4">Post to blog</div>-->
-	    <div class="ac" id="publicShare">
-	      {{#publicShareButton}}
-	      {{#hasLink}}
-	      <a href="{{short}}">Public share link</a>
-	      {{/hasLink}}
-	      {{#makeLink}}
-	      <button onclick="makePublicShare()">Make public share link</button>
-	      {{/makeLink}}
-	      {{/publicShareButton}}
-	    </div>
-	    
-	  </div>
-	  <div class="actions">
-	    <h2>Links</h2>
-	    <div class="ac">
-	      More images:
-	      <ul id="related">
-	      </ul>
-	    </div>
+              {{/mayCopy}}
+              {{/uploadButton}}
+            </div>
+            <!--  <div class="ac" style="opacity: .4">Email</div>
+                 <div class="ac" style="opacity: .4">Post to blog</div>-->
+            <div class="ac" id="publicShare">
+              {{#publicShareButton}}
+              {{#hasLink}}
+              <a href="{{short}}">Public share link</a>
+              {{/hasLink}}
+              {{#makeLink}}
+              <button onclick="makePublicShare()">Make public share link</button>
+              {{/makeLink}}
+              {{/publicShareButton}}
+            </div>
+            
+          </div>
+          <div class="actions">
+            <h2>Links</h2>
+            <div class="ac">
+              More images:
+              <ul id="related">
+              </ul>
+            </div>
 
-	    <div class="ac">
-	      <a href="javascript:PicLensLite.start();">View set as slideshow 
-	      <img src="http://lite.piclens.com/images/PicLensButton.png" 
-		   alt="PicLens" width="16" height="12" border="0" 
-		   align="absmiddle" /></a>
-	    </div>
+            <div class="ac">
+              <a href="javascript:PicLensLite.start();">View set as slideshow 
+              <img src="http://lite.piclens.com/images/PicLensButton.png" 
+                   alt="PicLens" width="16" height="12" border="0" 
+                   align="absmiddle" /></a>
+            </div>
 
-	    <div class="ac">Sizes: 
-	    {{#otherSizeLinks}}
-	    <a href="{{href}}">{{label}}</a> 
-	    {{/otherSizeLinks}}
-	    </div>
-	    <div class="ac">
-	      <div>Link to this image: </div>
-	      <div style="font-size: 60%">{{#link}}
-	      {{#video}}
-	      &lt;video width="600" height="450" controls="1" preload="1" src="<a href="{{uri}}">{{uri}}</a>"/&gt;
-	      {{/video}}
-	      {{#image}}
-	      &lt;img src="<a href="{{uri}}">{{uri}}</a>"/&gt;
-	      {{/image}}
-	      {{/link}}
-	      </div>
-	    </div>
-	    <div class="ac"><a id="debugRdf">Debug rdf</a></div>
-	  </div>
-	  {{/actionsAllowed}}
-	</div>
-	<div style="clear: both"/>
+            <div class="ac">Sizes: 
+            {{#otherSizeLinks}}
+            <a href="{{href}}">{{label}}</a> 
+            {{/otherSizeLinks}}
+            </div>
+            <div class="ac">
+              <div>Link to this image: </div>
+              <div style="font-size: 60%">{{#link}}
+              {{#video}}
+              &lt;video width="600" height="450" controls="1" preload="1" src="<a href="{{uri}}">{{uri}}</a>"/&gt;
+              {{/video}}
+              {{#image}}
+              &lt;img src="<a href="{{uri}}">{{uri}}</a>"/&gt;
+              {{/image}}
+              {{/link}}
+              </div>
+            </div>
+            <div class="ac"><a id="debugRdf">Debug rdf</a></div>
+          </div>
+          {{/actionsAllowed}}
+        </div>
+        <div style="clear: both"/>
       </div>
     </div>
 
     <table id="t1">
       <tr>
-	<td>
-	  <div id="facts">
-	    <ul>
-	    </ul>
-	  </div>
-	</td>
-
-	<td>
-	  <div class="tagging">
-	    <div>Tags: <span id="starTag"/> <input type="text" id="tags"/> </div>
-	    <div>Description: <textarea id="desc"></textarea></div>
-	    {{#allowedToWriteMeta}}<div><button id="saveMeta">save</button> <span id="saveStatus"/></div>{{/allowedToWriteMeta}}
-	  </div>
-	</td>
-	<td>
-	  <div id="commentsFade">
-	    <div id="comments"></div>
+        <td>
+          <div id="facts">
+            <ul>
+            </ul>
           </div>
-	</td>
+        </td>
+
+        <td>
+          <div class="tagging">
+            <div>Tags: <span id="starTag"/> <input type="text" id="tags"/> </div>
+            <div>Description: <textarea id="desc"></textarea></div>
+            {{#allowedToWriteMeta}}<div><button id="saveMeta">save</button> <span id="saveStatus"/></div>{{/allowedToWriteMeta}}
+          </div>
+        </td>
+        <td>
+          <div id="commentsFade">
+            <div id="comments"></div>
+          </div>
+        </td>
       </tr>
     </table>
     <div class="photosInSet">
@@ -185,11 +185,11 @@
       {{#photosInSet}}
       {{#thumb}}
       <a href="{{uri}}">
-	<span class="{{cls}}"><img src="{{src}}"/>
-	{{#isVideo}}
-	<div class="ovl"/>
-	{{/isVideo}}
-	</span>
+        <span class="{{cls}}"><img src="{{src}}"/>
+        {{#isVideo}}
+        <div class="ovl"/>
+        {{/isVideo}}
+        </span>
       </a>
       {{/thumb}}
       {{/photosInSet}}
@@ -198,37 +198,37 @@
     <div class="ac">
       <div class="expand">&#8853; tag range</div>
       <div class="tagRange">
-	<div id="rangeState"></div>
-	<div id="rangeStart">
-	  1. <button>Pick range start</button>: 
-	  <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR42mP4//8/AAX+Av4zEpUUAAAAAElFTkSuQmCC"/>
-	  <span class="pick"/>
-	</div>
-	<div id="rangeEnd">
-	  2. <button>Pick range end</button>: 
-	  <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR42mP4//8/AAX+Av4zEpUUAAAAAElFTkSuQmCC"/>
-	  <span class="pick"/>
-	</div>
-	<div id="addForm">
-	  <div>
-	    3. These pictures depict: <input name="label" id="addColumnLabel" type="text"/>
-	  </div>
-	  <div class="uriControl">
-	    <div style="float:left; padding-left: 10px;">
-	      Class:
-	      <select name="class" style="vertical-align: top" size="3"> <!-- should be radios-->
-		<option value="http://xmlns.com/foaf/0.1/Person">Person</option>
-		<option value="http://photo.bigasterisk.com/0.1/Place">Place</option>
-		<option value="http://photo.bigasterisk.com/0.1/Event" selected="selected">Event</option>
-	      </select>
-	    </div>
-	    <div style="float:left; padding-left: 10px;">
-	      URI: <input id="add-uri" name="uri" type="text" size="50"/>
-	    </div>
-	    <div style="clear:both"></div>
-	  </div>
-	  <div>4. <button id="submitRange">Create set</button></div>
-	</div>
+        <div id="rangeState"></div>
+        <div id="rangeStart">
+          1. <button>Pick range start</button>: 
+          <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR42mP4//8/AAX+Av4zEpUUAAAAAElFTkSuQmCC"/>
+          <span class="pick"/>
+        </div>
+        <div id="rangeEnd">
+          2. <button>Pick range end</button>: 
+          <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR42mP4//8/AAX+Av4zEpUUAAAAAElFTkSuQmCC"/>
+          <span class="pick"/>
+        </div>
+        <div id="addForm">
+          <div>
+            3. These pictures depict: <input name="label" id="addColumnLabel" type="text"/>
+          </div>
+          <div class="uriControl">
+            <div style="float:left; padding-left: 10px;">
+              Class:
+              <select name="class" style="vertical-align: top" size="3"> <!-- should be radios-->
+                <option value="http://xmlns.com/foaf/0.1/Person">Person</option>
+                <option value="http://photo.bigasterisk.com/0.1/Place">Place</option>
+                <option value="http://photo.bigasterisk.com/0.1/Event" selected="selected">Event</option>
+              </select>
+            </div>
+            <div style="float:left; padding-left: 10px;">
+              URI: <input id="add-uri" name="uri" type="text" size="50"/>
+            </div>
+            <div style="clear:both"></div>
+          </div>
+          <div>4. <button id="submitRange">Create set</button></div>
+        </div>
       </div>
     </div>
 
@@ -252,11 +252,11 @@
 
     <script type="text/javascript" src="/static/imageSet.js?v=26"></script>
     <script type="text/javascript" 
-          src="http://lite.piclens.com/current/piclens.js"></script>
+            src="http://lite.piclens.com/current/piclens.js"></script>
 
     <!-- you can leave src empty and let the js set it after ajax is done,
-	 but in chrome, when the download is interrupted, it sometimes doesn't
-	 resume and you see partial img on the next page -->
+         but in chrome, when the download is interrupted, it sometimes doesn't
+         resume and you see partial img on the next page -->
     <img id="preload" src="{{nextImagePreload}}"/>
   </body>
 </html>
