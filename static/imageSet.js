@@ -155,7 +155,8 @@ $(function () {
 
     function tagsOrDescChanged(event) {
 	// I mean to catch any change, including mouse paste
-	$("#saveMeta").attr('disabled', false);
+	$("#saveMeta")[0].disabled = false;
+	$("#saveMeta").removeAttr('disabled');
 
 	if (event && event.keyCode == '13') {
 	    saveTagsAndDesc();
@@ -172,7 +173,7 @@ $(function () {
     function refreshTagsAndDesc(data) {
 	setTags(data.tagString);
 	$("#desc").val(data.desc);
-	$("#saveMeta").attr('disabled', true);
+	$("#saveMeta").attr("disabled", "disabled");
 
 	    // not working with new links section yet
 	$(".related-withTag").remove();
