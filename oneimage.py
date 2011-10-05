@@ -92,7 +92,7 @@ class facts(object):
                 except Exception, e:
                     log.error("%s birthday failed: %s" % (who, e))
 
-        ret['factLines'] = lines 
+        ret['factLines'] = [dict(line=x) for x in lines]
 
         # 'used in this blog entry'        
         return json.dumps(ret)
@@ -145,6 +145,8 @@ class links(object):
         return json.dumps({'links' : links.items()})
 
 from tagging import getTags, saveTags
+
+
 
 class tags(object):
     """description too, though you can get that separately if you want"""

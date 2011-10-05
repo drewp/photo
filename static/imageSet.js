@@ -73,12 +73,6 @@ $(function () {
 	       }, "json");
     });
 
-
-
-    function startNextImgPreload() {
-	$("#preload").attr('src', preloadImg);
-    }
-
     $(window).keydown(function (e) {
 	var tt = e.target.tagName;
 	if (!e.ctrlKey && (tt == 'TEXTAREA' || tt == 'INPUT')) {
@@ -101,7 +95,6 @@ $(function () {
 	      $("#comments").html(result);
 	      $("#commentsFade").fadeTo(500, 1);
 	      loadDelayedImgs();
-	      //startNextImgPreload(); // try to do this after other work
 	  }, "html");
 
     function loadDelayedImgs() {
@@ -174,14 +167,6 @@ $(function () {
 	setTags(data.tagString);
 	$("#desc").val(data.desc);
 	$("#saveMeta").attr("disabled", "disabled");
-
-	    // not working with new links section yet
-	$(".related-withTag").remove();
-	$.each(data.tags, function (i, tag) {
-	    var label = tag == "*" ? "{starred}" : tag;
-	    $("#related").append(
-		imageLinkListElem("withTag", "/set?tag="+tag, label));
-	});
     }
 
     refreshTagsAndDesc(picInfo.tags);
@@ -204,35 +189,6 @@ $(function () {
     $("#tags").focus();
     $(document).scrollTop(0);
 });
-
-function imageLinkListElem(kind, uri, label) {
-    var li = $("<li>");
-    var a = $("<a>");
-    li.addClass("related-"+kind);
-    a.attr('href', uri).text(label);
-    li.text(kind + " ").append(a);
-    return li;
-}
-
-function fillImageInfo() {
-    $.each(picInfo.links.links, function (i, kind) {
-	$.each(kind[1], function (i2, link) {
-	    $("#related").append(
-		imageLinkListElem(kind[0], link.uri, link.label));
-	});
-    });
-
-    $("#debugRdf").attr('href', 'http://bang:8080/openrdf-workbench/repositories/photo/explore?' + $.param({resource: '<'+picInfo.currentPhotoUri+'>'}));
-
-    if(picInfo.facts.factLines) {
-	$.each(picInfo.facts.factLines, function (i, line) {
-	    $("#facts ul").append($("<li>").text(line));
-	});
-    }
-
-}
-fillImageInfo(); // *before* page draw
-
 
 function flickrUpload() {
     var st = $("#flickrUpload");

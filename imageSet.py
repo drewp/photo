@@ -338,6 +338,20 @@ class View(pystache.view.View):
                 return dict(hasLink=dict(short=short))
         return dict(makeLink=dict(show=True))
 
+    def related(self):
+        js = serviceCallSync(self.agent, 'links', self.desc.currentPhoto())
+
+        ret = []
+        for kind, links in json.loads(js)['links']:
+            for link in links:
+                ret.append(dict(kind=kind, uri=link['uri'],
+                                label=link['label']))
+        return ret
+
+    def facts(self):
+        js = serviceCallSync(self.agent, 'facts', self.desc.currentPhoto())
+        return json.loads(js)
+    
     def otherSizeLinks(self):
         if self.desc.currentPhoto() is None:
             return []
@@ -421,26 +435,14 @@ class View(pystache.view.View):
         if current is None:
             return {}
 
-        # multiprocessing pool didn't go faster. i forget how to do
-        # async requests with restkit
-        results = map(serviceCallSync, [(self.agent, name, current)
-                                        for name in ['links', 'facts', 'tags']])
+        js = serviceCallSync(self.agent, 'tags', current)
+        tags = json.loads(js)
+        return dict(relCurrentPhotoUri=localSite(current),
+                    currentPhotoUri=current,
+                    tags=tags)
 
-        def readOrError(js):
-            if isinstance(js, Exception):
-                log.error(traceback.format_exc())
-                return {'error' : str(js)}
-                
-            return json.loads(js)
-
-        ret = dict(
-            relCurrentPhotoUri=localSite(current),
-            currentPhotoUri=current,
-            links=readOrError(results[0]),
-            facts=readOrError(results[1]),
-            tags=readOrError(results[2]),
-            )
-        return ret
+    def debugRdf(self):
+        return 'http://bang:8080/openrdf-workbench/repositories/photo/explore?' +urllib.urlencode([('resource', '<'+self.desc.currentPhoto()+'>')])
 
     def nextImagePreload(self):
         _, nextImg = self.prevNext()
@@ -492,15 +494,11 @@ def serviceCall(ctx, name, uri):
             headers={'x-foaf-agent' : str(getUser(ctx)),
                        }).addCallback(endTime)
 
-def serviceCallSync((agent, name, uri)):
-    """returns exceptions instead of raising them"""
+def serviceCallSync(agent, name, uri):
     t1 = time.time()
     log.debug("serviceCall: %s %s", name, uri)
     svc = restkit.Resource(networking.serviceUrl(name))
-    try:
-        rsp = svc.get(uri=uri, headers={'x-foaf-agent' : str(agent)})
-    except restkit.RequestFailed, e:
-        return e
+    rsp = svc.get(uri=uri, headers={'x-foaf-agent' : str(agent)})
     log.info("timing: service call %r in %.01f ms", name, 1000 * (time.time() - t1))
     return rsp.body_string()
 

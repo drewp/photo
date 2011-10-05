@@ -51,22 +51,21 @@
           </div>
           {{/stepButtons}}
     
-        <div>
+          <div>
+            {{#featured}}
 
-        {{#featured}}
+            {{#video}}
+            <video src="{{src}}" controls="1" preload="1" width="600" height="450"/>
+            {{/video}}
+            {{#image}}
+            <div class="nextClick" nextclick="{{nextClick}}">
+              <img src="{{src}}" width="{{w}}" height="{{h}}" 
+                   style="margin: 0 {{marg}}px" alt="{{alt}}"/>
+            </div>
+            {{/image}}
 
-        {{#video}}
-          <video src="{{src}}" controls="1" preload="1" width="600" height="450"/>
-        {{/video}}
-        {{#image}}
-        <div class="nextClick" nextclick="{{nextClick}}">
-          <img src="{{src}}" width="{{w}}" height="{{h}}" 
-               style="margin: 0 {{marg}}px" alt="{{alt}}"/>
-        </div>
-        {{/image}}
-
-        {{/featured}}
-        </div>
+            {{/featured}}
+          </div>
         </div>
         <div style="float: left; width: 400px">
           <div class="loginRow">{{{loginWidget}}}</div>
@@ -117,6 +116,11 @@
             <div class="ac">
               More images:
               <ul id="related">
+                {{#related}}
+                <li class="related-{{kind}}">
+                  {{kind}} <a href="{{uri}}">{{label}}</a>
+                </li>
+                {{/related}}
               </ul>
             </div>
 
@@ -144,7 +148,7 @@
               {{/link}}
               </div>
             </div>
-            <div class="ac"><a id="debugRdf">Debug rdf</a></div>
+            <div class="ac"><a id="debugRdf" href="{{debugRdf}}">Debug rdf</a></div>
           </div>
           {{/actionsAllowed}}
         </div>
@@ -152,11 +156,16 @@
       </div>
     </div>
 
-    <table id="t1">
+    <table id="featuredMeta">
       <tr>
         <td>
           <div id="facts">
             <ul>
+              {{#facts}}
+              {{#factLines}}
+              <li>{{line}}</li>
+              {{/factLines}}
+              {{/facts}}
             </ul>
           </div>
         </td>
@@ -175,7 +184,7 @@
         </td>
       </tr>
     </table>
-    <div class="photosInSet">
+    <div id="photosInSet">
       <div>{{#setAclWidget}}{{> aclwidget}}{{/setAclWidget}}</div>
       <div>Switch to 
       {{#starLinkAll}}<a href="{{href}}">all</a>{{/starLinkAll}}
@@ -232,14 +241,12 @@
       </div>
     </div>
 
-    <div>
-      Download a <a rel="nofollow" href="{{zipUrl}}">.zip file of the full size images on this page</a> {{zipSizeWarning}}
-    </div>
+    {{! <div> Download a <a rel="nofollow" href="{zipUrl}">.zip file of the full size images on this page</a> {zipSizeWarning} </div>}}
 
     <script type="text/javascript" src="/static/aclwidget.js?v=2"></script>
     <script type="text/javascript" src="/static/tag.js"></script>
    
-    <script type="text/javascript">
+    <script type="text/javascript" id="pageJson">
       {{#pageJson}}
       // <![CDATA[
       var picInfo = {{{picInfo}}};
@@ -250,7 +257,7 @@
       {{/pageJson}}
     </script>
 
-    <script type="text/javascript" src="/static/imageSet.js?v=26"></script>
+    <script type="text/javascript" src="/static/imageSet.js?v=27"></script>
     <script type="text/javascript" 
             src="http://lite.piclens.com/current/piclens.js"></script>
 
