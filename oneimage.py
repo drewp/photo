@@ -150,14 +150,14 @@ class tags(object):
     """description too, though you can get that separately if you want"""
     def GET(self):
         img = URIRef(web.input()['uri'])
-        user = URIRef(web.ctx.environ['HTTP_X_FOAF_AGENT'])
+        user = access.getUserWebpy(web.ctx.environ)
         web.header("Content-Type", "text/json")
         return json.dumps(getTags(graph, user, img))
 
     def PUT(self):
         i = web.input()
         img = URIRef(i['uri'])
-        user = URIRef(web.ctx.environ['HTTP_X_FOAF_AGENT'])
+        user = access.getUserWebpy(web.ctx.environ)
         saveTags(graph,
                  foafUser=user,
                  img=img,

@@ -22,9 +22,15 @@ serializer = XHTMLSerializer()
 log = logging.getLogger()
 
 def getUser(ctx):
+    return _getUser(inevow.IRequest(ctx).getHeader)
+
+def getUserWebpy(environ):
+    return _getUser(environ.get)
+
+def _getUser(getHeader):
     if os.environ.get('PHOTO_FORCE_LOGIN', ''):
         return URIRef(os.environ['PHOTO_FORCE_LOGIN'])
-    agent = inevow.IRequest(ctx).getHeader('x-foaf-agent')
+    agent = getHeader('x-foaf-agent')
     if agent is None:
         return None
     return URIRef(agent)
