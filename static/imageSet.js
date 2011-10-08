@@ -131,9 +131,21 @@ $(function () {
     }
 
     var _preloaded = {};
-    function preloadNext() {
-        var p = $(".nextClick").attr("nextclick")
-        getNewPageContents(p, function (data) { _preloaded[p] = data });
+    var _preloadStarted = {};
+    function preloadContents(path) {
+        if (_preloadStarted[path]) {
+            return;
+        }
+        _preloadStarted[path] = true;
+        getNewPageContents(path, function (data) { 
+            data['preloadTime'] = new Date();
+            _preloaded[path] = data;
+
+            // _preloaded might get big, and we should kill old
+            // entries. Also they get invalid over time
+            
+            $("#loaded").append($("<div>").text(path));
+        });
     }
 
     function getNewPageContents(newPath, cb) {
@@ -141,6 +153,7 @@ $(function () {
             cb(_preloaded[newPath]);
             return;
         }
+        // this could run a preload that had already been launched but not finished yet
 	$.ajax({
             url: newPath, 
             // should be an Accept header (or a different resource, if
@@ -149,7 +162,8 @@ $(function () {
             data: {"jsonUpdate":"1"}, 
             success: function (data) {
                 cb(data);
-            }
+            },
+            isPreload: true
         });
     }
 
@@ -158,8 +172,8 @@ $(function () {
             updateSections(data);
             // maybe this doesnt have to wait for the new data?
             var loc = window.location;
-            window.history.pushState({}, document.title, 
-                                     loc.protocol + '//' + loc.host + newPath);
+            var newUrl = loc.protocol + '//' + loc.host + newPath;
+            window.history.pushState({}, document.title, newUrl);
             refresh.main();
         });
     }
@@ -171,7 +185,31 @@ $(function () {
 
 
     var refresh = {
-        main: function () {
+        startup: function () {
+            $(window).keydown(function (e) {
+	        var tt = e.target.tagName;
+	        if (!e.ctrlKey && (tt == 'TEXTAREA' || tt == 'INPUT')) {
+	            // no arrow key flips in the text boxes (unless you add ctrl)
+	            return true;
+	        }
+	        if (e.which == 37) {
+	            gotoPage(arrowPages.prev);
+	        } else if (e.which == 39) {
+	            gotoPage(arrowPages.next);
+	        }
+
+            });
+
+            $("#ajaxError").ajaxError(function (e, jqxhr, settings, exception) {
+                if (settings.isPreload) {
+                    return;
+                }
+	        if (!xhr.responseText) {
+	            return;
+	        }
+	        $(this).show();
+	        $(this).append("<p>Ajax error: "+xhr.responseText+"</p>");
+            });
 
             $(".expand").click(function () {
 	        $(this).next().toggle('fast');
@@ -208,21 +246,8 @@ $(function () {
 	               }, "json");
             });
 
-            $(window).keydown(function (e) {
-	        var tt = e.target.tagName;
-	        if (!e.ctrlKey && (tt == 'TEXTAREA' || tt == 'INPUT')) {
-	            // no arrow key flips in the text boxes (unless you add ctrl)
-	            return true;
-	        }
-	        if (e.which == 37) {
-	            document.location = arrowPages.prev;
-	        } else if (e.which == 39) {
-	            document.location = arrowPages.next;
-	        }
-
-            });
-
-
+        },
+        main: function () {
             $("#commentsFade").fadeTo(0, 0);
             $.get(picInfo.relCurrentPhotoUri + "/comments",
 	          {},
@@ -248,11 +273,13 @@ $(function () {
             setGlobalTags(allTags);
             $("#tags").tagSuggest({});
 
-            $("#featuredPic div.nextClick").click(function () { 
-                // i could preload this whole set of template results as well
-                // as the images inside them
-                var newPath = $(this).attr("nextclick");
-                gotoPage(newPath);
+            $(".iset").click(function () { 
+                gotoPage($(this).attr("href"));
+                return false;
+            });
+
+            $("#featuredPic div.nextClick").click(function () {
+                gotoPage($(this).attr("nextclick"));
                 return false;
             });
 
@@ -262,20 +289,20 @@ $(function () {
                 return false;
             });
 
-            $("#ajaxError").ajaxError(function (event, xhr, ajaxOptions) {
-	        if (!xhr.responseText) {
-	            return;
-	        }
-	        $(this).show();
-	        $(this).append("<p>Ajax error: "+xhr.responseText+"</p>");
-            });
-
             $("#tags").focus();
             refreshCurrentPhoto(picInfo.currentPhotoUri);
-            preloadNext();
+                       
+            setTimeout(function () {                           
+                $(".iset.pl").each(function (i, elem) {
+                    preloadContents(elem.getAttribute("href"));
+                });
+            }, 500);
         }
     };
+    refresh.startup();
     refresh.main();
+
+    // this is to combat the autoscroll from focusing on tag widget. not sure where it goes
     $(document).scrollTop(0);
 });
 

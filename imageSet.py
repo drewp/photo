@@ -124,9 +124,12 @@ class ImageSet(rend.Page):
             'topBar' : v("setLabel storyModeUrl intro".split()),
             'featured' : v("currentLabel prevNextDateButtons stepButtons featured actionsAllowed publicShareButton related otherSizeLinks link debugRdf ".split()),
             'featuredMeta' : v("facts allowedToWriteMeta".split()),
-            #'photosInSet' : v(" starLinkAll starLinkOnly photosInSet".split()),
+            # this one should be omitted when the client already had the right set
+            'photosInSet' : v(" starLinkAll starLinkOnly photosInSet".split()),
             'preload' : v(["nextImagePreload"]),
             'pageJson' : v(["pageJson"]),
+            # putting comments in here too would be nice
+            # maybe spell out the images that will be needed for this page, for the preload queue?
             }
 
     def jsonContent(self):
@@ -486,7 +489,10 @@ class View(pystache.view.View):
             "Standard site"]
 
     def rssHref(self):
-        href = url.URL.fromString(self.desc.otherImageUrl(self.desc.photos()[0]))
+        photos = self.desc.photos()
+        if not photos:
+            return "incomplete"
+        href = url.URL.fromString(self.desc.otherImageUrl(photos[0]))
         return href.remove('current').add('rss', '1')
 
     def prevNext(self):

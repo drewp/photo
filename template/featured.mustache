@@ -8,20 +8,20 @@
           {{#prevNextDateButtons}}
           <div class="dateChange">
             {{#prev}}
-            <a href="/set?date={{prevDate}}">{{prevDate}} &#8672;</a>
+            <a class="iset pl" href="/set?date={{prevDate}}">{{prevDate}} &#8672;</a>
             {{/prev}}
             change date
             {{#next}}
-            <a href="/set?date={{nextDate}}">&#8674; {{nextDate}}</a>
+            <a class="iset pl" href="/set?date={{nextDate}}">&#8674; {{nextDate}}</a>
             {{/next}}
           </div>
           {{/prevNextDateButtons}}
     
           {{#stepButtons}}
           <div class="steps">
-            <a href="{{p}}" title="Previous image (left arrow key)">&#11013;</a>
+            <a class="iset pl" href="{{p}}" title="Previous image (left arrow key)">&#11013;</a>
             change image
-            <a href="{{n}}" title="Next image (click in the image, or press right arrow key)">&#10145;</a>
+            <a class="iset pl" href="{{n}}" title="Next image (click in the image, or press right arrow key)">&#10145;</a>
           </div>
           {{/stepButtons}}
     
@@ -90,7 +90,7 @@
               <ul id="related">
                 {{#related}}
                 <li class="related-{{kind}}">
-                  {{kind}} <a href="{{uri}}">{{label}}</a>
+                  {{kind}} <a class="iset pl" href="{{uri}}">{{label}}</a>
                 </li>
                 {{/related}}
               </ul>
