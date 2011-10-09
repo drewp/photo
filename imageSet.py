@@ -468,8 +468,12 @@ class View(pystache.view.View):
         if current is None:
             return {}
 
-        js = serviceCallSync(self.agent, 'tags', current)
-        tags = json.loads(js)
+        try:
+            js = serviceCallSync(self.agent, 'tags', current)
+            tags = json.loads(js)
+        except restkit.RequestFailed, e:
+            tags = {"error" : str(e)}
+            
         return dict(relCurrentPhotoUri=localSite(current),
                     currentPhotoUri=current,
                     tags=tags)
