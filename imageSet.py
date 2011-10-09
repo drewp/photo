@@ -300,7 +300,7 @@ class View(pystache.view.View):
                 size = getSize(current, sizes["large"])
             except (ValueError, IOError):
                 size = (0,0)
-            marg = (600 - 2 - size[0]) // 2
+            marg = (602 - 2 - size[0]) // 2
             return dict(image=dict(
                 nextClick=self.desc.otherImageUrl(nextUri),
                 src=currentLocal+"?size=large",
