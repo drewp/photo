@@ -63,7 +63,7 @@ $(function () {
 		desc: $("#desc").val()},
 	    success: function(data) {
 		$("#saveStatus").text("ok");
-                rebuildThisPage();
+                rebuildThisPage(); // besides being inefficient, this also resets a currently-playing video. It ought to only refresh featureMeta, facts, and tags
 		refreshTagsAndDesc(data);
 	    },
 	    dataType: "json",
@@ -91,12 +91,14 @@ $(function () {
 
     function refreshCurrentPhoto(uri) {
         /* light up this one in the photosInSet collection */
-        $("#photosInSet > a > span.current").attr("class", "not-current");
-        $("#photosInSet > a[about='"+uri+"'] > span").attr("class", "current");
+        $("#photosInSet > a > span.current").removeClass("current").addClass("not-current");
+        $("#photosInSet > a[about='"+uri+"'] > span").addClass("current");
     }
 
     function rebuildThisPage() {
         var thisPath = window.location.pathname + window.location.search;
+        // wrong: in the case of random set, putting tags on this
+        // image changes the set for all the other images too
         delete _preloaded[thisPath];
         gotoPage(thisPath);
     }
