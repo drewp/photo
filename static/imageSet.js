@@ -172,7 +172,7 @@ $(function () {
     }
 
     function gotoPage(newPath) {
-        $("body").css("cursor", "wait");
+        $("body").css("cursor", "wait"); // doesn't work on the nextClick image!
         var loc = window.location;
         var newUrl = loc.protocol + '//' + loc.host + newPath;
 
@@ -291,6 +291,7 @@ $(function () {
             setGlobalTags(allTags);
             $("#tags").tagSuggest({});
 
+            // should be a live bind (most of these should)
             $(".iset").click(function () { 
                 gotoPage($(this).attr("href"));
                 return false;
@@ -298,12 +299,6 @@ $(function () {
 
             $("#featuredPic div.nextClick").click(function () {
                 gotoPage($(this).attr("nextclick"));
-                return false;
-            });
-
-            // should be a live bind (most of these should)
-            $("#photosInSet > a").click(function () {
-                gotoPage($(this).attr("href"));
                 return false;
             });
 
