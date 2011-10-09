@@ -55,7 +55,6 @@ $(function () {
     function saveTagsAndDesc() {
 	$("#saveStatus").text("");
 	$("#saveMeta").attr('disabled', true);
-        _preloaded = {};
 	$.ajax({
 	    type: 'PUT',
 	    url: picInfo.relCurrentPhotoUri + "/tags",
@@ -64,6 +63,7 @@ $(function () {
 		desc: $("#desc").val()},
 	    success: function(data) {
 		$("#saveStatus").text("ok");
+                rebuildThisPage();
 		refreshTagsAndDesc(data);
 	    },
 	    dataType: "json",
@@ -94,6 +94,13 @@ $(function () {
         $("#photosInSet > a > span.current").attr("class", "not-current");
         $("#photosInSet > a[about='"+uri+"'] > span").attr("class", "current");
     }
+
+    function rebuildThisPage() {
+        var thisPath = window.location.pathname + window.location.search;
+        delete _preloaded[thisPath];
+        gotoPage(thisPath);
+    }
+
 
     function updateSections(data) {
 	$.each(data, function (tmpl, contents) {
@@ -157,9 +164,9 @@ $(function () {
     }
 
     function gotoPage(newPath) {
+        var loc = window.location;
+        var newUrl = loc.protocol + '//' + loc.host + newPath;
         getNewPageContents(newPath, function (data) {
-            var loc = window.location;
-            var newUrl = loc.protocol + '//' + loc.host + newPath;
             try {
                 updateSections(data);
             } catch (e) {
