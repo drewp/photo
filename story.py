@@ -5,9 +5,10 @@ import urllib, time, restkit, logging, json, hashlib
 from imageSet import photosWithTopic
 from lib import print_timing
 from genshi import Markup
-
 from genshi.template import TemplateLoader
 from genshi.output import XHTMLSerializer
+import pystache
+
 from rdflib import RDFS
 from urls import localSite
 from imageurl import starFilter
@@ -19,6 +20,8 @@ serializer = XHTMLSerializer()
 log = logging.getLogger()
 
 def syncServiceCall(name, photoUri, foafUser, **moreParams):
+    if not photoUri:
+        raise ValueError("no uri to %s service call" % name)
     t1 = time.time()
     params = {'uri' : photoUri}
     params.update(moreParams)
@@ -46,7 +49,7 @@ def sizeAttrs(foafUser, uri, sizeName):
 
 @print_timing
 def renderPage(graph, topic, foafUser, cookie):
-    photos = photosWithTopic(graph, topic)
+    photos = photosWithTopic(graph, topic, isVideo={})
     filtered = starFilter(graph, 'only', foafUser, photos)
     if filtered:
         photos = filtered 
@@ -66,9 +69,9 @@ def renderPage(graph, topic, foafUser, cookie):
                 rows.append(dict(type='date', date=date))
 
         facts = json.loads(syncServiceCall('facts', photo, foafUser))
-        factLines = [l for l in facts['factLines']
-                     if not l.startswith("Picture taken ")]
-        factLines = [l for l in factLines if l not in knownFacts]
+        factLines = [l['line'] for l in facts['factLines']
+                     if not l['line'].startswith("Picture taken ")]
+        factLines = [l['line'] for l in factLines if l['line'] not in knownFacts]
         knownFacts.update(factLines)
 
         commentHtml = syncServiceCall('comments', photo, foafUser, js=commentJs)
@@ -85,13 +88,17 @@ def renderPage(graph, topic, foafUser, cookie):
             commentHtml=Markup(commentHtml),
             desc=graph.value(photo, RDFS.comment),
             ))
+
+    accessControl = pystache.render(
+        open("template/aclwidget.mustache").read(),
+        access.accessControlWidget(graph, foafUser, topic))
     
     stream = tmpl.generate(
         rows=rows,
         title=graph.value(topic, RDFS.label, any=True),
         localSite=localSite,
         loginBar=Markup(networking.getLoginBarSync(cookie)),
-        accessControl=Markup(access.accessControlWidget(graph, foafUser, topic).decode('utf8')),
+        accessControl=Markup(accessControl),
         dateRange=findDateRange(graph, photos),
         sizeAttrs=lambda uri, sizeName: sizeAttrs(foafUser, uri, sizeName),
         )

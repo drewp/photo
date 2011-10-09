@@ -117,15 +117,13 @@ class ImageSet(rend.Page):
         def v(keys):
             for k in keys:
                 x = getattr(view, k)()
-                print k
-                json.dumps(x)
             return dict((k, getattr(view, k)()) for k in keys)
         return {
             'topBar' : v("setLabel storyModeUrl intro".split()),
-            'featured' : v("currentLabel prevNextDateButtons stepButtons featured actionsAllowed publicShareButton related otherSizeLinks link debugRdf ".split()),
+            'featured' : v("currentLabel prevNextDateButtons stepButtons featured actionsAllowed aclWidget uploadButton publicShareButton related otherSizeLinks link debugRdf ".split()),
             'featuredMeta' : v("facts allowedToWriteMeta".split()),
             # this one should be omitted when the client already had the right set
-            'photosInSet' : v(" starLinkAll starLinkOnly photosInSet".split()),
+            'photosInSet' : v(" starLinkAll starLinkOnly photosInSet setAclWidget".split()),
             'preload' : v(["nextImagePreload"]),
             'pageJson' : v(["pageJson"]),
             # putting comments in here too would be nice
@@ -236,7 +234,10 @@ class View(pystache.view.View):
         # set?tag=foo. error message is poor.
 
         # need something on desc
-        return self.desc.storyModeUrl()
+        try:
+            return self.desc.storyModeUrl()
+        except ValueError:
+            return None
 
     def intro(self):
         intro = self.graph.value(self.desc.topic, PHO['intro'])
@@ -364,7 +365,10 @@ class View(pystache.view.View):
         return dict(makeLink=dict(show=True))
 
     def related(self):
-        js = serviceCallSync(self.agent, 'links', self.desc.currentPhoto())
+        try:
+            js = serviceCallSync(self.agent, 'links', self.desc.currentPhoto())
+        except ValueError:
+            return []
 
         ret = []
         for kind, links in json.loads(js)['links']:
@@ -374,7 +378,10 @@ class View(pystache.view.View):
         return ret
 
     def facts(self):
-        js = serviceCallSync(self.agent, 'facts', self.desc.currentPhoto())
+        try:
+            js = serviceCallSync(self.agent, 'facts', self.desc.currentPhoto())
+        except ValueError:
+            return {}
         return json.loads(js)
     
     def otherSizeLinks(self):
@@ -468,7 +475,10 @@ class View(pystache.view.View):
                     tags=tags)
 
     def debugRdf(self):
-        return 'http://bang:8080/openrdf-workbench/repositories/photo/explore?' +urllib.urlencode([('resource', '<'+self.desc.currentPhoto()+'>')])
+        current = self.desc.currentPhoto()
+        if not current:
+            return None
+        return 'http://bang:8080/openrdf-workbench/repositories/photo/explore?' +urllib.urlencode([('resource', '<'+current+'>')])
 
     def nextImagePreload(self):
         _, nextImg = self.prevNext()
@@ -524,6 +534,8 @@ def serviceCall(ctx, name, uri):
                        }).addCallback(endTime)
 
 def serviceCallSync(agent, name, uri):
+    if not uri:
+        raise ValueError("no uri for service call to %s" % name)
     t1 = time.time()
     log.debug("serviceCall: %s %s", name, uri)
     svc = restkit.Resource(networking.serviceUrl(name))

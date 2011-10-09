@@ -211,3 +211,9 @@ span.result {
 #featuredPic div.nextClick {
    cursor:pointer;
 }
+#loaded {
+    height: 120px;
+    overflow-y: scroll;
+    font-family: monospace;
+    font-size: 9px;
+}

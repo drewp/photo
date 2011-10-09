@@ -104,7 +104,7 @@ $(function () {
 
     function updateSections(data) {
 	$.each(data, function (tmpl, contents) {
-            try {
+
 		if (tmpl == "title") {
 		    $("title").text(contents);
                 } else if (tmpl == "pageJson") {
@@ -114,20 +114,13 @@ $(function () {
                     arrowPages = {prev: JSON.parse(d.prev), 
                                   next: JSON.parse(d.next)};
                     allTags = JSON.parse(d.allTags);
+                } else if (tmpl == "client") {
+                    // not a template
 		} else {
 		    var newHtml = Mustache.to_html(templates[tmpl], contents);
-		    // tmpl: topBar, featured, featuredMeta, photosInSet, preload, pageJson
-                    try {
-                        $("#"+tmpl).html(newHtml);
-                    } catch (e) {
-                        console.log("templating failed", tmpl, newHtml);
-                    }
+                    $("#"+tmpl).html(newHtml);
                 }
-            } catch (e) {
-                console.log("outer fail", tmpl);
-            }
 	});
-
     }
 
     var _preloaded = {};
@@ -138,7 +131,7 @@ $(function () {
         }
         _preloadStarted[path] = true;
         getNewPageContents(path, function (data) { 
-            data['preloadTime'] = new Date();
+            data.client = {preloadTime: new Date()};
             _preloaded[path] = data;
 
             // _preloaded might get big, and we should kill old
@@ -169,10 +162,14 @@ $(function () {
 
     function gotoPage(newPath) {
         getNewPageContents(newPath, function (data) {
-            updateSections(data);
-            // maybe this doesnt have to wait for the new data?
             var loc = window.location;
             var newUrl = loc.protocol + '//' + loc.host + newPath;
+            try {
+                updateSections(data);
+            } catch (e) {
+                window.location = newUrl;
+            }
+            // maybe this doesnt have to wait for the new data?
             window.history.pushState({}, document.title, newUrl);
             refresh.main();
         });

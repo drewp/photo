@@ -20,6 +20,7 @@ class ImageSetDesc(object): # in design phase
         self.graph = graph
         self.parsedUrl = url.URL.fromString(uriOrQuery).remove('jsonUpdate')
         params = dict(self.parsedUrl.queryList())
+        self._isVideo = {}
 
         topic = self.determineTopic(graph, params)
         
@@ -31,7 +32,6 @@ class ImageSetDesc(object): # in design phase
                                         if 'seed' in params else None)]
             self.setLabel = 'random choices'
         else:
-            self._isVideo = {}
             self._photos = photosWithTopic(graph, topic, self._isVideo)
         self._currentPhoto = None
         if params.get('current') is not None:
@@ -162,7 +162,8 @@ class ImageSetDesc(object): # in design phase
         return uri in self._photos
 
     def isVideo(self, uri):
-        """may KeyError for now, but this could be made to do a query"""
+        if uri not in self._isVideo:
+            self._isVideo[uri] = self.graph.contains((uri, RDF.type, PHO.Video))
         return self._isVideo[uri]
     
     def label(self):

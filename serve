@@ -21,6 +21,12 @@ log = boot.log
 
 myPicSubdirs = [d for d in os.listdir("/my/pic") if d != "~thumb"]
 
+def importModule(name):
+    m = __import__(name)
+    if os.environ.get("PHOTO_RELOAD"):
+        reload(m)
+    return m        
+
 class ImagePage(rend.Page):
     def __init__(self, graph, uri):
         self.graph, self.uri = graph, uri
@@ -142,9 +148,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
 
     def topicChild(self, ctx, uri):
         if ctx.arg('random'):
-            import imageSet
-            reload(imageSet)
-            return imageSet.RandomImage(self.graph, uri, ctx), ()
+            return importModule('imageSet').RandomImage(self.graph, uri, ctx), ()
 
         if ctx.arg('edit'):
             return self.child_set(ctx), ()
@@ -152,8 +156,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         return self.makeStoryPage(uri), ()
 
     def makeStoryPage(self, topic):
-        import story
-        reload(story)
+        story = importModule('story')
         g = self.graph
         class ret(rend.Page):
             def renderHTTP(self, ctx):
@@ -168,8 +171,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         return ret()
 
     def child_set(self, ctx):
-        import imageSet
-        reload(imageSet)
+        imageSet = importModule('imageSet')
         ua = inevow.IRequest(ctx).getHeader('user-agent')
         if 'iPad' in ua or ctx.arg('tablet') == '1':
             cls = imageSet.ImageSetTablet
@@ -178,14 +180,10 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         return cls(ctx, self.graph, inevow.IRequest(ctx).uri)
 
     def child_events(self, ctx):
-        import search
-        reload(search)
-        return search.Events(ctx, self.graph)
+        return importModule('search').Events(ctx, self.graph)
 
     def child_browse(self, ctx):
-        import browse
-        reload(browse)
-        return browse.FileBrowse(ctx, self.graph)
+        return importModule('browse').FileBrowse(ctx, self.graph)
 
     def child_edit(self, ctx, _name="Edit"):
         req = inevow.IRequest(ctx)
@@ -193,9 +191,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         if user not in auth.superusers:
             raise ValueError("forbidden")
         
-        import edit
-        reload(edit)
-        return getattr(edit, _name)(ctx, self.graph)
+        return getattr(importModule('edit'), _name)(ctx, self.graph)
 
     def child_edit2(self, ctx):
         return self.child_edit(ctx, _name="Edit2")

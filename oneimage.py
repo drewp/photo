@@ -23,6 +23,7 @@ from tagging import getTagLabels
 import access
 from oneimagequery import photoCreated
 from ns import PHO, FOAF, EXIF, SCOT, DC
+from urls import localSite
 import db
 
 log = boot.log
@@ -122,7 +123,7 @@ class links(object):
 
         for row in relQuery(FOAF.depicts):
             links.setdefault('depicting', []).append(
-                {'uri' : row['d'], 'label' : row['label']})
+                {'uri' : localSite(row['d']), 'label' : row['label']})
 
         for row in relQuery(PHO.inDirectory):
             links.setdefault('inDirectory', []).append(
