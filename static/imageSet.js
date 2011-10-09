@@ -172,11 +172,13 @@ $(function () {
     }
 
     function gotoPage(newPath) {
+        $("body").css("cursor", "wait");
         var loc = window.location;
         var newUrl = loc.protocol + '//' + loc.host + newPath;
 
         function ajaxUpdateFailed() {
             window.location = newUrl;
+            // cursor will reset itself
         }
 
         getNewPageContents(newPath, function (data) {
@@ -189,6 +191,7 @@ $(function () {
             window.history.pushState({}, document.title, newUrl);
             // this is incomplete- i apparently need to watch for the browser going to this history and reconstruct the page state
             refresh.main();
+            $("body").css("cursor", "auto");
         }, function (x, s, e) {
             ajaxUpdateFailed();
         });
