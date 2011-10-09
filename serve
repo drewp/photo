@@ -221,7 +221,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         """big json bundle of all the templates"""
         allTemplates = dict(
             (n, open("template/%s.mustache" % n).read())
-            for n in "topBar featured featuredMeta photosInSet preload pageJson".split())
+            for n in "topBar featured featuredMeta photosInSet preload pageJson aclwidget".split())
         return json.dumps({"templates" : allTemplates})
 
 def returnJson(d):
