@@ -8,7 +8,7 @@
           type="application/rss+xml" title="" id="gallery" href="{{rssHref}}"/>
 
     <!-- if we're on a phone screen, things should shrink accordingly -->
-   <link rel="Stylesheet" type="text/css" href="/static/styles.css?v4" media="all" />
+   <link rel="Stylesheet" type="text/css" href="/static/styles.css?v5" media="all" />
     <title id="title">{{title}}</title>
     <script type="text/javascript" src="{{bestJqueryLink}}"/>
   </head>
@@ -70,15 +70,15 @@
 
     {{! <div> Download a <a rel="nofollow" href="{zipUrl}">.zip file of the full size images on this page</a> {zipSizeWarning} </div>}}
 
-    <script type="text/javascript" src="/static/aclwidget.js?v=2"></script>
+    <script type="text/javascript" src="/static/aclwidget.js?v=3"></script>
     <script type="text/javascript" src="/static/tag.js"></script>
    
     <script type="text/javascript" id="pageJson">
       {{> pageJson}}
     </script>
 
-    <script type="text/javascript" src="/static/imageSet.js?v=27"></script>
-    <script type="text/javascript" src="/static/mustache.js"></script>
+    <script type="text/javascript" src="/static/imageSet.js?v=28"></script>
+    <script type="text/javascript" src="/static/mustache.minjs"></script>
     {{!<script type="text/javascript" src="http://lite.piclens.com/current/piclens.js"></script>}}
 
     <!-- you can leave src empty and let the js set it after ajax is done,
