@@ -131,8 +131,6 @@ $(function () {
         }
         _preloadStarted[path] = true;
         getNewPageContents(path, function (data) { 
-            data.client = {preloadTime: new Date()};
-            _preloaded[path] = data;
 
             // _preloaded might get big, and we should kill old
             // entries. Also they get invalid over time
@@ -141,12 +139,11 @@ $(function () {
         });
     }
 
-    function getNewPageContents(newPath, cb) {
-        if (!cb) { 
-            cb = function (x) {};
-        }
+    function getNewPageContents(newPath, cb, eb) {
         if (_preloaded[newPath]) {
-            cb(_preloaded[newPath]);
+            if (cb) {
+                cb(_preloaded[newPath]);
+            }
             return;
         }
         // this could run a preload that had already been launched but not finished yet
@@ -157,7 +154,16 @@ $(function () {
             // jquery docs on the plane right now
             data: {"jsonUpdate":"1"}, 
             success: function (data) {
-                cb(data);
+                data.client = {preloadTime: new Date()};
+                _preloaded[newPath] = data;
+                if (cb) {
+                    cb(data);
+                }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                if (eb) {
+                    eb(jqXHR, textStatus, errorThrown);
+                }
             },
             isPreload: true
         });
@@ -166,16 +172,23 @@ $(function () {
     function gotoPage(newPath) {
         var loc = window.location;
         var newUrl = loc.protocol + '//' + loc.host + newPath;
+
+        function ajaxUpdateFailed() {
+            window.location = newUrl;
+        }
+
         getNewPageContents(newPath, function (data) {
             try {
                 updateSections(data);
             } catch (e) {
-                window.location = newUrl;
+                ajaxUpdateFailed();
             }
             // maybe this doesnt have to wait for the new data?
             window.history.pushState({}, document.title, newUrl);
             // this is incomplete- i apparently need to watch for the browser going to this history and reconstruct the page state
             refresh.main();
+        }, function (x, s, e) {
+            ajaxUpdateFailed();
         });
     }
 
