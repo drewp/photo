@@ -25,7 +25,8 @@ def getUser(ctx):
     return _getUser(inevow.IRequest(ctx).getHeader)
 
 def getUserWebpy(environ):
-    return _getUser(environ.get)
+    return _getUser(
+        lambda h: environ.get('HTTP_%s' % h.upper().replace('-','_')))
 
 def _getUser(getHeader):
     if os.environ.get('PHOTO_FORCE_LOGIN', ''):

@@ -201,11 +201,11 @@ $(function () {
                 if (settings.isPreload) {
                     return;
                 }
-	        if (!xhr.responseText) {
+	        if (!jqxhr.responseText) {
 	            return;
 	        }
 	        $(this).show();
-	        $(this).append("<p>Ajax error: "+xhr.responseText+"</p>");
+	        $(this).append("<p>Ajax error: "+jqxhr.responseText+"</p>");
             });
 
             $(".expand").click(function () {
