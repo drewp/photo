@@ -35,14 +35,6 @@ $(function () {
 	$('#add-uri').val(newUri);
     }
 
-    function loadDelayedImgs() {
-	$("img[delaySrc]").each(function (i, elem) {
-	    elem = $(elem);
-	    elem.attr("src", elem.attr("delaysrc"));
-	    elem.removeAttr("delaysrc");
-	});
-    }
-
     function getTagString() {
 	// turns star into a '*' tag
 	return $("#tags").val() + ($("#starTag").hasClass("set") ? " *" : "");
@@ -63,6 +55,7 @@ $(function () {
     function saveTagsAndDesc() {
 	$("#saveStatus").text("");
 	$("#saveMeta").attr('disabled', true);
+        _preloaded = {};
 	$.ajax({
 	    type: 'PUT',
 	    url: picInfo.relCurrentPhotoUri + "/tags",
@@ -142,6 +135,9 @@ $(function () {
     }
 
     function getNewPageContents(newPath, cb) {
+        if (!cb) { 
+            cb = function (x) {};
+        }
         if (_preloaded[newPath]) {
             cb(_preloaded[newPath]);
             return;
@@ -171,6 +167,7 @@ $(function () {
             }
             // maybe this doesnt have to wait for the new data?
             window.history.pushState({}, document.title, newUrl);
+            // this is incomplete- i apparently need to watch for the browser going to this history and reconstruct the page state
             refresh.main();
         });
     }
@@ -251,7 +248,6 @@ $(function () {
 	          function (result) {
 	              $("#comments").html(result);
 	              $("#commentsFade").fadeTo(500, 1);
-	              loadDelayedImgs();
 	          }, "html");
 
             $("#starTag").click(function () {
