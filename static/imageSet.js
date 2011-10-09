@@ -117,7 +117,7 @@ $(function () {
                 } else if (tmpl == "client") {
                     // not a template
 		} else {
-		    var newHtml = Mustache.to_html(templates[tmpl], contents);
+		    var newHtml = Mustache.to_html(templates[tmpl], contents, templates);
                     $("#"+tmpl).html(newHtml);
                 }
 	});
