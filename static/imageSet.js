@@ -331,7 +331,7 @@ $(function () {
                 return false;
             });
 
-            $("#tags").focus();
+            //$("#tags").focus(); // too much page bumping. avoidable?
             refreshCurrentPhoto(picInfo.currentPhotoUri);
                        
             $(".iset.pl").each(function (i, elem) {
@@ -346,7 +346,7 @@ $(function () {
     refresh.main();
 
     // this is to combat the autoscroll from focusing on tag widget. not sure where it goes
-    $(document).scrollTop(0);
+    //$(document).scrollTop(0);
 });
 
 function flickrUpload() {

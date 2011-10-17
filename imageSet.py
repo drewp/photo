@@ -111,12 +111,12 @@ class ImageSet(rend.Page):
         
         req.setHeader("Content-Type", "application/xhtml+xml")
         ret = view.render()
+        print "rendered view is %s" % len(ret)
+        # after 65k, this gets truncated somewhere! get a new web server
         return ret.encode('utf8')
 
     def templateData(self, view):
         def v(keys):
-            for k in keys:
-                x = getattr(view, k)()
             return dict((k, getattr(view, k)()) for k in keys)
         return {
             'topBar' : v("setLabel storyModeUrl intro".split()),
