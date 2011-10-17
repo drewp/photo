@@ -41,7 +41,7 @@ def jqueryLink(forwardedFor):
         # if local wifi users got routed through my squid cache,
         # this would be unnecessary, as I would have a local cache
         # of the google copy
-        return "/static/jquery-1.4.2.min.js"
+        return "/static/jquery-1.6.4.min.js"
     else:
-        return "http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"
+        return "http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"
 
