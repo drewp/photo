@@ -125,6 +125,14 @@ $(function () {
 	});
     }
 
+    function preloadImage(src) {
+        var nextImg = new Image();
+        nextImg.src = src;
+        var progress = $("<span>").text("I");
+        $("#activity").append(progress);
+        $(nextImg).load(function (ev) { progress.remove(); });
+    }
+
     var _preloaded = {};
     var _preloadStarted = {};
     function preloadContents(path) {
@@ -149,13 +157,16 @@ $(function () {
             return;
         }
         // this could run a preload that had already been launched but not finished yet
+        var progress = $("<span>").text("P");
+        $("#activity").append(progress);
 	$.ajax({
             url: newPath, 
             // should be an Accept header (or a different resource, if
             // we're going to do this in pieces?) but i don't have the
             // jquery docs on the plane right now
-            data: {"jsonUpdate":"1"}, 
+            data: {"jsonUpdate":"1"},
             success: function (data) {
+                progress.remove();
                 data.client = {preloadTime: new Date()};
                 _preloaded[newPath] = data;
                 if (cb) {
@@ -163,6 +174,7 @@ $(function () {
                 }
             },
             error: function (jqXHR, textStatus, errorThrown) {
+                progress.remove();
                 if (eb) {
                     eb(jqXHR, textStatus, errorThrown);
                 }
@@ -310,6 +322,8 @@ $(function () {
                     preloadContents(elem.getAttribute("href"));
                 });
             }, 500);
+
+            preloadImage(preloadImg);
         }
     };
     refresh.startup();

@@ -217,3 +217,18 @@ span.result {
     font-family: monospace;
     font-size: 9px;
 }
+
+#activity {
+    left: 0;
+    margin-left: auto;
+    margin-right: auto;
+    position: absolute;
+    right: 0;
+    text-align: center;
+    top: 0;
+}
+#activity span {
+    background:  #4B4B4B;
+    border: 1px solid #717171;
+    border-radius:  4px;
+}

@@ -124,7 +124,6 @@ class ImageSet(rend.Page):
             'featuredMeta' : v("facts allowedToWriteMeta".split()),
             # this one should be omitted when the client already had the right set
             'photosInSet' : v(" starLinkAll starLinkOnly photosInSet setAclWidget".split()),
-            'preload' : v(["nextImagePreload"]),
             'pageJson' : v(["pageJson"]),
             # putting comments in here too would be nice
             # maybe spell out the images that will be needed for this page, for the preload queue?

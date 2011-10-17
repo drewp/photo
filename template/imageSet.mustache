@@ -19,6 +19,7 @@
     <div id="topBar">
       {{> topBar}}
     </div>
+    <div id="activity"></div>
 
     <div id="featured">
       {{> featured}}
@@ -80,11 +81,6 @@
     <script type="text/javascript" src="/static/imageSet.js?v=31"></script>
     <script type="text/javascript" src="/static/mustache.min.js"></script>
     {{!<script type="text/javascript" src="http://lite.piclens.com/current/piclens.js"></script>}}
-
-    <!-- you can leave src empty and let the js set it after ajax is done,
-         but in chrome, when the download is interrupted, it sometimes doesn't
-         resume and you see partial img on the next page -->
-    <div id="preload">{{> preload}}</div>
 
     <div>
       Preloaded pages:
