@@ -139,6 +139,9 @@ if __name__ == '__main__':
     # turn this on for a log line per request
     #from twisted.python import log as twlog
     #twlog.startLogging(sys.stdout)
+
+    import logging
+    log.setLevel(logging.WARN)
     
     reactor.listenTCP(int(sys.argv[1]), site)
     reactor.run()
