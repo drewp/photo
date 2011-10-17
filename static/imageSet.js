@@ -183,12 +183,27 @@ $(function () {
         });
     }
 
+    var runningAjax = [];
+    $.ajaxPrefilter(function (opts, orig, jqXHR) {
+	runningAjax.push(jqXHR);
+    });
+    function stopAllAjax() {
+	$.each(runningAjax, function (i, j) { j.abort() });
+	runningAjax = [];
+    }
+
     function gotoPage(newPath) {
+
+	stopAllAjax();
+
         $("body").css("cursor", "wait"); // doesn't work on the nextClick image!
+	var loading = $("<span>").text("Loading..");
+	$("#activity").append(loading);
         var loc = window.location;
         var newUrl = loc.protocol + '//' + loc.host + newPath;
 
         function ajaxUpdateFailed() {
+	    $("#activity").append($("<span>").text("Page reload"));
             window.location = newUrl;
             // cursor will reset itself
         }
@@ -204,7 +219,9 @@ $(function () {
             // this is incomplete- i apparently need to watch for the browser going to this history and reconstruct the page state
             refresh.main();
             $("body").css("cursor", "auto");
+	    loading.remove();
         }, function (x, s, e) {
+	    loading.remove();
             ajaxUpdateFailed();
         });
     }
@@ -317,12 +334,11 @@ $(function () {
             $("#tags").focus();
             refreshCurrentPhoto(picInfo.currentPhotoUri);
                        
-            setTimeout(function () {                           
-                $(".iset.pl").each(function (i, elem) {
-                    preloadContents(elem.getAttribute("href"));
-                });
-            }, 500);
-
+            $(".iset.pl").each(function (i, elem) {
+		// some of these are just too slow
+                //preloadContents(elem.getAttribute("href"));
+            });
+	    preloadContents($(".iset.plPri").attr("href"));
             preloadImage(preloadImg);
         }
     };
