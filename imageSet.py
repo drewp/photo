@@ -130,12 +130,12 @@ class ImageSet(rend.Page):
             }
 
     def jsonContent(self):
-        return json.dumps({'photos' : self.photos})
+        return json.dumps({'photos' : self.desc.photos()})
         
     def archiveZip(self, ctx):
         f = StringIO('')
         zf = zipfile.ZipFile(f, 'w', zipfile.ZIP_DEFLATED)
-        for photo in self.photos:
+        for photo in self.desc.photos():
             data, mtime = thumb(photo, maxSize=Full)
             zf.writestr(str(photo.split('/')[-1]), data)
 
@@ -152,14 +152,15 @@ class ImageSet(rend.Page):
 
     def postTagRange(self, ctx):
         # security?
-        
-        i1 = self.photos.index(URIRef(ctx.arg('start')))
-        i2 = self.photos.index(URIRef(ctx.arg('end')))
+
+        p = self.desc.photos()
+        i1 = p.index(URIRef(ctx.arg('start')))
+        i2 = p.index(URIRef(ctx.arg('end')))
 
         newUri = URIRef(ctx.arg('uri'))
 
         imgStatements = [(img, FOAF.depicts, newUri)
-                         for img in self.photos[i1:i2+1]]
+                         for img in p[i1:i2+1]]
         if (ctx.arg('label') or '').strip():
             imgStatements.append((newUri, RDFS.label, Literal(ctx.arg('label'))))
         writeStatements([
