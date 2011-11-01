@@ -154,6 +154,10 @@ def agentImageSetCheck(graph, agent, photo):
      }
     """, initBindings={'agent' : agent}):
         maySee = row['access']
+        if 'bigasterisk.com/openidProxySite' in maySee:
+            # some other statements about permissions got in the
+            # graph; it's wasting time to check them as images
+            continue
         log.debug("%r can see %r - is the pic in that set?", agent, maySee)
         try:
             imgSet = ImageSetDesc(graph, agent, maySee)
@@ -168,13 +172,6 @@ def viewableViaInference(graph, uri, agent):
     """
     viewable for some reason that can't be removed here
     """
-
-    # not final; just matching the old logic. Oops- this fast one gets
-    # checked after some really slow queries. But that's ok; I get a
-    # better taste of the slowness of the site this way
-    if agent in auth.superagents:
-        log.debug("ok, agent %r is in superagents", agent)
-        return True
 
     # somehow allow local clients who could get to the filesystem
     # anyway. maybe with a cookie file in the fs, or just ip
@@ -191,14 +188,25 @@ def viewableViaInference(graph, uri, agent):
 
     return False
 
+def viewableBySuperAgent(agent):
+    # not final; just matching the old logic. Oops- this fast one gets
+    # checked after some really slow queries. But that's ok; I get a
+    # better taste of the slowness of the site this way
+    if agent in auth.superagents:
+        log.debug("ok, agent %r is in superagents", agent)
+        return True
+    return False
+
+
 @print_timing
 def viewable(graph, uri, agent):
     """
     should the resource at uri be retrievable by this agent
     """
     log.debug("viewable check for %s to see %s", agent, uri)
-    ok = (viewableViaPerm(graph, uri, agent) or
-           viewableViaInference(graph, uri, agent))
+    ok = (viewableBySuperAgent(agent) or
+          viewableViaPerm(graph, uri, agent) or
+          viewableViaInference(graph, uri, agent))
     if not ok:
         log.debug("not viewable")
 

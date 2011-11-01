@@ -13,6 +13,7 @@ class NoSetUri(ValueError):
     "there is no stable URI that can represent this set"
 
 class ImageSetDesc(object): # in design phase
+    @print_timing
     def __init__(self, graph, user, uriOrQuery):
         """
         uriOrQuery is like /set?tag=foo&star=only
