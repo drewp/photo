@@ -264,18 +264,19 @@ $(function () {
 	        return false;
             }).next().hide();
 
+	    function updateRange(rangeAttr, picked) {
+	        rangeAttr.find(".pick").text(picked.closest("a").attr("about"));
+	        rangeAttr.find("img").attr("src", picked.attr("src"));
+	    }
+
             $("#rangeStart button").click(function() {
-	        startImagePick("range start", function(picked) {
-	            $("#rangeStart .pick").text(picked.closest("a").attr("about"));
-	            $("#rangeStart img").attr("src", $(picked).attr("src"));
-	        });
+	        startImagePick("range start", function (picked) { 
+		    updateRange($("#rangeStart"), $(picked)) });
             });
 
             $("#rangeEnd button").click(function() {
-	        startImagePick("range end", function(picked) {
-	            $("#rangeEnd .pick").text(picked.closest("a").attr("about"));
-	            $("#rangeEnd img").attr("src", $(picked).attr("src"));
-	        });
+	        startImagePick("range end", function (picked) { 
+		    updateRange($("#rangeEnd"), $(picked)) });
             });
 
             $("#addForm select[name=class], #addForm input[name=label]"
