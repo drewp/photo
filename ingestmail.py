@@ -14,11 +14,11 @@ import maillib
 
 import datetime, os, logging, sys, urllib, restkit
 from dateutil.tz import tzlocal
-from remotesparql import RemoteSparql
 import networking
 from rdflib import URIRef, Literal
 from scanFs import uriOfFilename
 from ns import PHO, SITE, FOAF, DCTERMS, RDFS, RDF
+from db import getGraph
 
 log = boot.log
 log.setLevel(logging.INFO)
@@ -35,13 +35,6 @@ def filenameAttempts(filename, outDir):
         outFilename = root + suffix + ext
         outPath = os.path.join(outDir, outFilename)
         yield outPath
-
-def getGraph():
-    return RemoteSparql(networking.graphRepoRoot(),
-                        "photo",
-                        initNs=dict(foaf=FOAF,
-                                    rdfs=RDFS.RDFSNS,
-                                    pho=PHO))
 
 def emailStatements(uri, msg):
     sender = URIRef("mailto:" + msg.sender[1]) # quote?
