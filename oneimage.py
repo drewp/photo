@@ -122,8 +122,12 @@ class links(object):
             return ('/set?' + urllib.urlencode(params))
 
         for row in relQuery(FOAF.depicts):
-            links.setdefault('depicting', []).append(
-                {'uri' : localSite(row['d']), 'label' : row['label']})
+            try:
+                links.setdefault('depicting', []).append(
+                    {'uri' : localSite(row['d']), 'label' : row['label']})
+            except ValueError, e:
+                log.warn("error in FOAF.depicts: %s %s" % (vars(), e))
+                pass
 
         for row in relQuery(PHO.inDirectory):
             links.setdefault('inDirectory', []).append(
