@@ -71,7 +71,7 @@ def renderPage(graph, topic, foafUser, cookie):
         facts = json.loads(syncServiceCall('facts', photo, foafUser))
         factLines = [l['line'] for l in facts['factLines']
                      if not l['line'].startswith("Picture taken ")]
-        factLines = [l['line'] for l in factLines if l['line'] not in knownFacts]
+        factLines = [l for l in factLines if l not in knownFacts]
         knownFacts.update(factLines)
 
         commentHtml = syncServiceCall('comments', photo, foafUser, js=commentJs)
