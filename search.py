@@ -12,7 +12,7 @@ log = logging.getLogger()
 _datePool = []
 _datePoolCreated = None
 @print_timing
-def randomDates(graph, n=3, rand=random):
+def randomDates(graph, n=3, rand=random, year=None):
     global _datePoolCreated, _datePool
     if _datePoolCreated < time.time() - 40000:
         _datePool = [row['d'] for row in graph.queryd("""
@@ -20,11 +20,15 @@ def randomDates(graph, n=3, rand=random):
             """)]
         _datePoolCreated = time.time()
 
-    return rand.sample(_datePool, n)
+    pool = _datePool
+    if year is not None:
+        pool = [d for d in _datePool if str(d).startswith(year)]
+    
+    return rand.sample(pool, n)
 
 
 @print_timing
-def randomSet(graph, n=3, foafUser=None, seed=None):
+def randomSet(graph, n=3, foafUser=None, seed=None, year=None, tags="without"):
     """
     list of dicts with pic, filename, date
 
@@ -32,17 +36,19 @@ def randomSet(graph, n=3, foafUser=None, seed=None):
     regarding presence-of-tags
 
     pass a seed if you want the same set of images repeatedly
+
+    pass a year string to limit dates to that year
     """
     rand = random.Random(seed)
     
     ret = []
     retUris = set()
 
-    dates = randomDates(graph, n, rand)
+    dates = randomDates(graph, n, rand, year)
 
     while len(ret) < n:
         if not dates: # accidental dups could exhaust the dates
-            dates = randomDates(graph, 3, rand)
+            dates = randomDates(graph, 3, rand, year)
         d = dates.pop()
 
         allPicsThatDay = graph.queryd("""
@@ -57,8 +63,10 @@ def randomSet(graph, n=3, foafUser=None, seed=None):
         if pick['pic'] in retUris:
             continue
 
-        if hasTags(graph, foafUser, pick['pic']):
+        if tags == "without" and hasTags(graph, foafUser, pick['pic']):
             log.debug("random: skip pic with tags")
+            continue
+        elif tags == "only" and not hasTags(graph, foafUser, pick['pic']):
             continue
 
         retUris.add(pick['pic'])

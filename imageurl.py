@@ -29,9 +29,13 @@ class ImageSetDesc(object): # in design phase
             self._photos = [r['pic'] for r in
                             randomSet(graph, int(params.get('random', '10')),
                                       user,
+                                      year=params.get('year', None),
+                                      tags=params.get('tags', 'without'),
                                       seed=int(params['seed'])
                                         if 'seed' in params else None)]
             self.setLabel = 'random choices'
+            if params.get('year'):
+                self.setLabel += " from the year %s" % params['year']
         else:
             self._photos = photosWithTopic(graph, topic, self._isVideo)
         self._currentPhoto = None
