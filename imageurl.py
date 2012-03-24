@@ -6,6 +6,7 @@ from search import randomSet
 from oneimagequery import photoCreated
 from lib import print_timing
 from ns import SITE, PHO, XS
+from dateutil.parser import parse
 
 log = logging.getLogger()
 
@@ -19,13 +20,14 @@ class ImageSetDesc(object): # in design phase
         uriOrQuery is like /set?tag=foo&star=only
         """
         self.graph = graph
-        self.parsedUrl = url.URL.fromString(uriOrQuery).remove('jsonUpdate')
+        # shouldn't these removes be handled by paramsAffectingSet or something?
+        self.parsedUrl = url.URL.fromString(uriOrQuery).remove('jsonUpdate').remove('setList')
         params = dict(self.parsedUrl.queryList())
         self._isVideo = {}
 
-        topic = self.determineTopic(graph, params)
+        topicDict = self.determineTopic(graph, params)
         
-        if topic == PHO.randomSet:
+        if topicDict['topic'] == PHO.randomSet:
             self._photos = [r['pic'] for r in
                             randomSet(graph, int(params.get('random', '10')),
                                       user,
@@ -37,7 +39,7 @@ class ImageSetDesc(object): # in design phase
             if params.get('year'):
                 self.setLabel += " from the year %s" % params['year']
         else:
-            self._photos = photosWithTopic(graph, topic, self._isVideo)
+            self._photos = photosWithTopic(graph, topicDict, self._isVideo)
         self._currentPhoto = None
         if params.get('current') is not None:
             self._currentPhoto = URIRef(params['current'])          
@@ -57,10 +59,11 @@ class ImageSetDesc(object): # in design phase
             else:
                 self._currentPhoto = self._photos[0]
 
-        self.topic = topic
+        self.topicDict = topicDict
 
     @print_timing
     def determineTopic(self, graph, params):
+        topicDict = {}
         completeUri = SITE[self.parsedUrl.path]
         if graph.queryd("ASK { ?img foaf:depicts ?uri }",
                          initBindings={'uri' : completeUri}):
@@ -75,7 +78,13 @@ class ImageSetDesc(object): # in design phase
             elif 'tag' in params:
                 topic = URIRef('http://photo.bigasterisk.com/tag/%s' % params['tag'])
             elif 'date' in params:
+                if 'span' in params:
+                    if params['span'] == '7d':
+                        topicDict['span'] = params['span']
+                    else:
+                        raise NotImplementedError
                 topic = Literal(params['date'], datatype=XS.date)
+                
             elif 'random' in params:
                 topic = PHO.randomSet
             elif 'current' in params:
@@ -83,12 +92,16 @@ class ImageSetDesc(object): # in design phase
                 topic = URIRef(params['current'])
             else:
                 raise ValueError("no topic; %r" % params)
-        return topic
+        topicDict['topic'] = topic
+        return topicDict
 
-    def determineLabel(self, graph, topic):
+    def determineLabel(self, graph, topicDict):
+        topic = topicDict['topic']
         if graph.contains((topic, RDF.type, PHO.DiskDirectory)):
             return ["directory ", graph.value(topic, PHO.filename)]
         elif isinstance(topic, Literal):
+            if 'span' in topicDict:
+                topic = "%s and the next %s" % (topic, topicDict['span'])
             return topic
         else:
             return graph.label(topic)
@@ -102,7 +115,7 @@ class ImageSetDesc(object): # in design phase
         """
         if not any(t in params for t in ['dir', 'tag', 'date', 'random']):
             return 'current'
-        return ['dir', 'tag', 'date', 'star', 'recent']
+        return ['dir', 'tag', 'date', 'span', 'star', 'recent']
     
     def canonicalSetUri(self):
         """this page uri, but only including the params that affect
@@ -178,7 +191,7 @@ class ImageSetDesc(object): # in design phase
         directory', 'random choices'.
         """
         if not hasattr(self, 'setLabel'):
-            self.setLabel = self.determineLabel(self.graph, self.topic)
+            self.setLabel = self.determineLabel(self.graph, self.topicDict)
         return self.setLabel
     
     def storyModeUrl(self):
@@ -211,32 +224,19 @@ def starFilter(graph, starArg, agent, photos):
         raise NotImplementedError("star == %r" % starArg)
 
 @print_timing
-def photosWithTopic(graph, uri, isVideo):
+def photosWithTopic(graph, topicDict, isVideo):
     """photos can be related to uri in a variety of ways: foaf:depicts,
     dc:date, etc
 
     we fill isVideo with uri:bool where we learn if the photo was a video
     """
-    q = graph.queryd("""SELECT DISTINCT ?photo ?isVideo WHERE {
-                               {
-                                 ?photo foaf:depicts ?u .
-                               } UNION {
-                                 ?photo pho:inDirectory ?u .
-                               } UNION {
-                                 ?photo scot:hasTag ?u .
-                               } UNION {
-                                 ?photo dc:date ?u .
-                               } UNION {
-                                 ?email a pho:Email ; dc:date ?u ; dcterms:hasPart ?photo .
-                               }
-                              # ?photo pho:viewableBy pho:friends .
-                               OPTIONAL {
-                                 ?photo a ?isVideo .
-                                 FILTER( ?isVideo = pho:Video ) .
-                               }
-                             }""",
-                          initBindings={'u' : uri})
+    uri = topicDict['topic']
+    q = queryOneTopic(graph, uri)
 
+    if topicDict.get('span') == '7d':
+        for otherDay in daysInSpan(topicDict['topic'], topicDict['span']):
+            q.extend(queryOneTopic(graph, otherDay))
+    
     def sortkey(uri):
         try:
             return photoCreated(graph, uri)
@@ -246,3 +246,31 @@ def photosWithTopic(graph, uri, isVideo):
         isVideo[row['photo']] = bool(row['isVideo'])
 
     return sorted([row['photo'] for row in q], key=sortkey)
+
+def daysInSpan(day, span):
+    dd = int(span.replace('d',''))
+    d = parse(day)
+    for i in range(dd):
+        d = d + datetime.timedelta(days=1)
+        yield Literal(d.date().isoformat(), datatype=XS['date'])
+
+def queryOneTopic(graph, uri):
+    return graph.queryd("""SELECT DISTINCT ?photo ?isVideo WHERE {
+                           {
+                             ?photo foaf:depicts ?u .
+                           } UNION {
+                             ?photo pho:inDirectory ?u .
+                           } UNION {
+                             ?photo scot:hasTag ?u .
+                           } UNION {
+                             ?photo dc:date ?u .
+                           } UNION {
+                             ?email a pho:Email ; dc:date ?u ; dcterms:hasPart ?photo .
+                           }
+                          # ?photo pho:viewableBy pho:friends .
+                           OPTIONAL {
+                             ?photo a ?isVideo .
+                             FILTER( ?isVideo = pho:Video ) .
+                           }
+                         }""",
+                      initBindings={'u' : uri})

@@ -336,6 +336,11 @@ def describeAuthorizations(graph, forAgent, accessTo):
 def addAccess(graph, user, agent, accessTo):
     if not agentMaySetAccessControl(user):
         raise ValueError("user is not allowed to set access controls")
+
+    # i'm trying to resist setting access for dates, since they're not
+    # a good grouping in the first place and also because seeing one
+    # date lets you see a span of them, currently
+    assert isinstance(accessTo, URIRef)
     
     auth = URIRef("http://photo.bigasterisk.com/access/%f" % time.time())
     stmts = [(auth, RDF.type, ACL.Authorization),

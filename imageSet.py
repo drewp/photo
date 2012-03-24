@@ -12,7 +12,7 @@ download from flickr
 ocr and search, like http://norman.walsh.name/2009/11/01/evernote
 """
 from __future__ import division
-import logging, zipfile, datetime, json, urllib, random, time, traceback, restkit
+import logging, zipfile, datetime, json, urllib, random, time, traceback, restkit, subprocess
 from StringIO import StringIO
 from nevow import loaders, rend, tags as T, inevow, url, flat
 from rdflib import URIRef, Literal
@@ -77,7 +77,8 @@ class ImageSet(rend.Page):
     def renderHTTP(self, ctx):
         req = inevow.IRequest(ctx)
 
-        if req.getHeader('accept') == 'application/json': # approximage parse
+        if (req.getHeader('accept') == 'application/json' and
+            not ctx.arg("jsonUpdate") and not ctx.arg('setList')): # approximage parse
             return self.jsonContent()
         
         if req.method == 'POST':
@@ -108,6 +109,11 @@ class ImageSet(rend.Page):
         if ctx.arg("jsonUpdate"):
             req.setHeader("Content-Type", "application/json")
             return json.dumps(self.templateData(view))
+
+        if ctx.arg("setList"):
+            req.setHeader("Content-Type", "application/json")
+            return json.dumps(view.photosInSetPlus())
+          
         
         req.setHeader("Content-Type", "application/xhtml+xml")
         ret = view.render()
@@ -182,7 +188,8 @@ class ImageSet(rend.Page):
         # copied from what flickr emits
         request.setHeader("Content-Type", "text/xml; charset=utf-8")
 
-        items = [T.Tag('title')["bigasterisk %s photos" % self.graph.label(self.desc.topic)]]
+        items = [T.Tag('title')["bigasterisk %s photos" %
+              self.desc.determineLabel(self.desc.graph, self.desc.topicDict)]]
         for pic in self.desc.photos()[-50:]: # no plan yet for the range. use paging i guess
             items.append(T.Tag('item')[
                 T.Tag('title')[self.graph.label(pic, default=pic.split('/')[-1])],
@@ -221,8 +228,8 @@ class View(pystache.view.View):
 
     def title(self):
         # why not setLabel?
-        return self.graph.label(self.desc.topic)
-        
+        return self.desc.determineLabel(self.desc.graph, self.desc.topicDict)
+    
     def bestJqueryLink(self):
         return networking.jqueryLink(self.forwardedFor)
         
@@ -240,7 +247,7 @@ class View(pystache.view.View):
             return None
 
     def intro(self):
-        intro = self.graph.value(self.desc.topic, PHO['intro'])
+        intro = self.graph.value(self.desc.topicDict['topic'], PHO['intro'])
         if intro is not None:
             intro = intro.replace(r'\n', '\n') # rdflib parse bug?
             return {'html' : intro}
@@ -377,9 +384,9 @@ class View(pystache.view.View):
                                 label=link['label']))
         return ret
 
-    def facts(self):
+    def facts(self, p=None):
         try:
-            js = serviceCallSync(self.agent, 'facts', self.desc.currentPhoto())
+            js = serviceCallSync(self.agent, 'facts', p or self.desc.currentPhoto())
         except ValueError:
             return {}
         return json.loads(js)
@@ -438,6 +445,27 @@ class View(pystache.view.View):
             src="%s?size=thumb" % localSite(p),
             isVideo=desc.isVideo(p)))
                 for p in desc.photos()]
+
+    def photosInSetPlus(self):
+        """for use by other tools who want to draw some photos
+        """
+        out = []
+        for p in self.desc.photos():
+            try:
+                s = getSize(p, sizes["thumb"])
+                thumbSize = {"thumbSize" : dict(w=s[0], h=s[1])}
+            except (ValueError, IOError, subprocess.CalledProcessError):
+                thumbSize = {}
+            out.append(dict(
+                link=absoluteSite(self.desc.otherImageUrl(p)),
+                uri=p,
+                facts=self.facts(p),
+                thumb="%s?size=thumb" % p,
+                screen="%s?size=screen" % p,
+                isVideo=self.desc.isVideo(p)))
+            out[-1].update(thumbSize)
+        return out
+        
 
     def zipUrl(self):
         return "%s?archive=zip" % self.desc.topic
