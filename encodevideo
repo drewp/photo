@@ -14,7 +14,7 @@ if inPath.endswith(".mp4"):
         "-vcodec", "libvpx",
         "-b", "500000",
         "-s", "320x240"]
-elif inPath.endswith(".AVI"):
+elif inPath.endswith((".AVI", ".avi")):
     # nikon digicam
     ARGS="-threads 16  -keyint_min 0 -r 30000/1001 -g 250 -skip_threshold 0 -qmin 1 -qmax 51".split() + [
         "-i", inPath,
