@@ -116,6 +116,7 @@ $(function () {
                     arrowPages = {prev: JSON.parse(d.prev), 
                                   next: JSON.parse(d.next)};
                     allTags = JSON.parse(d.allTags);
+		    preloadImg = JSON.parse(d.preloadImg);
                 } else if (tmpl == "client") {
                     // not a template
 		} else {
@@ -130,6 +131,7 @@ $(function () {
         nextImg.src = src;
         var progress = $("<span>").text("I");
         $("#activity").append(progress);
+	//$("#loaded").append("preloading image "+src);
         $(nextImg).load(function (ev) { progress.remove(); });
     }
 
