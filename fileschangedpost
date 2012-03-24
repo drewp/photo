@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2.6
 """
 run this on any machine that could notice files (images or rdf data)
 getting written to the pic areas. It would be nice to run this only on
