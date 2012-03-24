@@ -26,6 +26,8 @@ for row in graph.queryd("""
     # also go to commentServe and add up the comments (but no authors,
     # since that should not be searched, at least at the same strength
     # as the rest of the text)
+
+    # need to boost recent dates somehow. send a date? send a boost factor?
     
     picVid = 'Video' if row['isVideo'] else 'Photo'
     if txt.strip():

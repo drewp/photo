@@ -17,7 +17,7 @@ def graphRepoRoot():
 
 def searchRoot():
     return os.environ.get('PHOTO_SEARCH',
-                          "http://bang:8080/search_2.8.1-1.0.3/")
+                          "http://bang:8080/search_2.9.1-1.6/")
 
 def shortenerRoot():
     return "http://%s:9079/" % serviceHost
