@@ -1,5 +1,6 @@
 from xml.utils import iso8601
 import datetime
+from dateutil.tz import tzlocal
 
 _photoCreated = {} # uri : datetime
 def photoCreated(graph, uri):
@@ -31,8 +32,8 @@ def photoCreated(graph, uri):
     except Exception:
         sec = iso8601.parse(str(photoDate) + '-0700')
 
-    # todo: this is losing tz unnecessarily
-    ret = datetime.datetime.fromtimestamp(sec)
+    # todo: this is losing the original tz unnecessarily
+    ret = datetime.datetime.fromtimestamp(sec, tzlocal())
     _photoCreated[uri] = ret
     return ret
 
