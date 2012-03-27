@@ -49,7 +49,7 @@ def sizeAttrs(foafUser, uri, sizeName):
 
 @print_timing
 def renderPage(graph, topic, foafUser, cookie):
-    photos = photosWithTopic(graph, topic, isVideo={})
+    photos = photosWithTopic(graph, {'topic':topic}, isVideo={})
     filtered = starFilter(graph, 'only', foafUser, photos)
     if filtered:
         photos = filtered 
