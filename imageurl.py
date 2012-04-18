@@ -7,6 +7,7 @@ from oneimagequery import photoCreated
 from lib import print_timing
 from ns import SITE, PHO, XS
 from dateutil.parser import parse
+from dateutil.tz import tzlocal
 
 log = logging.getLogger()
 
@@ -241,7 +242,7 @@ def photosWithTopic(graph, topicDict, isVideo):
         try:
             return photoCreated(graph, uri)
         except ValueError:
-            return datetime.datetime(1,1,1)
+            return datetime.datetime(1,1,1, tzinfo=tzlocal())
     for row in q:
         isVideo[row['photo']] = bool(row['isVideo'])
 
