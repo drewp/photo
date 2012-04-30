@@ -60,6 +60,8 @@ def renderPage(graph, topic, foafUser, cookie):
     knownFacts = set()
     commentJs = '1'
     for photo in photos:
+        if not access.viewable(graph, photo, foafUser):
+            raise access.NeedsMoreAccess()
         try:
             date = photoCreated(graph, photo).date()
         except ValueError:

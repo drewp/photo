@@ -11,7 +11,7 @@ from nevow import loaders, rend, static, tags as T
 from xml.utils import iso8601
 from photos import getSize, getRequestedSize
 from rdflib import URIRef
-import auth, networking
+import auth, networking, restkit
 import access
 from db import getGraph
 from urls import absoluteSite, absSiteHost
@@ -20,6 +20,20 @@ from ns import PHO, SITE, FOAF, SIOC, DC, DCTERMS, SCOT, XS, RDF
 log = boot.log
 
 myPicSubdirs = [d for d in os.listdir("/my/pic") if d != "~thumb"]
+
+c3po = restkit.Resource('http://bang:9040/')
+
+def msgAdmins(msg):
+    for u in auth.superagents:
+        c3po.post(path='',
+                  payload={
+                      'user' : u,
+                      'msg' : msg,
+                      'mode' : 'xmpp'
+                      },
+                  headers={'content-type' :
+                           'application/x-www-form-urlencoded'}
+                  )
 
 def importModule(name):
     m = __import__(name)
@@ -162,10 +176,14 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
             def renderHTTP(self, ctx):
                 req = inevow.IRequest(ctx)
                 req.setHeader('Content-Type', 'application/xhtml+xml')
-                cookie = inevow.IRequest(ctx).getHeader("cookie") or ''
-                req.write(story.renderPage(g, topic,
-                                           access.getUser(ctx), 
-                                           cookie))
+                cookie = req.getHeader("cookie") or ''
+                user = access.getUser(ctx)
+                try:
+                    req.write(story.renderPage(g, topic,
+                                               user, 
+                                               cookie))
+                except access.NeedsMoreAccess:
+                    setAccessError(req, user, topic)
                 req.finish()
                 return ''
         return ret()
@@ -223,6 +241,25 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
             (n, open("template/%s.mustache" % n).read())
             for n in "topBar featured featuredMeta photosInSet preload pageJson aclwidget".split())
         return json.dumps({"templates" : allTemplates})
+
+def setAccessError(req, user, topic):
+    if req.getHeader('x-openid-proxy') and not user:
+        req.setResponseCode(http.FORBIDDEN)
+        req.write(("You have a working openid but you cannot see %s" %
+                   topic).encode('utf8'))
+        msgAdmins("Openid %s has no user yet and cannot see %s . Use http://bigasterisk.com/magma/openidAccess to associate this openid." %
+                  (req.getHeader('x-openid-proxy'), topic))
+    if user:
+        req.setResponseCode(http.FORBIDDEN)
+        req.write(("Your user cannot see %s" % topic).encode('utf8'))
+        msgAdmins("User %s tried to see %s but is not allowed. Use http://bigasterisk.com/magma/openidAccess to configure users." %
+                  (user, topic))
+    else:
+        req.setResponseCode(303)
+        req.setHeader(
+            "Location",
+            "http://photo.bigasterisk.com/login?" +
+            urllib.urlencode([('redir', req.uri)]))
 
 def returnJson(d):
     class ret(rend.Page):

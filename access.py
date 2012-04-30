@@ -21,6 +21,9 @@ loader = TemplateLoader(".", auto_reload=True)
 serializer = XHTMLSerializer()
 log = logging.getLogger()
 
+class NeedsMoreAccess(ValueError):
+    pass
+
 def getUser(ctx):
     return _getUser(inevow.IRequest(ctx).getHeader)
 
