@@ -149,7 +149,10 @@ def _localPath(url):
     assert url.startswith("http://photo.bigasterisk.com/")
     return "/my/pic/" + urllib.unquote(
         url[len("http://photo.bigasterisk.com/"):])
-    
+
+def fitSize(w, h, maxW, maxH):
+    scl = min(maxW / w, maxH / h)
+    return int(round(w * scl)), int(round(h * scl))
 
 _lastOpen = None, None
 def _resizeAndSave(localPath, thumbPath, maxSize, localURL):
@@ -166,9 +169,8 @@ def _resizeAndSave(localPath, thumbPath, maxSize, localURL):
 
     # img.thumbnail is faster, but much lower quality
     w, h = img.size
-    scl = min(maxSize / w, maxSize / h)
-    img = img.resize((int(round(w * scl)), int(round(h * scl))),
-                     Image.ANTIALIAS)
+    outW, outH = fitSize(w, h, maxSize, maxSize)
+    img = img.resize(outW, outH, Image.ANTIALIAS)
 
     jpg = StringIO()
     jpg.name = localURL

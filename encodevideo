@@ -2,29 +2,18 @@
 
 # <input video> <output.webm>
 
-# missing a mode for /my/pic/moviecam/ari-garage.avi, maybe others
+import sys, subprocess, os, re
+from photos import fitSize
 
-import sys, subprocess, os
 inPath, outPath = sys.argv[1:]
 
 if inPath.endswith(".mp4"):
-    if 'phonecam/de' in inPath:
-        # epic phone cam
-        ARGS="-threads 16  -keyint_min 0 -r 29.98 -g 250 -skip_threshold 0 -qmin 1 -qmax 51".split() + [
-            "-i", inPath,
-            "-vcodec", "libvpx",
-            "-b", "500000",
-            "-s", "360x240"]
-        
-    elif 'phonecam/dt' in inPath:
-        # pre phone cam
-        ARGS="-threads 16  -keyint_min 0 -r 30000/1001 -g 250 -skip_threshold 0 -qmin 1 -qmax 51".split() + [
-            "-i", inPath,
-            "-vcodec", "libvpx",
-            "-b", "500000",
-            "-s", "320x240"]
-    else:
-        raise NotImplementedError()
+    # pre phone cam
+    ARGS="-threads 16  -keyint_min 0 -r 30000/1001 -g 250 -skip_threshold 0 -qmin 1 -qmax 51".split() + [
+        "-i", inPath,
+        "-vcodec", "libvpx",
+        "-b", "500000",
+        "-s", "320x240"]
 elif inPath.endswith((".AVI", ".avi")):
     # nikon digicam
     ARGS="-threads 16  -keyint_min 0 -r 30000/1001 -g 250 -skip_threshold 0 -qmin 1 -qmax 51".split() + [
@@ -36,5 +25,5 @@ elif inPath.endswith((".AVI", ".avi")):
     
 LOGBASE="/tmp/vid-%s" % os.getpid()
 
-subprocess.check_call(['/usr/bin/ffmpeg', '-pass', '1', '-passlogfile', LOGBASE] + ARGS + ['-an', '-f', 'rawvideo', '-y', '/dev/null'])
-subprocess.check_call(['/usr/bin/ffmpeg', '-pass', '2', '-passlogfile', LOGBASE] + ARGS + ['-acodec', 'libvorbis', '-y', outPath])
+subprocess.check_call(['/usr/local/bin/ffmpeg', '-pass', '1', '-passlogfile', LOGBASE] + ARGS + ['-an', '-f', 'rawvideo', '-y', '/dev/null'])
+subprocess.check_call(['/usr/local/bin/ffmpeg', '-pass', '2', '-passlogfile', LOGBASE] + ARGS + ['-acodec', 'libvorbis', '-y', outPath])
