@@ -8,19 +8,26 @@ from photos import fitSize
 
 inPath, outPath = sys.argv[1:]
 
-probe = subprocess.Popen(['/usr/bin/avprobe', inPath], stderr=subprocess.PIPE).communicate()[1]
-print repr(probe)
-m = re.search(r'Video.*?(\d+)x(\d+)', probe)
-w, h = map(int, m.groups())
+try:
+    probe = subprocess.Popen(['/usr/bin/avprobe', inPath], stderr=subprocess.PIPE).communicate()[1]
+    print repr(probe)
+    m = re.search(r'Video.*?(\d+)x(\d+)', probe)
+    w, h = map(int, m.groups())
 
-outSize = fitSize(w, h, 320, 320)
+    outSize = fitSize(w, h, 320, 320)
 
-convArgs = ['-y', '-i', inPath, '-s', '%sx%s' % outSize]
-if '11025 Hz' in probe or '11024 Hz' in probe:
-    # see http://ffmpeg-users.933282.n4.nabble.com/ffmpeg-fails-to-create-webm-content-if-audio-bitrate-is-less-than-44K-td2303313.html
-    # '11024' is from some canon cam
-    convArgs.extend(['-ar', '44100'])
-convArgs.append(outPath)
+    convArgs = ['-y', '-i', inPath, '-s', '%sx%s' % outSize]
+    if '11025 Hz' in probe or '11024 Hz' in probe:
+        # see http://ffmpeg-users.933282.n4.nabble.com/ffmpeg-fails-to-create-webm-content-if-audio-bitrate-is-less-than-44K-td2303313.html
+        # '11024' is from some canon cam
+        convArgs.extend(['-ar', '44100'])
+    convArgs.append(outPath)
 
-subprocess.check_call(['/usr/bin/avconv'] + convArgs)
+    subprocess.check_call(['/usr/bin/avconv'] + convArgs)
 
+except Exception, e:
+    try:
+        os.unlink(outPath)
+    except OSError:
+        pass
+    raise e
