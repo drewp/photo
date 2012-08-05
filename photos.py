@@ -170,7 +170,7 @@ def _resizeAndSave(localPath, thumbPath, maxSize, localURL):
     # img.thumbnail is faster, but much lower quality
     w, h = img.size
     outW, outH = fitSize(w, h, maxSize, maxSize)
-    img = img.resize(outW, outH, Image.ANTIALIAS)
+    img = img.resize((outW, outH), Image.ANTIALIAS)
 
     jpg = StringIO()
     jpg.name = localURL

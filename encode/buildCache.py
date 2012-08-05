@@ -15,11 +15,12 @@ and then we can ask for 600 followed by 75.
 testing? use this to remove the last 24h of thumbs:
   find /my/pic/~thumb -mtime -1 -type f -delete
 """
-
+import sys
+sys.path.append("..")
 import boot
 import subprocess, time, optparse, logging
 from multiprocessing import Pool, Queue, Process
-from photos import justCache
+from worker import justCache
 from urls import photoUri
 from picdirs import picSubDirs
 from scanFs import imageExtensions, videoExtensions
@@ -36,16 +37,12 @@ def ProgressReport(q, total):
         now = time.time()
         if now > lastReportStart + reportStep:
             perFile = (now - lastReportStart) / (seen - lastReportFiles)
-            log.info("finished %s of %s: %s, est %s min left" % (seen, total, item, round((total - seen) * perFile / 60)))
+            log.info("finished %s of %s: %s, est %s min left" %
+                     (seen, total, item, round((total - seen) * perFile / 60)))
             lastReportStart = now
 
 def cacheFile((i, filename)):
-    try:
-        justCache(photoUri(filename),
-                  grid=opts.grid, gridLogDir='/my/log/grid',
-                  sizes=[75,250,600])
-    except (subprocess.CalledProcessError, IOError), e:
-        log.error("  failed: %s", e)
+    justCache.delay(photoUri(filename), sizes=[75,250,600])
     progressQueue.put("%s" % filename)
 
 def findFiles(opts):
