@@ -16,8 +16,9 @@ w, h = map(int, m.groups())
 outSize = fitSize(w, h, 320, 320)
 
 convArgs = ['-y', '-i', inPath, '-s', '%sx%s' % outSize]
-if '11025 Hz' in probe:
+if '11025 Hz' in probe or '11024 Hz' in probe:
     # see http://ffmpeg-users.933282.n4.nabble.com/ffmpeg-fails-to-create-webm-content-if-audio-bitrate-is-less-than-44K-td2303313.html
+    # '11024' is from some canon cam
     convArgs.extend(['-ar', '44100'])
 convArgs.append(outPath)
 
