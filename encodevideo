@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 # <input video> <output.webm>
+# this tool doesn't include writing to a temp file and moving the result into place
 
 import sys, subprocess, os, re
 from photos import fitSize
@@ -18,9 +19,7 @@ convArgs = ['-y', '-i', inPath, '-s', '%sx%s' % outSize]
 if '11025 Hz' in probe:
     # see http://ffmpeg-users.933282.n4.nabble.com/ffmpeg-fails-to-create-webm-content-if-audio-bitrate-is-less-than-44K-td2303313.html
     convArgs.extend(['-ar', '44100'])
-tempOut = outPath + ".temp%s" % os.path.splitext(outPath)[1]
-convArgs.append(tempOut)
+convArgs.append(outPath)
 
 subprocess.check_call(['/usr/bin/avconv'] + convArgs)
-    
-os.rename(tempOut, outPath)
+
