@@ -7,10 +7,7 @@ import sys
 sys.path.append("..")
 import photos
 
-celery = Celery('worker',
-                broker='mongodb://bang:27017/photoQueue',
-                backend='mongodb',
-                serializer='json')
+celery = Celery('worker')
 
 @celery.task
 def justCache(uri, sizes):
