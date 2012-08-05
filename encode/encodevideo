@@ -4,6 +4,7 @@
 # this tool doesn't include writing to a temp file and moving the result into place
 
 import sys, subprocess, os, re
+sys.path.append("..")
 from photos import fitSize
 
 inPath, outPath = sys.argv[1:]

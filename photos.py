@@ -82,7 +82,7 @@ def encodedVideo(localPath, _return=True):
     # this could start a second conversion while the first is going on!
     _makeDirToThumb(videoOut)
     tmpOut = videoOut+tmpSuffix+'.webm'
-    subprocess.check_call(['/my/site/photo/encodevideo', localPath, tmpOut])
+    subprocess.check_call(['/my/site/photo/encode/encodevideo', localPath, tmpOut])
     os.rename(tmpOut, videoOut)
     if not _return:
         return
