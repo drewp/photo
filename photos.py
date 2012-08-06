@@ -99,7 +99,7 @@ def getSize(localURL, maxSize):
     jpg, mtime = thumb(localURL, maxSize)
     return Image.open(StringIO(jpg)).size
 
-def justCache(url, sizes, grid=False, gridLogDir='/dev/null'):
+def justCache(url, sizes):
     """
     if it's a video, we automatically add video2 size
     """
@@ -108,9 +108,9 @@ def justCache(url, sizes, grid=False, gridLogDir='/dev/null'):
     if localPath.lower().endswith(videoExtensions):
         justCacheVideo(url)
     else:
-        justCachePhoto(url, sizes, grid, gridLogDir)
+        justCachePhoto(url, sizes)
 
-def justCachePhoto(url, sizes, grid, gridLogDir):
+def justCachePhoto(url, sizes):
     todo = []
     for size in sizes:
         thumbPath = _thumbPath(url, size)
@@ -122,15 +122,6 @@ def justCachePhoto(url, sizes, grid, gridLogDir):
             todo.append(size)
 
     for size in todo:
-        if grid:
-            subprocess.check_call(
-                ['qsub',
-                 '-b', 'yes',
-                 '-m', 'a',
-                 '-N',  _safeSgeJobName('resize %s' % url),
-                 '-o', gridLogDir, '-e', gridLogDir,
-                 sibpath(__file__, 'resizeOne'), url] + map(str, sizes))
-        else:
             thumbPath = _thumbPath(url, size)
             _makeDirToThumb(thumbPath)
             localPath = _localPath(url)
@@ -139,9 +130,6 @@ def justCachePhoto(url, sizes, grid, gridLogDir):
 def justCacheVideo(url):
     localPath = _localPath(url)
     encodedVideo(localPath, _return=False)
-
-def _safeSgeJobName(s):
-    return re.sub(r'[^a-zA-Z0-9\.]+', '_', s)
 
 def _localPath(url):
     # localURL like http://photo.bigasterisk.com/digicam/housewarm/00023.jpg
