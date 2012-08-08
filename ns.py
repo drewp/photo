@@ -15,7 +15,7 @@ XS = Namespace("http://www.w3.org/2001/XMLSchema#")
 
 initNs = dict(
     foaf=FOAF,
-    rdfs=RDFS.RDFSNS,
+    rdfs=RDFS.uri,
     sioc=SIOC,
     pho=PHO,
     scot=SCOT,

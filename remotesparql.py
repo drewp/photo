@@ -1,6 +1,6 @@
 import warnings
 warnings.warn("RemoteSparql has moved to sparqlhttp package", DeprecationWarning, 2)
-from rdflib.Graph import Graph
+from rdflib import Graph
 
 import sys
 import restkit

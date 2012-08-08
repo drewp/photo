@@ -1,4 +1,4 @@
-#!/usr/bin/python2.6
+#!/usr/bin/python2.7
 import boot
 from sparqlhttp.graph2 import SyncGraph
 import os, time, cyclone.web, sys
@@ -84,7 +84,7 @@ quick = False
   
 graph = SyncGraph('sesame', networking.graphRepoRoot() + "/photo",
                   initNs=dict(foaf=FOAF,
-                              rdfs=RDFS.RDFSNS,
+                              rdfs=RDFS.uri,
                               pho=PHO))
 
 scanFs = ScanFs(graph, '/my/pic')

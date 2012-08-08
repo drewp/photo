@@ -17,7 +17,7 @@ import boot
 import web, time, os, logging
 import flickrapi
 import restkit, tempfile, json
-from rdflib.Graph import Graph
+from rdflib import Graph
 from rdflib import URIRef, Literal
 from xml.utils import iso8601
 from photos import sizes
