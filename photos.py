@@ -80,7 +80,10 @@ def thumb(localURL, maxSize=100):
     jpg = _resizeAndSave(localPath, thumbPath, maxSize, localURL)
     return jpg.getvalue(), time.time()
 
-def encodedVideo(localPath, _return=True):
+class StillEncoding(ValueError):
+    pass
+
+def encodedVideo(localPath, _returnContents=True):
     """returns full webm binary + time. does its own caching"""
     h = hashlib.md5(localPath + "?size=video2").hexdigest()
     videoOut = '/var/cache/photo/video/%s/%s.webm' % (h[:2], h[2:])
