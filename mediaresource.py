@@ -16,6 +16,9 @@ from urls import photoUri
 class StillEncoding(ValueError):
     pass
 
+class Done(object):
+    """video is done encoding"""
+
 class Full(object): pass
 class Video2(object): "half-size video"
 
@@ -26,6 +29,11 @@ sizes = {'thumb' : 75,
          'video2' : Video2,
          'full' : Full}
 
+def getRequestedSize(ctx):
+    return sizes.get(ctx.arg('size'), 250)
+
+_lastOpen = None, None
+
 class MediaResource(object):
     def __init__(self, graph, uri):
         self.graph, self.uri = graph, uri
@@ -34,7 +42,20 @@ class MediaResource(object):
         return self.graph.contains((self.uri, RDF.type, PHO.Video))
 
     def videoProgress(self):
-        """True if we have the video, or a string explaining the status"""
+        """Done if we have the video, or a string explaining the status"""
+
+        log.info("progess on %s" % self.uri)
+        if not os.path.exists(self._sourcePath()):
+            return "source file %r not found" % self._sourcePath()
+        if os.path.exists(self._thumbPath(Video2)):
+            return Done
+
+        # here we look at the pending jobs for the one that will
+        # compress self._sourcePath(). if it's not there, return 'not
+        # started'. Else see about a way to get the progress or at
+        # least the honest runtime of the job
+        
+        return "still working2"
 
     def getSize(self, size):
         """pass photo size or thumb boundary size, get (w,h)
@@ -49,15 +70,44 @@ class MediaResource(object):
         return Image.open(StringIO(jpg)).size
 
     def getImageAndMtime(self, size):
-        """block and return an image fitting in this size square plus
-        the mtime of the image data. If it's a video, raise
-        StillEncoding (with videoProgress as an attr) if we don't have
-        the data yet"""
+        """
+        most important method.
+
+        block and return an image or video fitting in this size square
+        plus the mtime of the image data. If the response would be a
+        full video, and we don't have the data yet, raise
+        StillEncoding"""
         
-        log.debug("need thumb for %r", self.uri)
+        log.debug("getImageAndMtime %r", self.uri)
         # this ought to return a redirect to a static error image when it breaks
-        jpg, mtime = thumb(self.uri, size)
-        return jpg, mtime
+
+        if self.isVideo():
+            if size == sizes['thumb']:
+                return self._runVideoThumbnail()
+            elif size is Video2:
+                self.startVideoEncode()
+                raise StillEncoding()
+            else:
+                raise NotImplementedError(
+                    "only Video2 size is supported for video %r" % self.uri)
+        else:
+            if size is Video2:
+                raise NotImplementedError("maxSize=Video2 on an image %r" %
+                                          self.uri)
+            elif size is Full:
+                return self._strippedFullRes()
+            else:
+                thumbPath = self._thumbPath(size)
+
+                try:
+                    f = open(thumbPath)
+                except IOError:
+                    pass
+                else:
+                    return f.read(), os.path.getmtime(thumbPath)
+
+                jpg = self._runPhotoResize(size)
+                return jpg.getvalue(), time.time()
 
     def cacheResize(self):
         """block and prepare the standard sizes as needed, but don't
@@ -66,59 +116,88 @@ class MediaResource(object):
 
     def startVideoEncode(self):
         """non-blocking. starts a video encoding if we don't have one"""
+        thumbPath = self._thumbPath()
+        if not os.path.exists(thumbPath):
+            # there may be one running, and we just started a second
+            # one! look at the job list here.
+            
 
+    def _strippedFullRes(self):
+        s = self._sourcePath()
+        return jpgWithoutExif(s), os.path.getmtime(s)
 
+    def _runVideoThumbnail(self):
+        # this is not caching yet but it should
+        tf = tempfile.NamedTemporaryFile()
+        subprocess.check_call(['/usr/bin/ffmpegthumbnailer',
+                               '-i', self._sourcePath(),
+                               '-o', tf.name,
+                               '-c', 'jpeg',
+                               '-s', str(sizes['thumb'])])
+        return open(tf.name).read(), time.time() # todo
 
-def getRequestedSize(ctx):
-    return sizes.get(ctx.arg('size'), 250)
+    def _runPhotoResize(self, maxSize):
+        """returns the jpeg result too"""
+        global _lastOpen
+
+        source = self._sourcePath()
+        thumbPath = self._thumbPath(maxSize)
+        _makeDirToThumb(thumbPath)
+        
+        log.info("resizing %s to %s in %s" % (source, maxSize, thumbPath))
+
+        # this is meant to reduce decompress calls when we're making
+        # multiple resizes of a new image
+        if _lastOpen[0] == source:
+            img = _lastOpen[1]
+        else:
+            img = Image.open(source)
+            _lastOpen = source, img
+
+        # img.thumbnail is faster, but much lower quality
+        w, h = img.size
+        outW, outH = fitSize(w, h, maxSize, maxSize)
+        img = img.resize((outW, outH), Image.ANTIALIAS)
+
+        jpg = StringIO()
+        jpg.name = self.uri # just for the extension
+        q = 80
+        if maxSize <= 100:
+            q = 60
+        img.save(jpg, quality=q)
+        open(thumbPath + tmpSuffix, "w").write(jpg.getvalue())
+        os.rename(thumbPath + tmpSuffix, thumbPath)
+        return jpg
+
+    def _thumbPath(self, maxSize):
+        if self.isVideo():
+            h = hashlib.md5(self.uri + "?size=video2").hexdigest()
+            return '/var/cache/photo/video/%s/%s.webm' % (h[:2], h[2:])
+        else:
+            thumbUrl = self.uri + "?size=%s" % maxSize
+            cksum = hashlib.md5(thumbUrl).hexdigest()
+            return "/var/cache/photo/%s/%s/%s" % (cksum[:2], cksum[2:4], cksum[4:])
+
+    def _sourcePath(self):
+        """filesystem path to the source image"""
+        # uri like http://photo.bigasterisk.com/digicam/housewarm/00023.jpg
+        #         means /my/pic/digicam/housewarm/00023.jpg
+        assert self.uri.startswith("http://photo.bigasterisk.com/")
+        return "/my/pic/" + urllib.unquote(
+            self.uri[len("http://photo.bigasterisk.com/"):])
+
+    def _sourceExists(self):
+        return os.path.exists(self._sourcePath())
 
 
 tmpSuffix = ".tmp" + ''.join([random.choice(string.letters) for c in range(5)])
 """
 uses 'exiftool', from ubuntu package libimage-exiftool-perl
-
 """
 
-def thumb(localURL, maxSize=100):
-    """returns jpeg data, mtime
-
-    if maxSize is Video, then you get webm data instead, or a
-    StillEncoding exception with progress data (someday)
-
-    I forget what's 'local' about localURL. it's just the photo's main URI.
-    """
-    localPath = _localPath(localURL)
-
-    if localPath.lower().endswith(videoExtensions):
-        if maxSize is Video2:
-            return encodedVideo(localPath)
-        elif maxSize is Full:
-            raise NotImplementedError
-        else:
-            return videoThumbnail(localPath, maxSize)
-    if maxSize is Video2:
-        raise NotImplementedError("maxSize=Video2 on localPath %r" % localPath)
-    
-    if maxSize is Full:
-        return jpgWithoutExif(localPath), os.path.getmtime(localPath)
-
-    thumbPath = _thumbPath(localURL, maxSize)
-    _makeDirToThumb(thumbPath)
-
-    try:
-        f = open(thumbPath)
-    except IOError:
-        pass
-    else:
-        return f.read(), os.path.getmtime(thumbPath)
-
-    jpg = _resizeAndSave(localPath, thumbPath, maxSize, localURL)
-    return jpg.getvalue(), time.time()
 
 def encodedVideo(localPath, _returnContents=True):
     """returns full webm binary + time. does its own caching"""
-    h = hashlib.md5(localPath + "?size=video2").hexdigest()
-    videoOut = '/var/cache/photo/video/%s/%s.webm' % (h[:2], h[2:])
     try:
         f = open(videoOut)
     except IOError:
@@ -147,12 +226,6 @@ def encodedVideo(localPath, _returnContents=True):
 
         subprocess.check_call(['/my/site/photo/encode/encodevideo',
                                localPath, videoOut])
-
-def videoThumbnail(localPath, maxSize):
-    # this is not caching yet but it should
-    tf = tempfile.NamedTemporaryFile()
-    subprocess.check_call(['/usr/bin/ffmpegthumbnailer', '-i', localPath, '-o', tf.name, '-c', 'jpeg', '-s', str(maxSize)])
-    return open(tf.name).read(), time.time() # todo
 
 def justCache(url, sizes):
     """
@@ -185,47 +258,6 @@ def justCachePhoto(url, sizes):
 def justCacheVideo(url):
     localPath = _localPath(url)
     encodedVideo(localPath, _returnContents=False)
-
-def _localPath(url):
-    # localURL like http://photo.bigasterisk.com/digicam/housewarm/00023.jpg
-    #         means /my/pic/digicam/housewarm/00023.jpg
-    assert url.startswith("http://photo.bigasterisk.com/")
-    return "/my/pic/" + urllib.unquote(
-        url[len("http://photo.bigasterisk.com/"):])
-
-_lastOpen = None, None
-def _resizeAndSave(localPath, thumbPath, maxSize, localURL):
-    global _lastOpen
-    print "resizing %s to %s in %s" % (localPath, maxSize, thumbPath)
-
-    # this is meant to reduce decompress calls when we're making
-    # multiple resizes of a new image
-    if _lastOpen[0] == localPath:
-        img = _lastOpen[1]
-    else:
-        img = Image.open(localPath)
-        _lastOpen = localPath, img
-
-    # img.thumbnail is faster, but much lower quality
-    w, h = img.size
-    outW, outH = fitSize(w, h, maxSize, maxSize)
-    img = img.resize((outW, outH), Image.ANTIALIAS)
-
-    jpg = StringIO()
-    jpg.name = localURL
-    q = 80
-    if maxSize <= 100:
-        q = 60
-    img.save(jpg, quality=q)
-    open(thumbPath + tmpSuffix, "w").write(jpg.getvalue())
-    os.rename(thumbPath + tmpSuffix, thumbPath)
-    return jpg
-
-
-def _thumbPath(localURL, maxSize):
-    thumbUrl = localURL + "?size=%s" % maxSize
-    cksum = hashlib.md5(thumbUrl).hexdigest()
-    return "/var/cache/photo/%s/%s/%s" % (cksum[:2], cksum[2:4], cksum[4:])
 
 def _makeDirToThumb(path):
     try:

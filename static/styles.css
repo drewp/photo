@@ -232,3 +232,8 @@ span.result {
     border: 1px solid #717171;
     border-radius:  4px;
 }
+
+.videoProgress {
+    color: #7A6BD3;
+    margin-top: 100px;
+}

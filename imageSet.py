@@ -12,13 +12,13 @@ download from flickr
 ocr and search, like http://norman.walsh.name/2009/11/01/evernote
 """
 from __future__ import division
-import logging, zipfile, datetime, json, urllib, random, time, traceback, restkit, subprocess
+import logging, zipfile, datetime, json, urllib, random, time, restkit, subprocess
 from StringIO import StringIO
 from nevow import loaders, rend, tags as T, inevow, url, flat
 from rdflib import URIRef, Literal
 from twisted.web.client import getPage
 from isodate.isodates import parse_date, date_isoformat
-from mediaresource import Full, thumb, sizes, MediaResource
+from mediaresource import Full, sizes, MediaResource, Done
 from urls import localSite, absoluteSite
 from imageurl import ImageSetDesc, photosWithTopic, NoSetUri
 from edit import writeStatements
@@ -139,6 +139,7 @@ class ImageSet(rend.Page):
         return json.dumps({'photos' : self.desc.photos()})
         
     def archiveZip(self, ctx):
+        raise NotImplementedError("bitrotted- needs fixing")
         f = StringIO('')
         zf = zipfile.ZipFile(f, 'w', zipfile.ZIP_DEFLATED)
         for photo in self.desc.photos():
@@ -300,12 +301,18 @@ class View(pystache.view.View):
             return ''
         currentLocal = localSite(current)
         _, nextUri = self.prevNext()
-        if self.graph.contains((current, RDF.type, PHO.Video)):
-            return dict(video=dict(src=currentLocal+"?size=video2"))
+
+        feat = MediaResource(self.graph, current)
+
+        if feat.isVideo():
+            progress = feat.videoProgress()
+            if progress is Done:
+                return dict(video=dict(src=currentLocal+"?size=video2"))
+            else:
+                return dict(videoNotReady=dict(progress=progress))
         else:
             try:
-                r = MediaResource(self.graph, current)
-                size = r.getSize(sizes["large"])
+                size = feat.getSize(sizes["large"])
             except (ValueError, IOError):
                 size = (0,0)
             marg = (602 - 2 - size[0]) // 2
@@ -429,8 +436,8 @@ class View(pystache.view.View):
         raise NotImplementedError
         choices = []
         for opt in [10, 50, 100]:
-            url = self.desc.altUrl(recent=str(opt))
-            choices.append(T.a(href=url)[opt])
+            href = self.desc.altUrl(recent=str(opt))
+            choices.append(T.a(href=href)[opt])
         choices.append(T.a(href=self.desc.altUrl(recent=''))['all'])
         return ['show only the ', [[c, ' '] for c in choices],
                 ' most recent of these']
@@ -452,8 +459,9 @@ class View(pystache.view.View):
         """
         out = []
         for p in self.desc.photos():
+            r = MediaResource(self.graph, p)
             try:
-                s = getSize(p, sizes["thumb"])
+                s = r.getSize(sizes["thumb"])
                 thumbSize = {"thumbSize" : dict(w=s[0], h=s[1])}
             except (ValueError, IOError, subprocess.CalledProcessError):
                 thumbSize = {}
@@ -463,7 +471,8 @@ class View(pystache.view.View):
                 facts=self.facts(p),
                 thumb="%s?size=thumb" % p,
                 screen="%s?size=screen" % p,
-                isVideo=self.desc.isVideo(p)))
+                isVideo=self.desc.isVideo(p)
+                ))
             out[-1].update(thumbSize)
         return out
         

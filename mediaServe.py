@@ -8,7 +8,7 @@ from nevow import rend, inevow, static, appserver
 from rdflib import URIRef
 from twisted.web import http
 from twisted.internet import reactor
-from mediaresource import MediaResource, getRequestedSize
+from mediaresource import MediaResource, getRequestedSize, Video2
 from db import getGraph
 import access
 from ns import RDF, SITE, PHO
@@ -77,7 +77,7 @@ class Main(rend.Page):
         r = MediaResource(graph, uri)
         size = getRequestedSize(ctx)
         jpg, mtime = r.getImageAndMtime(size)
-        ct = "video/webm" if r.isVideo() else "image/jpeg"
+        ct = "video/webm" if (r.isVideo() and size is Video2) else "image/jpeg"
         return StaticCached(jpg, ct, mtime)
     
     def imageChild(self, ctx, uri):
