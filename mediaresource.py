@@ -7,6 +7,7 @@ from twisted.python.util import sibpath
 from StringIO import StringIO
 import Image
 from lib import print_timing
+from ns import RDF, PHO
 from scanFs import videoExtensions
 from dims import fitSize
 log = logging.getLogger()
@@ -26,25 +27,37 @@ sizes = {'thumb' : 75,
          'full' : Full}
 
 class MediaResource(object):
-    def __init__(self, uri):
-        self.uri = uri
+    def __init__(self, graph, uri):
+        self.graph, self.uri = graph, uri
 
     def isVideo(self):
+        return self.graph.contains((self.uri, RDF.type, PHO.Video))
 
     def videoProgress(self):
         """True if we have the video, or a string explaining the status"""
 
-    def getRes(self, size):
-        """pass photo size or thumb size, get (w,h)
+    def getSize(self, size):
+        """pass photo size or thumb boundary size, get (w,h)
 
         videos can be requested at thumb size for a thumbnail, or else
-        the special size Video2 for a res-2 (320w) version
+        you can request the special size Video2 for the res-2 (320w) version
         """
+        #no video support yet
+        
+        # this could probably get a ton faster if the sizes were in a db.
+        jpg, mtime = self.getImageAndMtime(size)
+        return Image.open(StringIO(jpg)).size
 
-    def getImage(self, size):
-        """block and return an image fitting in this size square. If
-        it's a video, raise StillEncoding (with videoProgress as an
-        attr) if we don't have the data yet"""
+    def getImageAndMtime(self, size):
+        """block and return an image fitting in this size square plus
+        the mtime of the image data. If it's a video, raise
+        StillEncoding (with videoProgress as an attr) if we don't have
+        the data yet"""
+        
+        log.debug("need thumb for %r", self.uri)
+        # this ought to return a redirect to a static error image when it breaks
+        jpg, mtime = thumb(self.uri, size)
+        return jpg, mtime
 
     def cacheResize(self):
         """block and prepare the standard sizes as needed, but don't
@@ -140,11 +153,6 @@ def videoThumbnail(localPath, maxSize):
     tf = tempfile.NamedTemporaryFile()
     subprocess.check_call(['/usr/bin/ffmpegthumbnailer', '-i', localPath, '-o', tf.name, '-c', 'jpeg', '-s', str(maxSize)])
     return open(tf.name).read(), time.time() # todo
-
-def getSize(localURL, maxSize):
-    # this could probably get a ton faster if the sizes were in a db.
-    jpg, mtime = thumb(localURL, maxSize)
-    return Image.open(StringIO(jpg)).size
 
 def justCache(url, sizes):
     """

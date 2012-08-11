@@ -4,11 +4,12 @@ import web
 from genshi import Markup
 from genshi.template import TemplateLoader
 from genshi.output import XHTMLSerializer
-import networking, photos
+import networking
 from urls import localSite
 from oneimagequery import photoCreated
 import db
 from ns import SITE
+from mediaresource import MediaResource, sizes
 
 log = boot.log
 loader = TemplateLoader(".", auto_reload=True)
@@ -28,7 +29,8 @@ class ShareSingle(object):
     """
     def GET(self):
         uri = URIRef(web.input()['uri'])
-        size = photos.getSize(uri, photos.sizes["screen"])
+        r = MediaResource(graph, uri)
+        size = r.getSize(sizes["screen"])
 
         try:
             created = photoCreated(graph, uri)

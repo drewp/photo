@@ -18,7 +18,7 @@ from nevow import loaders, rend, tags as T, inevow, url, flat
 from rdflib import URIRef, Literal
 from twisted.web.client import getPage
 from isodate.isodates import parse_date, date_isoformat
-from photos import Full, thumb, sizes, getSize
+from mediaresource import Full, thumb, sizes, MediaResource
 from urls import localSite, absoluteSite
 from imageurl import ImageSetDesc, photosWithTopic, NoSetUri
 from edit import writeStatements
@@ -304,7 +304,8 @@ class View(pystache.view.View):
             return dict(video=dict(src=currentLocal+"?size=video2"))
         else:
             try:
-                size = getSize(current, sizes["large"])
+                r = MediaResource(self.graph, current)
+                size = r.getSize(sizes["large"])
             except (ValueError, IOError):
                 size = (0,0)
             marg = (602 - 2 - size[0]) // 2

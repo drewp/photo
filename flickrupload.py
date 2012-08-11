@@ -20,7 +20,7 @@ import restkit, tempfile, json
 from rdflib import Graph
 from rdflib import URIRef, Literal
 from xml.utils import iso8601
-from photos import sizes
+from mediaresource import sizes
 from edit import writeStatements
 from ns import PHO, DCTERMS
 

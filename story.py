@@ -14,7 +14,7 @@ from urls import localSite
 from imageurl import starFilter
 from oneimage import photoCreated
 import networking, access
-from photos import getSize, sizes
+from mediaresource import sizes, MediaResource
 loader = TemplateLoader(".", auto_reload=True)
 serializer = XHTMLSerializer()
 log = logging.getLogger()
@@ -40,11 +40,12 @@ def sizeAttrs_by_http(foafUser, uri, sizeName):
                                   headers={'x-foaf-agent' : foafUser}
                                   ).body_string())
 
-def sizeAttrs(foafUser, uri, sizeName):
+def sizeAttrs(graph, foafUser, uri, sizeName):
     # this is similar to serve.ImageSizeResponse.renderHTTP, to avoid
     # an http call
     size = sizes[sizeName]
-    w, h = getSize(uri, size)
+    r = MediaResource(graph, uri)
+    w, h = r.getSize(size)
     return {'width' : w, 'height' : h}
 
 @print_timing
@@ -105,7 +106,7 @@ def renderPage(graph, topic, foafUser, cookie):
         loginBar=Markup(networking.getLoginBarSync(cookie)),
         accessControl=Markup(accessControl),
         dateRange=findDateRange(graph, photos),
-        sizeAttrs=lambda uri, sizeName: sizeAttrs(foafUser, uri, sizeName),
+        sizeAttrs=lambda uri, sizeName: sizeAttrs(graph, foafUser, uri, sizeName),
         )
     return (''.join(serializer(stream))).encode('utf8')
 

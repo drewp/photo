@@ -8,7 +8,7 @@ from nevow import rend, inevow, static, appserver
 from rdflib import URIRef
 from twisted.web import http
 from twisted.internet import reactor
-from photos import thumb, getRequestedSize
+from mediaresource import MediaResource, getRequestedSize
 from db import getGraph
 import access
 from ns import RDF, SITE, PHO
@@ -74,20 +74,14 @@ class Main(rend.Page):
         return self.imageChild(ctx, uri)
 
     def imageResource(self, uri, ctx):
+        r = MediaResource(graph, uri)
         size = getRequestedSize(ctx)
-
-        log.debug("need thumb for %r", uri)
-        # this ought to return a redirect to a static error image when it breaks
-        jpg, mtime = thumb(uri, size)
-        ct = "image/jpeg"
-        if graph.contains((uri, RDF.type, PHO.Video)):
-            ct = "video/webm"
+        jpg, mtime = r.getImageAndMtime(size)
+        ct = "video/webm" if r.isVideo() else "image/jpeg"
         return StaticCached(jpg, ct, mtime)
-
     
     def imageChild(self, ctx, uri):
         """
-
         
         proxy openid; now compare that header to the allowed viewers. if header is missing or empty, that becomes the 'anonymous' user. other openids are just URIRefs in the graph, and you have to be able to get from the viewableBy link to that URIRef (via any number of groups)
 
