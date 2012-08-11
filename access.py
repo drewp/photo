@@ -9,7 +9,7 @@ removed
 import logging, random, time, datetime, os
 from dateutil.tz import tzlocal
 from rdflib import URIRef, RDF, Literal
-from nevow import inevow
+from nevow import inevow, url
 import auth
 from genshi.template import TemplateLoader
 from genshi.output import XHTMLSerializer
