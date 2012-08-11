@@ -300,12 +300,14 @@ $(function () {
         },
         main: function () {
             $("#commentsFade").fadeTo(0, 0);
-            $.get(picInfo.relCurrentPhotoUri + "/comments",
-	          {},
-	          function (result) {
-	              $("#comments").html(result);
-	              $("#commentsFade").fadeTo(500, 1);
-	          }, "html");
+            if (picInfo.relCurrentPhotoUri) {
+                $.get(picInfo.relCurrentPhotoUri + "/comments",
+	              {},
+	              function (result) {
+	                  $("#comments").html(result);
+	                  $("#commentsFade").fadeTo(500, 1);
+	              }, "html");
+            }
 
             $("#starTag").click(function () {
 	        $("#starTag").toggleClass("set");
@@ -318,7 +320,9 @@ $(function () {
 	        return tagsOrDescChanged(event);
             });
 
-            refreshTagsAndDesc(picInfo.tags);
+            if (picInfo.tags) {
+                refreshTagsAndDesc(picInfo.tags);
+            }
 
             setGlobalTags(allTags);
             $("#tags").tagSuggest({});
