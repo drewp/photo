@@ -8,6 +8,7 @@ from StringIO import StringIO
 import Image
 from lib import print_timing
 from scanFs import videoExtensions
+from dims import fitSize
 log = logging.getLogger()
 
 class Full(object): pass
@@ -34,7 +35,8 @@ uses 'exiftool', from ubuntu package libimage-exiftool-perl
 def thumb(localURL, maxSize=100):
     """returns jpeg data, mtime
 
-    if maxSize is Video, then you get webm data instead
+    if maxSize is Video, then you get webm data instead, or a
+    StillEncoding exception with progress data (someday)
 
     I forget what's 'local' about localURL. it's just the photo's main URI.
     """
@@ -66,6 +68,9 @@ def thumb(localURL, maxSize=100):
     jpg = _resizeAndSave(localPath, thumbPath, maxSize, localURL)
     return jpg.getvalue(), time.time()
 
+class StillEncoding(ValueError):
+    pass
+
 def encodedVideo(localPath, _return=True):
     """returns full webm binary + time. does its own caching"""
     h = hashlib.md5(localPath + "?size=video2").hexdigest()
@@ -78,6 +83,8 @@ def encodedVideo(localPath, _return=True):
         if not _return:
             return
         return f.read(), os.path.getmtime(videoOut)
+
+    #check for existing job, maybe start oone, then raise
 
     # this could start a second conversion while the first is going on!
     _makeDirToThumb(videoOut)
@@ -137,10 +144,6 @@ def _localPath(url):
     assert url.startswith("http://photo.bigasterisk.com/")
     return "/my/pic/" + urllib.unquote(
         url[len("http://photo.bigasterisk.com/"):])
-
-def fitSize(w, h, maxW, maxH):
-    scl = min(maxW / w, maxH / h)
-    return int(round(w * scl)), int(round(h * scl))
 
 _lastOpen = None, None
 def _resizeAndSave(localPath, thumbPath, maxSize, localURL):
