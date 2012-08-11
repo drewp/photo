@@ -10,18 +10,6 @@ from lib import print_timing
 from scanFs import videoExtensions
 from dims import fitSize
 log = logging.getLogger()
-from urls import photoUri
-
-"""
-the api i need:
-
-for any url,
- is it video
- do we have it
- start video
- 
-
-"""
 
 class Full(object): pass
 class Video2(object): "half-size video"
@@ -80,6 +68,9 @@ def thumb(localURL, maxSize=100):
     jpg = _resizeAndSave(localPath, thumbPath, maxSize, localURL)
     return jpg.getvalue(), time.time()
 
+class StillEncoding(ValueError):
+    pass
+
 def encodedVideo(localPath, _return=True):
     """returns full webm binary + time. does its own caching"""
     h = hashlib.md5(localPath + "?size=video2").hexdigest()
@@ -89,7 +80,7 @@ def encodedVideo(localPath, _return=True):
     except IOError:
         pass
     else:
-        if not _returnContents:
+        if not _return:
             return
         return f.read(), os.path.getmtime(videoOut)
 
@@ -97,21 +88,12 @@ def encodedVideo(localPath, _return=True):
 
     # this could start a second conversion while the first is going on!
     _makeDirToThumb(videoOut)
-
-    if _returnContents:
-        # live site asking for a video
-        
-        # if existing job, figure out its progress and don't make a new one
-        # else:
-
-        import encode.worker
-        encode.worker.justCache.delay(photoUri(localPath), sizes=[])
-        raise StillEncoding("encoding") # this will be a progress message
-    else:
-        # worker asking to run an encoding (i hope)
-
-        subprocess.check_call(['/my/site/photo/encode/encodevideo',
-                               localPath, videoOut])
+    tmpOut = videoOut+tmpSuffix+'.webm'
+    subprocess.check_call(['/my/site/photo/encode/encodevideo', localPath, tmpOut])
+    os.rename(tmpOut, videoOut)
+    if not _return:
+        return
+    return open(videoOut).read(), os.path.getmtime(videoOut)
 
 def videoThumbnail(localPath, maxSize):
     # this is not caching yet but it should
@@ -154,7 +136,7 @@ def justCachePhoto(url, sizes):
 
 def justCacheVideo(url):
     localPath = _localPath(url)
-    encodedVideo(localPath, _returnContents=False)
+    encodedVideo(localPath, _return=False)
 
 def _localPath(url):
     # localURL like http://photo.bigasterisk.com/digicam/housewarm/00023.jpg
