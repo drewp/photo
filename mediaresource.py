@@ -1,4 +1,4 @@
-"""
+u"""
 depends on exiftool program from libimage-exiftool-perl ubuntu package
 """
 from __future__ import division
@@ -12,16 +12,8 @@ from dims import fitSize
 log = logging.getLogger()
 from urls import photoUri
 
-"""
-the api i need:
-
-for any url,
- is it video
- do we have it
- start video
- 
-
-"""
+class StillEncoding(ValueError):
+    pass
 
 class Full(object): pass
 class Video2(object): "half-size video"
@@ -32,6 +24,36 @@ sizes = {'thumb' : 75,
          'screen' : 1000,
          'video2' : Video2,
          'full' : Full}
+
+class MediaResource(object):
+    def __init__(self, uri):
+        self.uri = uri
+
+    def isVideo(self):
+
+    def videoProgress(self):
+        """True if we have the video, or a string explaining the status"""
+
+    def getRes(self, size):
+        """pass photo size or thumb size, get (w,h)
+
+        videos can be requested at thumb size for a thumbnail, or else
+        the special size Video2 for a res-2 (320w) version
+        """
+
+    def getImage(self, size):
+        """block and return an image fitting in this size square. If
+        it's a video, raise StillEncoding (with videoProgress as an
+        attr) if we don't have the data yet"""
+
+    def cacheResize(self):
+        """block and prepare the standard sizes as needed, but don't
+        return any. If this is a video, we make a thumbnail and
+        startVideoEncode for a queued encode. """
+
+    def startVideoEncode(self):
+        """non-blocking. starts a video encoding if we don't have one"""
+
 
 
 def getRequestedSize(ctx):
@@ -79,9 +101,6 @@ def thumb(localURL, maxSize=100):
 
     jpg = _resizeAndSave(localPath, thumbPath, maxSize, localURL)
     return jpg.getvalue(), time.time()
-
-class StillEncoding(ValueError):
-    pass
 
 def encodedVideo(localPath, _returnContents=True):
     """returns full webm binary + time. does its own caching"""
