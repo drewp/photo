@@ -49,7 +49,8 @@ def sizeAttrs(foafUser, uri, sizeName):
 
 @print_timing
 def renderPage(graph, topic, foafUser, cookie):
-    photos = photosWithTopic(graph, {'topic':topic}, isVideo={})
+    isVideo = {}
+    photos = photosWithTopic(graph, {'topic':topic}, isVideo=isVideo)
     filtered = starFilter(graph, 'only', foafUser, photos)
     if filtered:
         photos = filtered 
@@ -61,6 +62,7 @@ def renderPage(graph, topic, foafUser, cookie):
     commentJs = '1'
     for photo in photos:
         if not access.viewable(graph, photo, foafUser):
+            log.debug("story %s NeedsMoreAccess because %s can't view %s", topic, foafUser, photo)
             raise access.NeedsMoreAccess()
         try:
             date = photoCreated(graph, photo).date()
@@ -87,6 +89,7 @@ def renderPage(graph, topic, foafUser, cookie):
             # more stable than the row num as pics get added and removed:
             anchor=hashlib.md5(photo).hexdigest()[:8],
             factLines=factLines,
+            isVideo=isVideo.get(photo, False),
             commentHtml=Markup(commentHtml),
             desc=graph.value(photo, RDFS.comment),
             ))

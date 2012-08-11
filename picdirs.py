@@ -1,14 +1,15 @@
 import os.path
+from twisted.python.filepath import FilePath
 
 
 def picSubDirs(syncs=None, SesameSync=None, graph=None, quick=False):
     """return list of subdirs to watch for pics. We can also make
     SesameSync objects in the syncs dict"""
     subdirs = []
-
+    top = FilePath(__file__).parent()
     for picRoot, prefix in [
-        (os.path.abspath("input/"), "http://photo.bigasterisk.com/internal/"),
-        (os.path.abspath('webinput/'), "http://photo.bigasterisk.com/webinput/"),
+        (top.child("input/").path, "http://photo.bigasterisk.com/internal/"),
+        (top.child("webinput/").path, "http://photo.bigasterisk.com/webinput/"),
         ('/my/pic/', "http://photo.bigasterisk.com/"),
         ]:
         if syncs is not None:

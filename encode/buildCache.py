@@ -31,7 +31,7 @@ def ProgressReport(q, total):
     lastReportStart = time.time()
     lastReportFiles = 0
     reportStep = 5
-    
+   
     for item in iter(q.get, 'END'):
         seen = seen + 1
         now = time.time()
@@ -42,7 +42,8 @@ def ProgressReport(q, total):
             lastReportStart = now
 
 def cacheFile((i, filename)):
-    justCache.delay(photoUri(filename), sizes=[75,250,600])
+    log.debug("cacheFile %s" % filename)
+    d = justCache.delay(photoUri(filename), sizes=[75,250,600])
     progressQueue.put("%s" % filename)
 
 def findFiles(opts):
@@ -69,16 +70,20 @@ if __name__ == '__main__':
     opts, args = parser.parse_args()
 
     log = boot.log
-    if not opts.d:
-        log.setLevel(logging.INFO)
+    if opts.d:
+        log.setLevel(logging.DEBUG)
 
     files = findFiles(opts)
 
     progressQueue = Queue()
     Process(target=ProgressReport, args=(progressQueue, len(files))).start()
 
-    pool = Pool(processes=4)
-    result = pool.map(cacheFile, enumerate(files), chunksize=5)
+    #pool = Pool(processes=4)
+    #result = pool.map(cacheFile, enumerate(files), chunksize=5)
+    d = justCache.delay('x', sizes=[75,250,600])
+    for x in enumerate(files):
+        cacheFile(x)
+    result = []
     
     progressQueue.put('END')
     print "finished, %s results" % len(result)

@@ -184,8 +184,12 @@ actions appear over image: goto full page, email-to, see related, edit tags here
 	    <div class="grid_4 alpha">
 	      <a name="${row['anchor']}"/>
 	      <div class="picNum"><a href="#${row['anchor']}">${rowNum}</a></div>
-	      <img src="${localSite(row['uri'])}?size=large"
-		py:attrs="sizeAttrs(row['uri'], 'large')"/>
+		<py:choose test="row['isVideo']">
+		  <img py:when="False" src="${localSite(row['uri'])}?size=large"
+		    py:attrs="sizeAttrs(row['uri'], 'large')"/>
+                  <video py:when="True" src="${localSite(row['uri'])}?size=video2" controls="1" preload="1" width="600" height="450"/>
+		</py:choose>
+
 	      <div class="clear"/>
 	    </div>
 	    <div class="grid_2 omega">

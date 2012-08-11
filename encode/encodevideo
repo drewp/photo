@@ -1,11 +1,12 @@
 #!/usr/bin/python
+# ^ should be on the virtualenv python, but i have mixed distros still so that's hard
 
 # <input video> <output.webm>
 # this tool writes to a side file first so you won't see an in-progress output
 
 import sys, subprocess, os, re, random
 sys.path.append("..")
-from photos import fitSize
+from dims import fitSize
 
 inPath, outPath = sys.argv[1:]
 

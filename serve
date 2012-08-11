@@ -108,7 +108,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         elif lastSegment == 'size':
             return ImageSizeResponse(self.graph, uri)
         elif lastSegment == 'single':
-            args = networking.serviceHost, 8037, '/single'
+            args = networking.serviceHost, 8041, '/single'
         else:
             raise NotImplementedError()
 
@@ -223,9 +223,21 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
             raise ValueError("invalid method")
 
         user = access.getUser(ctx)
-        agent = URIRef(ctx.arg('agent'))
-        accessTo = URIRef(ctx.arg('accessTo'))
         op = ctx.arg('op')
+        accessTo = URIRef(ctx.arg('accessTo'))
+
+        if ctx.arg('email'):
+            if op != "allow":
+                raise NotImplementedError()
+            newAgent = access.addByEmail(self.graph, user,
+                                         ctx.arg('email'), accessTo)
+            return returnJson({"msg" : "added",
+                               "agent" : newAgent,
+                               "agentState":True})
+
+        if not ctx.arg('agent'):
+            raise ValueError("missing agent")
+        agent = URIRef(ctx.arg('agent'))
         if op == 'allow':
             access.addAccess(self.graph, user, agent, accessTo)
             return returnJson({"msg" : "added", "agentState":True})
@@ -274,6 +286,7 @@ def returnJson(d):
 
 setattr(Main, "child_favicon.ico", static.File("static/favicon.ico"))
 
+log.setLevel(logging.INFO)
 graph = getGraph()
 
 application = service.Application('photo')

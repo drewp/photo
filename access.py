@@ -19,7 +19,7 @@ from lib import print_timing
 from ns import PHO, FOAF, ACL, DCTERMS
 loader = TemplateLoader(".", auto_reload=True)
 serializer = XHTMLSerializer()
-log = logging.getLogger()
+log = logging.getLogger('access')
 
 class NeedsMoreAccess(ValueError):
     pass
@@ -53,6 +53,7 @@ def viewableViaPerm(graph, uri, agent):
     """
     viewable via some permission that can be set and removed
     """
+    log.debug("viewableViaPerm uri=%s agent=%s", uri, agent)
     if (graph.contains((uri, PHO['viewableBy'], PHO['friends']))
         or graph.contains((uri, PHO['viewableBy'], PHO['anyone']))):
         log.debug("ok, graph says :viewableBy :friends or :anyone")
@@ -65,8 +66,21 @@ def viewableViaPerm(graph, uri, agent):
     # spec wants me to use agentClass on this, but I've already
     # screwed that up elsewhere, so it will take new triples to make
     # the old data compatible
-    if graph.queryd("ASK { [ acl:agent foaf:Agent ; acl:mode acl:Read ; acl:accessTo ?photo ] .}", initBindings={'photo' : uri}):
+    if graph.queryd("""ASK {
+      [ acl:agent foaf:Agent ;
+        acl:mode acl:Read ;
+        acl:accessTo ?photo ] .
+      }""", initBindings={'photo' : uri}):
         log.debug("ok, graph has an authorization for foaf:Agent ('the public')")
+        return True
+
+    if graph.queryd("""ASK {
+      [ acl:agent foaf:Agent ;
+        acl:mode acl:Read ;
+        acl:accessTo ?topic ] .
+       ?photo foaf:depicts ?topic .
+      }""", initBindings={'photo' : uri}):
+        log.debug("ok, graph has an authorization for foaf:Agent ('the public') to see a topic depicted by the photo")
         return True
 
     if agent and graph.queryd("""
@@ -336,7 +350,7 @@ def describeAuthorizations(graph, forAgent, accessTo):
                         created=rows[0].get('created')))
     return ret
 
-def addAccess(graph, user, agent, accessTo):
+def addAccess(graph, user, agent, accessTo, otherStmts=[]):
     if not agentMaySetAccessControl(user):
         raise ValueError("user is not allowed to set access controls")
 
@@ -356,10 +370,53 @@ def addAccess(graph, user, agent, accessTo):
         
              (auth, DCTERMS.creator, user),
              (auth, DCTERMS.created, Literal(datetime.datetime.now(tzlocal())))]
-
+    stmts.extend(otherStmts)
     subgraph = URIRef('http://photo.bigasterisk.com/update/%f' % time.time())
     graph.add(stmts, context=subgraph)
     log.info("wrote new auth %s to subgraph %s" % (auth, subgraph))
+
+def cookie(n):
+    return ''.join(random.choice('bcdfghjklmnpqrstvwxz0123456789')
+                   for loop in range(n))
+
+def addByEmail(graph, user, agentEmail, accessTo):
+    """
+    send mail to agentEmail with an invite to view accessTo and a link
+    that will later log the agent in. This looks for an existing agent
+    with that address or else makes up a new one.
+
+    returns the agent that got invited
+    """
+    mbox = URIRef("mailto:%s" % agentEmail)
+    stmts = []
+    try:
+        agent = agentWithEmail(graph, mbox)
+    except ValueError:
+        agent = URIRef("http://bigasterisk.com/foaf/auto/%s" % cookie(8))
+        loginUri = URIRef(url.URL.fromString(accessTo).add("login", cookie(32)))
+        stmts.extend([
+            (agent, FOAF.mbox, mbox),
+            (agent, RDF.type, FOAF.Person),
+            (agent, DCTERMS.created, Literal(datetime.datetime.now(tzlocal()))),
+            (agent, PHO.invitedBy, user),
+            (loginUri, PHO.autoLogin, agent),
+            (loginUri, PHO.loginLinkFor, accessTo),
+            ])
+        
+    addAccess(graph, user, agent, accessTo, otherStmts=stmts)
+    
+    return agent
+                    
+
+def agentWithEmail(graph, mbox):
+    """
+    uri of an agent with this mailto uri or else ValueError
+    """
+    rows = graph.queryd("SELECT ?agent WHERE { ?agent foaf:mbox ?mbox }",
+                        initBindings={"mbox" : mbox})
+    if rows:
+        return rows[0]['agent']
+    raise ValueError("no agent with mbox %r" % mbox)
 
 def legacyRemove(graph, agent, accessTo):
     if graph.queryd("ASK { ?photo pho:viewableBy ?agent . }",

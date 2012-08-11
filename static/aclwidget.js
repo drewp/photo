@@ -3,14 +3,17 @@ $(function () {
 	$(this).closest(".aclWidget").find(".expandable").toggle();
 	return false;
     });
+    function spin(result) {
+	result.text("sending.. ");
+	result.append($('<img class="spinner" src="/static/snake-spinner.gif"/>'));
+    }
     function onCheckbox() {
 	var check = $(this);
 	var agent = check.attr('about');
 	var accessTo = check.closest("form").attr("about");
 	var op = check.is(":checked") ? "allow" : "deny";
 	var result = $(this).parent().find(".result");
-	result.text("sending.. ");
-	result.append($('<img class="spinner" src="/static/snake-spinner.gif"/>'));
+	spin(result);
 	$.post("/aclChange", {agent: agent, accessTo: accessTo, op: op}, 
 	       function (data) {
 		   result.text(data.msg);
