@@ -77,8 +77,11 @@ class ScanExif(object):
         #ed = exif.exif_data_new_from_file(filename)
         #exif.exif_data_dump(ed)
 
-        xml = subprocess.Popen(["exif", "-x", filename],
-                               stdout=subprocess.PIPE).communicate()[0]
+        assert filename.startswith('/'), "%r not an absolute path" % filename
+
+        cmd = ["exif", "-x", filename]
+        log.info("running %r" % cmd)
+        xml = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
         if not xml:
             raise ValueError("no result from exif")
 
