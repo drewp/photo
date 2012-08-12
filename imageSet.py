@@ -29,6 +29,7 @@ from access import getUser
 from shorturl import hasShortUrlSync
 from lib import print_timing
 from scanFs import videoExtensions
+from mediaresource import Video2
 log = logging.getLogger()
 from ns import PHO, FOAF, RDF, RDFS
 import pystache.view # needs a git version newer than 0.3.1. easy_install https://github.com/defunkt/pystache/tarball/f543efac93b753914a20b9daaf84a51382fba445 or newer. Then you need to remove a patch if https://github.com/defunkt/pystache/issues/25 hasn't been addressed already
@@ -305,9 +306,13 @@ class View(pystache.view.View):
         feat = MediaResource(self.graph, current)
 
         if feat.isVideo():
+            feat.requestVideo()
             progress = feat.videoProgress()
             if progress is Done:
-                return dict(video=dict(src=currentLocal+"?size=video2"))
+                w, h = feat.getSize(Video2)
+                return dict(video=dict(src=currentLocal+"?size=video2",
+                                       width=600,
+                                       height=600 / w * h))
             else:
                 return dict(videoNotReady=dict(progress=progress))
         else:

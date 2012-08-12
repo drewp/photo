@@ -1,12 +1,11 @@
-#!/usr/bin/python
-# ^ should be on the virtualenv python, but i have mixed distros still so that's hard
+#!bin/python
 
 # <input video> <output.webm>
 # this tool writes to a side file first so you won't see an in-progress output
 
-import sys, subprocess, os, re, random
-sys.path.append("..")
-from dims import fitSize
+import sys, subprocess, os, re, random, string
+sys.path.append("/my/site/photo")
+from dims import fitSize, videoSize, avprobe
 
 inPath, outPath = sys.argv[1:]
 
@@ -14,11 +13,8 @@ tmpSuffix = ".tmp" + ''.join([random.choice(string.letters) for c in range(5)])
 tmpOut = outPath + tmpSuffix + os.path.splitext(outPath)[1]
 
 try:
-    probe = subprocess.Popen(['/usr/bin/avprobe', inPath], stderr=subprocess.PIPE).communicate()[1]
-    print repr(probe)
-    m = re.search(r'Video.*?(\d+)x(\d+)', probe)
-    w, h = map(int, m.groups())
-
+    probe = avprobe(inPath)
+    w,h = videoSize(inPath, probe=probe)
     outSize = fitSize(w, h, 320, 320)
 
     convArgs = ['-y', '-i', inPath, '-s', '%sx%s' % outSize]

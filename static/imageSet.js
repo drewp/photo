@@ -194,7 +194,14 @@ $(function () {
 	runningAjax = [];
     }
 
+    function pathFromWindow() {
+	var loc = window.location;
+	return loc.href.slice(loc.protocol.length + "//".length + loc.host.length);
+    }
+    console.log(window.location, pathFromWindow())
+
     function gotoPage(newPath) {
+	console.log("gotoPage", newPath);
 
 	stopAllAjax();
 
@@ -299,6 +306,8 @@ $(function () {
 
         },
         main: function () {
+	    // some amount of page refresh has just happened
+
             $("#commentsFade").fadeTo(0, 0);
             if (picInfo.relCurrentPhotoUri) {
                 $.get(picInfo.relCurrentPhotoUri + "/comments",
@@ -341,6 +350,20 @@ $(function () {
             //$("#tags").focus(); // too much page bumping. avoidable?
             refreshCurrentPhoto(picInfo.currentPhotoUri);
                        
+	    if ($(".videoProgress").length) {
+		setTimeout(function () {
+		    if ($(".videoProgress").length) {
+			var p = pathFromWindow();
+			delete _preloaded[p];
+			// this would be better as a reloader that
+			// only updated the featured image part. The
+			// part where the comment box reloads is
+			// especially annoying.
+			gotoPage(p);
+		    }
+		}, 2000);
+	    }
+
             $(".iset.pl").each(function (i, elem) {
 		// some of these are just too slow
                 //preloadContents(elem.getAttribute("href"));
