@@ -6,12 +6,14 @@ from __future__ import division
 import boot
 from db import getGraph
 import networking
-import restkit, json
+import restkit, json, logging
 log = boot.log
 
+log.setLevel(logging.DEBUG)
 graph = getGraph()
 search = restkit.Resource(networking.searchRoot())
 
+sent = 0
 for row in graph.queryd("""
    SELECT ?pic ?tags ?comment ?filename ?isVideo WHERE {
      ?pic a foaf:Image .
@@ -35,6 +37,15 @@ for row in graph.queryd("""
                    title="%s %s" % (picVid, row['filename']),
                    view=row['pic'] + "/page",
                    text=txt)
-        print doc
-        search.post("index", source="photo",
-                    payload=json.dumps(doc))
+        for retries in range(3):
+            try:
+                ret = search.post("index", source="photo",
+                            payload=json.dumps(doc))
+                ret.close()
+                sent += 1
+                break
+            except Exception:
+                import traceback, time
+                print "while sending %s %r" % (sent, doc)
+                traceback.print_exc(limit=2)
+                time.sleep(5)

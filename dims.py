@@ -6,10 +6,8 @@ def fitSize(w, h, maxW, maxH):
     return int(round(w * scl)), int(round(h * scl))
 
 def avprobe(filename):
-    probe = subprocess.Popen(['/usr/bin/avprobe', filename],
+    return subprocess.Popen(['/usr/bin/avprobe', filename],
                              stderr=subprocess.PIPE).communicate()[1]
-    print repr(probe)
-    return probe
 
 def videoSize(filename, probe=None):
     """also works for jpg. i'm not sure if it's slow"""

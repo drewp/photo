@@ -1,31 +1,29 @@
-# ../bin/celery -A worker worker --loglevel=info
+"""
+uses the fork at https://github.com/drewp/monque
 
-from celery import Celery
-from celery import current_task
-import sys, traceback, logging
+Note that this worker will only use one proc, so run multiple workers
+"""
 
+import logging
 import boot
-from db import getGraph
+from monque import job
+
+from db import getGraph, getMonque
 from mediaresource import MediaResource, Done
 
 log = logging.getLogger('worker')
 graph = getGraph()
 
-import celeryconfig
+monque = getMonque()
 
-celery = Celery('worker')
-celery.config_from_object(celeryconfig)
-
-
-@celery.task(ignore_result=True)
+@job()
 def runVideoEncode(uri):
-    current_task.update_state(state='PROGRESS', meta={'current': 'x'})
-    
     m = MediaResource(graph, uri)
-    if m.hasRunningJob():
-        log.info("dup job- skipping")
-        return
-    m.runVideoEncode()
+    coll = monque.get_queue_collection(monque._workorder_defaults['queue'])
+    def onProgress(msg):
+        coll.update({"body.message.args" : uri}, {"$set" : {"progress" : msg}})
+    m.runVideoEncode(onProgress=onProgress)
 
 if __name__ == '__main__':
-    celery.worker_main()
+    worker = monque.new_worker(dispatcher='local')
+    worker.work(interval=1)

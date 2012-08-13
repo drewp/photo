@@ -16,14 +16,16 @@ testing? use this to remove the last 24h of thumbs:
   find /my/pic/~thumb -mtime -1 -type f -delete
 """
 import sys
-sys.path.append("..")
+sys.path.append("/my/site/photo")
 import boot
 import subprocess, time, optparse, logging
-from multiprocessing import Pool, Queue, Process
-from worker import justCache
+from multiprocessing.dummy import Pool, Queue, Process
+
 from urls import photoUri
 from picdirs import picSubDirs
 from scanFs import imageExtensions, videoExtensions
+from mediaresource import MediaResource
+from db import getGraph
 
 def ProgressReport(q, total):
     # unfinished.
@@ -41,11 +43,6 @@ def ProgressReport(q, total):
                      (seen, total, item, round((total - seen) * perFile / 60)))
             lastReportStart = now
 
-def cacheFile((i, filename)):
-    log.debug("cacheFile %s" % filename)
-    d = justCache.delay(photoUri(filename), sizes=[75,250,600])
-    progressQueue.put("%s" % filename)
-
 def findFiles(opts):
     cmd = ["/usr/bin/find"]
     cmd += picSubDirs(quick=opts.quick)
@@ -61,6 +58,33 @@ def findFiles(opts):
         files = [f for f in files if opts.pat in f]
     return files
 
+
+class Build(object):
+    def __init__(self):
+
+        pool = Pool(processes=2)
+        self.graph = getGraph()
+
+        files = findFiles(opts)
+
+        self.progressQueue = Queue()
+        Process(target=ProgressReport, args=(self.progressQueue, len(files))).start()
+        result = pool.map(self.cacheFile, enumerate(files), chunksize=5)
+        #result = []
+        #for x in enumerate(files):
+        #    self.cacheFile(x)
+
+        self.progressQueue.put('END')
+        print "finished, %s results" % len(result)
+
+    def cacheFile(self, (i, filename)):
+        log.debug("cacheFile %s" % filename)
+        uri = photoUri(filename)
+        m = MediaResource(self.graph, uri)
+        m.cacheAll()
+        self.progressQueue.put("%s" % filename)
+
+
 if __name__ == '__main__':
     parser = optparse.OptionParser()
     parser.add_option("--quick", action="store_true", help="only scan a few files")
@@ -73,17 +97,4 @@ if __name__ == '__main__':
     if opts.d:
         log.setLevel(logging.DEBUG)
 
-    files = findFiles(opts)
-
-    progressQueue = Queue()
-    Process(target=ProgressReport, args=(progressQueue, len(files))).start()
-
-    #pool = Pool(processes=4)
-    #result = pool.map(cacheFile, enumerate(files), chunksize=5)
-    d = justCache.delay('x', sizes=[75,250,600])
-    for x in enumerate(files):
-        cacheFile(x)
-    result = []
-    
-    progressQueue.put('END')
-    print "finished, %s results" % len(result)
+    Build()

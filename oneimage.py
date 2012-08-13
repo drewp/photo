@@ -58,7 +58,10 @@ class facts(object):
             created = photoCreated(graph, img)
             ret['created'] = created.isoformat()
             sec = time.mktime(created.timetuple())
-        except ValueError:
+        except ValueError, e:
+            log.warn("no created time for %s" % img)
+            import traceback
+            traceback.print_exc()
             created = sec = None
 
         if sec is not None:

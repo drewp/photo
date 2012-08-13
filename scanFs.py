@@ -15,6 +15,7 @@ from ns import PHO, SITE, FOAF, RDF
 log = logging.getLogger('scanFs')
 log.setLevel(logging.DEBUG)
 
+# these also appear in nginx_route.conf
 imageExtensions = ('.jpg', '.gif', '.jpeg')
 videoExtensions = ('.mp4','.avi')
 

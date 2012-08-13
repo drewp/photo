@@ -4,7 +4,7 @@ depends on exiftool program from libimage-exiftool-perl ubuntu package
 from __future__ import division
 import os, hashlib, time, random, string, subprocess, urllib, re, logging, tempfile
 from twisted.python.util import sibpath
-from pymongo import Connection
+from db import getMonque
 from StringIO import StringIO
 import Image
 from lib import print_timing
@@ -30,16 +30,14 @@ sizes = {'thumb' : 75,
          'video2' : Video2,
          'full' : Full}
 
+tmpSuffix = ".tmp" + ''.join([random.choice(string.letters) for c in range(5)])
+
 def getRequestedSize(ctx):
     return sizes.get(ctx.arg('size'), 250)
 
 _lastOpen = None, None
 
-from celery import Celery
-import celeryconfig
-celery = Celery()
-celery.config_from_object(celeryconfig)
-
+monque = getMonque()
 
 class MediaResource(object):
     def __init__(self, graph, uri):
@@ -57,28 +55,23 @@ class MediaResource(object):
         if os.path.exists(self._thumbPath(Video2)):
             return Done
 
-        self._videoJobStatus()
+        progress = self.hasQueuedJob(returnProgress=True)
+        if progress is not None:
+            return progress
 
-        # here we look at the pending jobs for the one that will
-        # compress self._sourcePath(). if it's not there, return 'not
-        # started'. Else see about a way to get the progress or at
-        # least the honest runtime of the job
-        
-        return "still working"
+        return "no job found"
 
-    def _videoJobStatus(self):
-        """look in celery for a job that is doing this video, return
-        the string 'no job found' or some other status text about an
-        existing job"""
-        res = celery.AsyncResult(self._taskId())
-        print "res %s %s" % (self._taskId(), res.state)
-        return res.state
-
-    def hasRunningJob(self):
+    def hasQueuedJob(self, returnProgress=False):
         """is there a celery job already running or finished for this uri?"""
-        s = self._videoJobStatus()
-        print repr(s), s.__class__
-        return self._videoJobStatus() != "PENDING"
+        coll = monque.get_queue_collection(monque._workorder_defaults['queue'])
+        jobs = list(coll.find({"body.message.args" : self.uri}))
+        if returnProgress:
+            if jobs:
+                return jobs[0].get('progress', 'queued')
+            else:
+                return None
+        else:
+            return bool(jobs)
 
     def getSize(self, size):
         """pass photo size or thumb boundary size, get (w,h)
@@ -97,8 +90,8 @@ class MediaResource(object):
         """client wants to render a <video> tag of this resource. It
         will next ask for videoProgress and decide what to do from
         there, but this method is where we trigger a job if needed"""
-        if not os.path.exists(self._thumbPath(Video2)):
-            # AND a job isn't already queued
+        if (not os.path.exists(self._thumbPath(Video2)) and
+            not self.hasQueuedJob()):
             self.enqueueVideoEncode()
 
     def getImageAndMtime(self, size):
@@ -143,18 +136,21 @@ class MediaResource(object):
         f = open(thumbPath)
         return f.read(), os.path.getmtime(thumbPath)
 
-    def cacheResize(self):
+    def cacheAll(self):
         """block and prepare the standard sizes as needed, but don't
-        return any. If this is a video, we make a thumbnail and
+        return any. If this is a video, <s>we make a thumbnail</s> and
         enqueueVideoEncode for a queued encode. """
 
-    def _taskId(self):
-        return "encode-"+self.uri
+        if self.isVideo():
+            self.enqueueVideoEncode()
+        else:
+            for size in [75,250,600]:
+                self.getImageAndMtime(size)
 
     def enqueueVideoEncode(self):
         """non-blocking. starts a video encoding if we don't have one"""
         thumbPath = self._thumbPath(Video2)
-        if not os.path.exists(thumbPath):
+        if not os.path.exists(thumbPath) and not self.hasQueuedJob():
             log.info("%r didn't exist; enqueuing a new encode job", thumbPath)
             # there may be one running, and we just started a second
             # one! look at the job list here.
@@ -168,14 +164,39 @@ class MediaResource(object):
             # else:
 
             import worker
-            worker.runVideoEncode.apply_async(args=(self.uri,),
-                                              task_id=self._taskId())
+            monque.enqueue(worker.runVideoEncode(self.uri))
 
-    def runVideoEncode(self):
+    def runVideoEncode(self, onProgress=None):
         """block for the whole encode process"""
-        subprocess.check_call(['/my/site/photo/encode/encodevideo',
-                               self._sourcePath(), self._thumbPath(Video2)])
-        
+        sourcePath = self._sourcePath()
+        thumbPath = self._thumbPath(Video2)
+        log.info("encodevideo %s %s" % (sourcePath, thumbPath))
+        p = subprocess.Popen(['/my/site/photo/encode/encodevideo',
+                               sourcePath, thumbPath],
+                             stderr=subprocess.PIPE)
+        buf = ""
+        allStderr = ""
+        while True:
+            chunk = p.stderr.read(1)
+            if not chunk:
+                break
+            buf += chunk
+            allStderr += chunk
+            if buf.endswith('\r'):
+                if onProgress:
+                    m = re.search(
+                        r'frame= *(\d+).*fps= *(\d+).*time= *([\d\.]+)', buf)
+                    if m is None:
+                        onProgress("running")
+                    else:
+                        onProgress("encoded %s sec so far, %s fps" %
+                                   (m.group(3), m.group(2)))
+                buf = ""
+        log.info("encodevideo finished")
+        if p.poll():
+            log.warn("all the stderr output: %s" % allStderr)
+            raise ValueError("process returned %s" % p.poll())
+
     def _strippedFullRes(self):
         s = self._sourcePath()
         return jpgWithoutExif(s), os.path.getmtime(s)
@@ -244,24 +265,6 @@ class MediaResource(object):
         return os.path.exists(self._sourcePath())
 
 
-tmpSuffix = ".tmp" + ''.join([random.choice(string.letters) for c in range(5)])
-"""
-uses 'exiftool', from ubuntu package libimage-exiftool-perl
-"""
-
-
-def encodedVideo(localPath, _returnContents=True):
-    """returns full webm binary + time. does its own caching"""
-    try:
-        f = open(videoOut)
-    except IOError:
-        pass
-    else:
-        if not _returnContents:
-            return
-        return f.read(), os.path.getmtime(videoOut)
-
-    #check for existing job, maybe start oone, then raise
 
 def justCache(url, sizes):
     """

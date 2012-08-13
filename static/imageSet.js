@@ -198,11 +198,8 @@ $(function () {
 	var loc = window.location;
 	return loc.href.slice(loc.protocol.length + "//".length + loc.host.length);
     }
-    console.log(window.location, pathFromWindow())
 
     function gotoPage(newPath) {
-	console.log("gotoPage", newPath);
-
 	stopAllAjax();
 
         $("body").css("cursor", "wait"); // doesn't work on the nextClick image!
