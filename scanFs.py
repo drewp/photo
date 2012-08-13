@@ -17,7 +17,7 @@ log.setLevel(logging.DEBUG)
 
 # these also appear in nginx_route.conf
 imageExtensions = ('.jpg', '.gif', '.jpeg')
-videoExtensions = ('.mp4','.avi')
+videoExtensions = ('.mp4','.avi','.mov')
 
 def uriOfFilename(rootUri, root, filename):
     prefix = root.rstrip('/')

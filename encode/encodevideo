@@ -22,6 +22,9 @@ try:
         # see http://ffmpeg-users.933282.n4.nabble.com/ffmpeg-fails-to-create-webm-content-if-audio-bitrate-is-less-than-44K-td2303313.html
         # '11024' is from some canon cam
         convArgs.extend(['-ar', '44100'])
+    if '24000 Hz' in probe:
+        # another camera
+        convArgs.extend(['-ar', '48000'])
     convArgs.append(tmpOut)
 
     subprocess.check_call(['/usr/bin/avconv'] + convArgs)
