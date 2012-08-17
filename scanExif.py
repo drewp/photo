@@ -95,8 +95,12 @@ class ScanExif(object):
     def timeStatements(self, uri, vals):
         dateAndTime = None
         # moved 'original' first for pics like /my/pic/digicam/ext-2011-08-11/DSCN1311.JPG
-        for timeKey in ['Date_and_Time__original_', 'Date_and_Time', 
-                        'Date_and_Time__digitized_']:
+        for timeKey in ['Date_and_Time__original_',
+                        'Date_and_Time__Original_',
+                        'Date_and_Time', 
+                        'Date_and_Time__digitized_',
+                        'Date_and_Time__Digitized_',
+                        ]:
             try:
                 dateAndTime = fixTime(vals[timeKey])
                 break
