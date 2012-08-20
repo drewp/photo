@@ -145,3 +145,29 @@ transcode -J transform=smoothing=10:crop=1:optzoom=0:interpol=3:sharpen=0 -i CIM
 
 zoom and leave-background
 transcode -J transform=smoothing=10:crop=0:optzoom=1:interpol=3:sharpen=0 -i CIMG0045.mp4 -y xvid4 -o stable0045.mp4
+
+-----------------------------------------------
+
+phone full?
+
+bang: ctl stop lsync_epic_pics
+
+ssh drewepic
+cd /mnt/sdcard/external_sd/DCIM/Camera
+rm *.jpg *.mp4
+
+run phone rsync, which will empty out 
+/my/pda/drewepic/mnt/sdcard/external_sd/DCIM/Camera
+
+mkdir /my/pic/phonecam/deX
+
+edit /my/site/photo/lsync-epic-pics to new dir
+
+bang: ctl start lsync_epic_pics
+
+
+-------------------
+
+query: how many subjects (statements?) in the exif graph?
+http://bang:8080/openrdf-workbench/repositories/photo/query?queryLn=SPARQL&query=%0Aselect%20%3Fc%20(count(%3Fs)%20as%20%3Fc)%20%7B%20%0A%20GRAPH%20%3Chttp%3A%2F%2Fphoto.bigasterisk.com%2Fscan%2Fexif%3E%20%7B%0A%20%20%20%3Fs%20%3Fp%20%3Fo%0A%7D%0A%7D&limit=100&infer=true
+
