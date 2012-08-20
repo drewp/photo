@@ -407,10 +407,21 @@ class View(pystache.view.View):
     def otherSizeLinks(self):
         if self.desc.currentPhoto() is None:
             return []
+
+        isVideo = self.desc.isVideo(self.desc.currentPhoto())
+
+        if isVideo:
+            avail = ['video2', 'full']
+        else:
+            avail = ['medium', 'large', 'screen', 'full']
+            
         return [
             dict(href="%s?size=%s" % (localSite(self.desc.currentPhoto()), s),
-                 label=str(sizes[s]) if sizes[s] != Full else "Original")
-            for s in 'medium', 'large', 'screen', 'full']
+                 label={'video2' : '320 (webm)',
+                        'full' : ('Original size and format' if isVideo else
+                                'Original'),
+                        }.get(s, str(sizes[s])))
+            for s in avail]
 
     def link(self):
         current = self.desc.currentPhoto()

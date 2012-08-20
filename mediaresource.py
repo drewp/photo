@@ -109,6 +109,8 @@ class MediaResource(object):
         if self.isVideo():
             if size == sizes['thumb']:
                 return self._runVideoThumbnail()
+            elif size is Full:
+                return self._fullVideoFile()
             elif size is Video2:
                 try:
                     return self._returnCached(size)
@@ -196,6 +198,11 @@ class MediaResource(object):
         if p.poll():
             log.warn("all the stderr output: %s" % allStderr)
             raise ValueError("process returned %s" % p.poll())
+
+    def _fullVideoFile(self):
+        # might be 100s of MBs!
+        s = self._sourcePath()
+        return open(s).read(), os.path.getmtime(s)
 
     def _strippedFullRes(self):
         s = self._sourcePath()

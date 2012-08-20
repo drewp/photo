@@ -77,7 +77,9 @@ class Main(rend.Page):
         r = MediaResource(graph, uri)
         size = getRequestedSize(ctx)
         jpg, mtime = r.getImageAndMtime(size)
-        ct = "video/webm" if (r.isVideo() and size is Video2) else "image/jpeg"
+        ct = (("video/webm" if size is Video2 else
+               "application/binary") if r.isVideo() else
+              "image/jpeg")
         return StaticCached(jpg, ct, mtime)
     
     def imageChild(self, ctx, uri):
