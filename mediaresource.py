@@ -272,39 +272,6 @@ class MediaResource(object):
         return os.path.exists(self._sourcePath())
 
 
-
-def justCache(url, sizes):
-    """
-    if it's a video, we automatically add video2 size
-    """
-
-    localPath = _localPath(url)
-    if localPath.lower().endswith(videoExtensions):
-        justCacheVideo(url)
-    else:
-        justCachePhoto(url, sizes)
-
-def justCachePhoto(url, sizes):
-    todo = []
-    for size in sizes:
-        thumbPath = _thumbPath(url, size)
-        if os.path.exists(thumbPath):
-            continue
-        else:
-            log.debug("%s doesn't exist for %s; will resize",
-                      thumbPath, (url, size))
-            todo.append(size)
-
-    for size in todo:
-            thumbPath = _thumbPath(url, size)
-            _makeDirToThumb(thumbPath)
-            localPath = _localPath(url)
-            _resizeAndSave(localPath, thumbPath, size, url)
-
-def justCacheVideo(url):
-    localPath = _localPath(url)
-    encodedVideo(localPath, _returnContents=False)
-
 def _makeDirToThumb(path):
     try:
         os.makedirs(os.path.split(path)[0])
@@ -312,7 +279,6 @@ def _makeDirToThumb(path):
         pass # if the dir can't be made (as opposed to exists
              # already), we'll get an error later
     
-
 def jpgWithoutExif(filename):
     """this is meant to remove GPS data, and I'm just removing
     everything.
