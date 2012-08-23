@@ -35,3 +35,10 @@ def photoUri(filename):
     assert filename.startswith('/my/pic/')
     return SITE[urllib.quote(filename[len("/my/pic/"):])]
 
+def relPath(uri):
+    """
+    >>> relPath('http://photo.bigasterisk.com/foo')
+    '/foo'
+    """
+    assert uri.startswith(SITE)
+    return uri[len(SITE)-1:]

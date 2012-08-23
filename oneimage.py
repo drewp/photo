@@ -14,15 +14,16 @@ the fetching of the resized images is still over in serve
 """
 from __future__ import division
 import boot
-import web, sys, json, time, urllib
+import web, sys, json, time, urllib, datetime, itertools
+from dateutil.tz import tzlocal
 from web.contrib.template import render_genshi
-from rdflib import URIRef, Variable
+from rdflib import URIRef, Variable, Literal
 import auth
 from xml.utils import iso8601
 from tagging import getTagLabels
 import access
 from oneimagequery import photoCreated
-from ns import PHO, FOAF, EXIF, SCOT, DC
+from ns import PHO, FOAF, EXIF, SCOT, DC, RDF, DCTERMS
 from urls import localSite
 import db
 
@@ -194,6 +195,54 @@ class stats(object):
                              
                               })
 
+class alt(object):
+    # GET should tell you about the alts for the image
+    
+    def POST(self):
+        uri = URIRef(web.input()['uri'])
+        desc = json.loads(web.data())
+        if desc['source'] != str(uri):
+            raise ValueError("source %r != %r" % (desc['source'], str(uri)))
+        newAltUri = self.pickNewUri(uri, desc['tag'])
+
+        ctx = URIRef(newAltUri + "#create")
+        now = Literal(datetime.datetime.now(tzlocal()))
+        creator = access.getUserWebpy(web.ctx.environ)
+        if not creator:
+            raise ValueError("missing creator")
+        
+        stmts = [
+            (uri, PHO.alternate, newAltUri),
+            (newAltUri, RDF.type, FOAF.Image),
+            (newAltUri, DCTERMS.creator, creator),
+            (newAltUri, DCTERMS.created, now),
+            ]
+        
+        for k, v in desc.items():
+            if k in ['source']:
+                continue
+            if k == 'types':
+                for typeUri in v:
+                    stmts.append((newAltUri, RDF.type, URIRef(typeUri)))
+            else:
+                # this handles basic json types at most. consider
+                # JSON-LD or just n3 as better input formats, but make
+                # sure all their statements are about the uri, not
+                # arbitrary data that could change security
+                # permissions and stuff
+                stmts.append((newAltUri, PHO[k], Literal(v)))
+        
+        graph.add(stmts, context=ctx)
+        return "added %s statements to context %s" % (len(stmts), ctx)
+
+    def pickNewUri(self, uri, tag):
+        for suffix in itertools.count(1):
+            proposed = URIRef("%s/alt/%s%s" % (uri, tag, suffix))
+            if not graph.contains((proposed, None, None)):
+                return proposed
+                
+
+
 def personAgeString(isoBirthday, photoDate):
     try:
         sec = iso8601.parse(str(photoDate))
@@ -217,6 +266,7 @@ if __name__ == '__main__':
             r'/viewPerm', 'viewPerm',
             r'/stats', 'stats',
             r'/tags', 'tags',
+            r'/alt', 'alt',
             )
 
     app = web.application(urls, globals(), autoreload=False)

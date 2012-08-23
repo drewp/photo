@@ -25,6 +25,9 @@ def shortenerRoot():
 def commentProxy():
     return serviceHost, 9031, "/comments"
 
+def mediaServeProxy2():
+    return serviceHost, 8032
+
 def oneImageServer():
     return serviceHost, 9043, ""
 

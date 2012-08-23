@@ -11,6 +11,7 @@ from fileschanged import allFiles
 from picdirs import picSubDirs
 import networking
 from ns import PHO, FOAF, RDFS
+from db import getGraph
 
 log = boot.log
 
@@ -82,10 +83,7 @@ def onChange(filename):
 
 quick = False
   
-graph = SyncGraph('sesame', networking.graphRepoRoot() + "/photo",
-                  initNs=dict(foaf=FOAF,
-                              rdfs=RDFS.uri,
-                              pho=PHO))
+graph = getGraph()
 
 scanFs = ScanFs(graph, '/my/pic')
 scanExif = ScanExif(graph)

@@ -23,6 +23,7 @@ def photoCreated(graph, uri):
              ?email a pho:Email ; dcterms:created ?t ; dcterms:hasPart ?uri .
            }""", initBindings={'uri' : uri})
         if not rows:
+            # also look up the :alternate tree for source images with times
             raise ValueError("can't find a date for %s" % uri)
     
     photoDate = rows[0]['t']

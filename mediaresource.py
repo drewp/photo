@@ -40,6 +40,9 @@ _lastOpen = None, None
 monque = getMonque()
 
 class MediaResource(object):
+    """
+    this is one pic or video which can be returned at various scales
+    """
     def __init__(self, graph, uri):
         self.graph, self.uri = graph, uri
 
@@ -83,6 +86,9 @@ class MediaResource(object):
         if size is Video2:
             return videoSize(self._thumbPath(size))
 
+        # if it's Full, you can just get the size of the source file;
+        # you don't have to strip the exif!
+
         jpg, mtime = self.getImageAndMtime(size)
         return Image.open(StringIO(jpg)).size
 
@@ -124,7 +130,7 @@ class MediaResource(object):
             if size is Video2:
                 raise NotImplementedError("maxSize=Video2 on an image %r" %
                                           self.uri)
-            elif size is Full:
+            elif size is Full and not self.isAlt():
                 return self._strippedFullRes()
             else:
                 try:
@@ -205,6 +211,12 @@ class MediaResource(object):
         return open(s).read(), os.path.getmtime(s)
 
     def _strippedFullRes(self):
+        """
+        this is intended to be a faster version of
+        _runPhotoResize(Full) since it doesn't do any recoding. It
+        should probably be moved inside of _runPhotoResize to be more
+        transparent of an optimization
+        """
         s = self._sourcePath()
         return jpgWithoutExif(s), os.path.getmtime(s)
 
@@ -222,34 +234,99 @@ class MediaResource(object):
         """returns the jpeg result too"""
         global _lastOpen
 
-        source = self._sourcePath()
         thumbPath = self._thumbPath(maxSize)
         _makeDirToThumb(thumbPath)
         
-        log.info("resizing %s to %s in %s" % (source, maxSize, thumbPath))
+        log.info("resizing %s to %s in %s" % (self.uri, maxSize, thumbPath))
 
         # this is meant to reduce decompress calls when we're making
         # multiple resizes of a new image
-        if _lastOpen[0] == source:
-            img = _lastOpen[1]
+        if _lastOpen[0] == self.uri:
+            img, ext, isAlt = _lastOpen[1], self.uri, _lastOpen[2]
         else:
-            img = Image.open(source)
-            _lastOpen = source, img
+            img, ext, isAlt = self._getSourceImage()
+            _lastOpen = self.uri, img, isAlt
 
-        # img.thumbnail is faster, but much lower quality
-        w, h = img.size
-        outW, outH = fitSize(w, h, maxSize, maxSize)
-        img = img.resize((outW, outH), Image.ANTIALIAS)
+        if maxSize is not Full:
+            # img.thumbnail is faster, but much lower quality
+            w, h = img.size
+            outW, outH = fitSize(w, h, maxSize, maxSize)
+            img = img.resize((outW, outH), Image.ANTIALIAS)
 
         jpg = StringIO()
-        jpg.name = self.uri # just for the extension
+        jpg.name = ext # just for the extension
         q = 80
         if maxSize <= 100:
             q = 60
         img.save(jpg, quality=q)
-        open(thumbPath + tmpSuffix, "w").write(jpg.getvalue())
-        os.rename(thumbPath + tmpSuffix, thumbPath)
+
+        if maxSize is Full and not isAlt:
+            # don't write copies of the full jpegs, but alts are
+            # considered expensive, so we do cache those
+            pass
+        else:
+            open(thumbPath + tmpSuffix, "w").write(jpg.getvalue())
+            os.rename(thumbPath + tmpSuffix, thumbPath)
         return jpg
+
+    def isAlt(self):
+        return self.graph.queryd("ASK { ?source pho:alternate ?uri }",
+                                 initBindings={'uri' : self.uri})
+        
+    def _getSourceImage(self):
+        """get PIL image for the source. This is at full size still,
+        but includes any alt processing. Also returns an extension for
+        passing to Image.save, and also isAlt
+
+        inefficient because we load full-res images just to get a
+        smaller version of a face crop, for example. we should figure
+        out the cheapest way to get the requested size
+        """
+        sources = self.graph.queryd(
+            "SELECT ?source WHERE { ?source pho:alternate ?uri }",
+            initBindings={'uri' : self.uri})
+        if not sources:
+            isAlt = False
+            source = self._sourcePath()
+            ext = self.uri
+        else:
+            isAlt = True
+            up = MediaResource(self.graph, sources[0]['source'])
+            # this could repeat- alts of alts. not handled yet.
+            source = up._sourcePath()
+            ext = up.uri
+        
+        img = Image.open(source)
+
+        if isAlt:
+            img = self._performAltProcess(img)
+            
+        return img, ext, isAlt
+
+    def _performAltProcess(self, img):
+        desc = {}
+        types = []
+        for row in self.graph.queryd(
+            "SELECT ?k ?v WHERE { ?alt ?k ?v }",
+            initBindings={'alt' : self.uri}):
+            if row['k'] == RDF.type:
+                types.append(row['v'])
+            else:
+                desc[row['k']] = row['v']
+                
+        if PHO.Crop in types:
+            return self._altCrop(img, desc)
+        else:
+            raise NotImplementedError(
+                "cannot process this alt description: %s" % desc)
+
+    def _altCrop(self, source, desc):
+        """PIL image for the described crop"""
+        w, h = source.size
+        return source.crop((int(w * desc[PHO.x1].toPython()),
+                            int(h * desc[PHO.y1].toPython()),
+                            int(w * desc[PHO.x2].toPython()),
+                            int(h * desc[PHO.y2].toPython())))
 
     def _thumbPath(self, maxSize):
         if maxSize is Video2:
