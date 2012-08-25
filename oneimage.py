@@ -202,6 +202,10 @@ class alt(object):
         uri = URIRef(web.input()['uri'])
         desc = json.loads(web.data())
         if desc['source'] != str(uri):
+            # sometimes this happens on a : vs %3A disagreement, which
+            # is something I think I workaround elsewhere. Drop
+            # 'source' attr entirely? figure out where this new :
+            # escaping is happening?
             raise ValueError("source %r != %r" % (desc['source'], str(uri)))
         newAltUri = self.pickNewUri(uri, desc['tag'])
 
