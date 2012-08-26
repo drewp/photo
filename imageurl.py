@@ -8,6 +8,7 @@ from lib import print_timing
 from ns import SITE, PHO, XS
 from dateutil.parser import parse
 from dateutil.tz import tzlocal
+from alternates import findCompleteAltTree
 
 log = logging.getLogger()
 
@@ -39,6 +40,8 @@ class ImageSetDesc(object): # in design phase
             self.setLabel = 'random choices'
             if params.get('year'):
                 self.setLabel += " from the year %s" % params['year']
+        elif topicDict.get('alternates', False):
+            self._photos = findCompleteAltTree(graph, topicDict['topic'])
         else:
             self._photos = photosWithTopic(graph, topicDict, self._isVideo)
         self._currentPhoto = None
@@ -88,6 +91,9 @@ class ImageSetDesc(object): # in design phase
                 
             elif 'random' in params:
                 topic = PHO.randomSet
+            elif 'alt' in params:
+                topic = URIRef(params['alt'])
+                topicDict['alternates'] = True
             elif 'current' in params:
                 # order is important, since 'current' could appear with other params
                 topic = URIRef(params['current'])
@@ -104,6 +110,8 @@ class ImageSetDesc(object): # in design phase
             if 'span' in topicDict:
                 topic = "%s and the next %s" % (topic, topicDict['span'])
             return topic
+        elif topicDict.get('alternates', False):
+            return "alternates of %s" % graph.label(topic, default=topic)
         else:
             return graph.label(topic)
 
@@ -116,7 +124,7 @@ class ImageSetDesc(object): # in design phase
         """
         if not any(t in params for t in ['dir', 'tag', 'date', 'random']):
             return 'current'
-        return ['dir', 'tag', 'date', 'span', 'star', 'recent']
+        return ['dir', 'tag', 'date', 'span', 'star', 'recent', 'alt']
     
     def canonicalSetUri(self):
         """this page uri, but only including the params that affect

@@ -116,10 +116,10 @@ class ImageSet(rend.Page):
             return json.dumps(view.photosInSetPlus())
           
         
-        req.setHeader("Content-Type", "application/xhtml+xml")
         ret = view.render()
         print "rendered view is %s" % len(ret)
         # after 65k, this gets truncated somewhere! get a new web server
+        req.setHeader("Content-Type", "application/xhtml+xml")
         return ret.encode('utf8')
 
     def templateData(self, view):

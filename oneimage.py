@@ -25,6 +25,7 @@ import access
 from oneimagequery import photoCreated
 from ns import PHO, FOAF, EXIF, SCOT, DC, RDF, DCTERMS
 from urls import localSite
+from alternates import findAltRoot
 import db
 
 log = boot.log
@@ -148,6 +149,11 @@ class links(object):
             links.setdefault('withTag', []).append(
                 {'uri' : setUrl(tag=row['label']),
                  'label' : row['label']})
+
+        alts = findAltRoot(graph, img)
+        if alts:
+            links['alternates'] = [{'uri' : setUrl(alt=alts[0]),
+                                   'label' : alts[1]}]
 
         # taken near xxxxx
 
