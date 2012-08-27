@@ -125,13 +125,16 @@ $(function () {
     function setupRelatedPreviews() {
         $("#related > li").each(function (i, li) {
             li = $(li);
-            console.log("attach" ,li);
             var previewDiv;
             li.hover(function () {
-                console.log("hover");
                 previewDiv = relatedPreview(li.find("a").attr("href"));
+		var offset = li.offset();
                 li.append(previewDiv);
+		previewDiv.offset({left: offset.left - 563, 
+				   top: offset.top - 28})
             }, function () {
+		// this is removing when they hover over to the
+		// preview div, which is not what i want.
                 previewDiv.remove();
             });
         });
@@ -333,8 +336,6 @@ $(function () {
 		           $("#rangeState").html(data.msg);
 	               }, "json");
             });
-            setupRelatedPreviews();
-
         },
         main: function () {
 	    // some amount of page refresh has just happened

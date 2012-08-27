@@ -239,7 +239,18 @@ span.result {
 }
 
 .relatedPreview {
-  border: 3px solid red;
-width: 500px;
-height: 76px;
+    background: url("relatedPreviewBg.png") no-repeat scroll 0 0 transparent;
+    height: 77px;
+    left: 0;
+    padding: 13px 20px 20px 28px;
+    position: absolute;
+    top: 0;
+    width: 507px;
+    padding-top: 13px;
+    padding-left: 28px;
+}
+.relatedPreview > div {
+    width: 505px;
+    height: 76px;
+    overflow: hidden;
 }
