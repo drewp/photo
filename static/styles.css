@@ -237,3 +237,9 @@ span.result {
     color: #7A6BD3;
     margin-top: 100px;
 }
+
+.relatedPreview {
+  border: 3px solid red;
+width: 500px;
+height: 76px;
+}

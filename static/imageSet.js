@@ -104,6 +104,39 @@ $(function () {
     }
 
 
+    function relatedPreview(relatedLink) {
+        // use preloadContents instead!
+        var div = $("<div>").addClass("relatedPreview");
+        div.append("loading...");
+        getNewPageContents(relatedLink, function (data) {
+            div.empty();
+            $.each(data.photosInSet.photosInSet, function (i, thumb) {
+                if (i > 5) {
+                    return;
+                }
+                // could use the video-triangle on here. These should
+                // also be links
+                div.append($("<img>").attr("src", thumb.thumb.src));
+            });
+        });
+        return div;
+    }
+
+    function setupRelatedPreviews() {
+        $("#related > li").each(function (i, li) {
+            li = $(li);
+            console.log("attach" ,li);
+            var previewDiv;
+            li.hover(function () {
+                console.log("hover");
+                previewDiv = relatedPreview(li.find("a").attr("href"));
+                li.append(previewDiv);
+            }, function () {
+                previewDiv.remove();
+            });
+        });
+    }
+
     function updateSections(data) {
 	$.each(data, function (tmpl, contents) {
 
@@ -300,6 +333,7 @@ $(function () {
 		           $("#rangeState").html(data.msg);
 	               }, "json");
             });
+            setupRelatedPreviews();
 
         },
         main: function () {
@@ -367,6 +401,7 @@ $(function () {
             });
 	    preloadContents($(".iset.plPri").attr("href"));
             preloadImage(preloadImg);
+            setupRelatedPreviews();
         }
     };
     refresh.startup();
