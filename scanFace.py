@@ -85,7 +85,11 @@ if __name__ == '__main__':
             print "has faces"
             continue
         if graph.queryd(
-            "ASK { ?uri pho:scanned <http://bigasterisk.com/tool/scanFace> }",
+            """ASK {
+            { ?uri pho:scanned <http://bigasterisk.com/tool/scanFace> }
+            UNION
+            { ?parent pho:alternate ?uri }
+            }""",
             initBindings={'uri':row['img']}):
             continue
         

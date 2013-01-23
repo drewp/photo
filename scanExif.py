@@ -85,6 +85,10 @@ class ScanExif(object):
         if not xml:
             raise ValueError("no result from exif")
 
+        # galaxy note 2 puts these in, and then the xml doesn't parse
+        xml = xml.replace("<User_Comment>\x12\xf8\x0f;</User_Comment>", "")
+        xml = xml.replace("<User_Comment>\x12\xf8\x0f;\x01</User_Comment>", "")
+
         root = ElementTree.fromstring(xml)
             
         vals = {}

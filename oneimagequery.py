@@ -31,6 +31,9 @@ def photoCreated(graph, uri):
     try:
         sec = iso8601.parse(str(photoDate))
     except Exception:
+        # i think this is the 1-hour error bug on the site. incoming
+        # dates might not have any zone, but we can make a guess about
+        # their local time
         sec = iso8601.parse(str(photoDate) + '-0700')
 
     # todo: this is losing the original tz unnecessarily

@@ -1,4 +1,7 @@
 #!/usr/bin/python2.7
+"""
+listen http, run scanfs and scanexif on requested files
+"""
 import boot
 from sparqlhttp.graph2 import SyncGraph
 import os, time, cyclone.web, sys
@@ -96,8 +99,25 @@ if quick:
     onChange('/my/pic/flickr/3716645105_27bca1ba5a_o.jpg')
     onChange('/my/pic/phonecam/dt-2009-07-16/CIMG0074.jpg')
     onChange('/my/pic/digicam/dl-2009-07-20/DSC_0092.JPG')
- 
-class FileChanged(cyclone.web.RequestHandler):
+
+import httplib, cgi
+class PrettyErrorHandler(object):
+    """
+    mix-in to improve cyclone.web.RequestHandler
+    """
+    def get_error_html(self, status_code, **kwargs):
+        try:
+            tb = kwargs['exception'].getTraceback()
+        except AttributeError:
+            tb = ""
+        return "<html><title>%(code)d: %(message)s</title>" \
+               "<body>%(code)d: %(message)s<pre>%(tb)s</pre></body></html>" % {
+            "code": status_code,
+            "message": httplib.responses[status_code],
+            "tb" : cgi.escape(tb),
+        }
+
+class FileChanged(PrettyErrorHandler, cyclone.web.RequestHandler):
     def get(self):
         self.write('''<html><body>
         <form method="post" action="">Report a changed file: <input name="file" size="100"/> <input type="submit"/></form>
@@ -112,7 +132,7 @@ class FileChanged(cyclone.web.RequestHandler):
         onChange(fileArg)
         self.write('ok\n')
         
-class AllChanged(cyclone.web.RequestHandler):
+class AllChanged(PrettyErrorHandler, cyclone.web.RequestHandler):
     def post(self):
         allFiles(subdirs, onChange)
         self.write('ok\n')

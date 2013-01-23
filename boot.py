@@ -11,6 +11,7 @@ log = getLogger()
 
 sys.path.insert(0, "/home/drewp/projects/sparqlhttp")
 sys.path.insert(0, "/my/proj/sparqlhttp")
+sys.path.insert(0, "/my/dl/modified/monque")
 import sparqlhttp
 print sparqlhttp
 

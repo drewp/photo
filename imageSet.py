@@ -614,7 +614,7 @@ class RandomImage(rend.Page):
         self.graph, self.uri, self.ctx = graph, uri, ctx
         
     def renderHTTP(self, ctx):
-        photos = photosWithTopic(self.graph, self.uri)
+        photos = photosWithTopic(self.graph, {'topic':self.uri}, {})
 
         newUrl = url.URL.fromString(str(random.choice(photos)))
 
