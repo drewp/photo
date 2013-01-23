@@ -40,8 +40,9 @@ for row in graph.queryd("""
         for retries in range(3):
             try:
                 ret = search.post("index", source="photo",
-                            payload=json.dumps(doc))
-                ret.close()
+                                  payload=json.dumps(doc))
+                # this is the exact amount you have to call to get keepalive
+                ret.body_string()
                 sent += 1
                 break
             except Exception:
