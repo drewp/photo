@@ -130,12 +130,14 @@ $(function () {
                 previewDiv = relatedPreview(li.find("a").attr("href"));
 		var offset = li.offset();
                 li.append(previewDiv);
+		li.addClass("previewing");
 		previewDiv.offset({left: offset.left - 563, 
 				   top: offset.top - 28})
             }, function () {
 		// this is removing when they hover over to the
 		// preview div, which is not what i want.
                 previewDiv.remove();
+		li.removeClass("previewing");
             });
         });
     }

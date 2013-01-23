@@ -254,3 +254,6 @@ span.result {
     height: 76px;
     overflow: hidden;
 }
+li.previewing {
+    background: #434343;
+}
