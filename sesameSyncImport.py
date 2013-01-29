@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!bin/python
 """
 listen http, run scanfs and scanexif on requested files
 """
