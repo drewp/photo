@@ -1,0 +1,23 @@
+#!bin/python
+
+# dirsync <fromdir> <todir>
+
+# rsyncs the files (no delete) and then pings photo site on all the
+# modified ones
+
+import sys, subprocess, os, restkit, logging, urllib
+logging.basicConfig(level=logging.INFO)
+fromDir, toDir = sys.argv[1:3]
+assert fromDir.endswith('/')
+assert toDir.endswith('/')
+
+sync = restkit.Resource("http://bang:9042/")
+
+out = subprocess.check_output(['/usr/bin/rsync', '-av', fromDir, toDir])
+for line in out.splitlines():
+    target = os.path.join(toDir, line.strip())
+    if os.path.isfile(target):
+        sync.post(payload=urllib.urlencode([('file', target)]),
+                  headers={'Content-Type': 'application/x-www-form-urlencoded'},
+        )
+
