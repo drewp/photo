@@ -3,13 +3,19 @@
 send photo tags, descriptions, and comments (?) to search
 """
 from __future__ import division
-import boot
+import boot, warnings
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import formless
+
 from db import getGraph
 import networking
 import restkit, json, logging
 log = boot.log
 
 log.setLevel(logging.DEBUG)
+logging.getLogger("graph2").setLevel(logging.INFO)
 graph = getGraph()
 search = restkit.Resource(networking.searchRoot())
 
@@ -22,8 +28,13 @@ for row in graph.queryd("""
      OPTIONAL { ?pic pho:filename ?filename }
      OPTIONAL { ?pic a ?isVideo . FILTER (?isVideo = pho:Video) }
    }"""):
-    txt = ' '.join(x for x in
-                   [row['tags'], row['comment'], row['filename']] if x)
+    txt = ' '.join(
+        x for x in
+        [row['tags'],
+         row['comment'],
+         row['filename'],
+         'video' if row['isVideo'] else '',
+        ] if x)
 
     # also go to commentServe and add up the comments (but no authors,
     # since that should not be searched, at least at the same strength
