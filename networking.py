@@ -46,5 +46,5 @@ def jqueryLink(forwardedFor):
         # of the google copy
         return "/static/jquery-1.6.4.min.js"
     else:
-        return "http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"
+        return "//ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"
 
