@@ -14,10 +14,18 @@ assert toDir.endswith('/')
 sync = restkit.Resource("http://bang:9042/")
 
 out = subprocess.check_output(['/usr/bin/rsync', '-av', fromDir, toDir])
+errored = []
 for line in out.splitlines():
     target = os.path.join(toDir, line.strip())
     if os.path.isfile(target):
-        sync.post(payload=urllib.urlencode([('file', target)]),
-                  headers={'Content-Type': 'application/x-www-form-urlencoded'},
-        )
+        try:
+            sync.post(payload=urllib.urlencode([('file', target)]),
+                      headers={'Content-Type': 'application/x-www-form-urlencoded'},
+            )
+        except restkit.errors.RequestFailed:
+            errored.append(target)
+if errored:
+    log.error("These files failed to post to photo site:")
+    for f in errored:
+        log.error(f)
 
