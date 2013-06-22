@@ -89,7 +89,12 @@ class ScanExif(object):
         xml = xml.replace("<User_Comment>\x12\xf8\x0f;</User_Comment>", "")
         xml = xml.replace("<User_Comment>\x12\xf8\x0f;\x01</User_Comment>", "")
 
-        root = ElementTree.fromstring(xml)
+        try:
+            root = ElementTree.fromstring(xml)
+        except ElementTree.ParseError, e:
+            # happened on /my/pic/phonecam/dn1/20130418_221054-1.jpg
+            # not sure how to correct it
+            raise
             
         vals = {}
         for child in root:
