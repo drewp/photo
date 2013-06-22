@@ -29,4 +29,16 @@ $(function () {
 	return false;
     }
     $("input[type=checkbox].acl-set").change(onCheckbox).click(onCheckbox);
+
+    $(".postEmailAccess").click(function () { 
+	var form = $(this).closest("form");
+	var result = $(this).parent().find(".result");
+	spin(result);
+	$.post("/aclChange", {accessTo: form.attr("about"),
+			      email: form.find("input[name=sendEmail]").val(),
+			      op: "allow"},
+	       function (data) {
+		   result.text(data.msg);	  
+	       });
+    });
 });
