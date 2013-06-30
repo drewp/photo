@@ -1,0 +1,16 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "dependencies": {
+    "connect-assetmanager": "0.0.28",
+    "connect-assetmanager-handlers": "0.0.18",
+    "socket.io": "~0.9.16",
+    "jade": "~0.31.2",
+    "nodefront": "~1.0.7",
+    "markdown": "~0.4.0",
+    "less": "~1.4.0"
+  },
+  "engine": {
+    "node": ">=0.10.12"
+  }
+}

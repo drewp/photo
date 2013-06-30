@@ -1,0 +1,198 @@
+
+2013 re-arch:
+
+differences to mediagoblin:
+  - more separated pieces (no single shared db schema)
+  - more ACL
+  - better file-watching, i think
+  - better search, i think
+
+features of all components:
+
+  - always available under /{componentname} if only to see status and version
+  - depending on access rights, you may be able to do more with a component over http
+  - components can be launched or restarted in any order
+  - most can be clustered, except the stateful ones, which need to handle their own clustering internally
+
+  
+components with state:
+
+  sourcefs
+    - precious data is kept here
+    - we mostly don't write here, but some components add images
+    - we can point to any existing trees; the layout is not special
+    - we sometimes read from here for live data, so performance will sometimes be visible to end users
+    - we can serve any file over http
+    
+  blobstore
+    - capabilities like gridfs or camlistore.
+    - object addresses always come *from* the store, to support CAS.
+    - this can serve the images over http
+    
+  rdfstore
+    - capabilities like sesame, including sparql/update
+    - precious data is kept here; needs backup
+    - we should mark whole contexts as rederivable or precious, and attempt to not have too much rederivable data in the precious contexts
+
+  localrdf
+    - sync some fs files into the rdf store
+    - for config stuff, basic facts, comments and docs
+    - share with rdfdb?
+
+more components:
+
+  crop
+    - makes an alt that is a crop of an image
+
+  takes
+    - notices runs of images that are close, describes them as a 'take'
+
+  imagerotate
+    - makes upright alts of camera photos per exif
+    - somehow this should suppress the natural generation of unrotated resizes, since those are a waste
+
+  facedetect
+    - makes alts of the faces found in images
+    - writes data about found faces
+    - who tracks what users have said about those faces?
+
+  randoms
+    - return randomly-selected images
+    - minus ones with certain tags
+
+  aclserve
+    - proxies data from blobstore (usually) but also sourcefs
+    - this server subjects everything to access control
+    - the public gets routes to this web server
+    - uses rdf data to know if the requester can see a file or alt
+    - can quickly answer allowed/disallowed for a list of files
+    - almost certainly runs a side cache since acl is hard. Need messages about every acl change?
+    - receive all edits to ACL
+    - this component will serve some paths that aren't under a root name 'aclserve', like just '/some/photo1.jpg'
+
+  tags
+    - read tags from rdf
+    - save edited tags
+    - produce the autocomplete data for tags
+
+  reformat
+    - resize images, encode videos
+    - render svg too?
+    - clustered
+
+  personage
+    - add facts about image saying how old the people are
+    
+  frontend
+    - web site
+
+  route
+    - sends most requests to aclserve or frontend
+    - can we use nginx for loadbalancing this time instead of haproxy?
+    - routes /comp/{component} to that component
+    - serves static files
+    
+  toflickr
+
+  tosnapfish
+
+  toshutterfly
+
+  toyoutube
+
+  fromflickr
+
+  fromemail
+
+  fromdropbox
+
+  buildindex
+    - updates my global search index
+    
+  
+    
+    
+messages:
+
+  Any code shall be able to send a message with one triple in it. The
+  triple should be something in the rdf graph, though that's not
+  enforced, and it might be gone by the time a listener decides to
+  respond.
+
+  Component has to register the patterns of the messages it wants to
+  hear, hopefully not (*,*,*). Maybe this is where we say "send this
+  to only one component at a time until you get a successful receipt"?
+  
+  Messages are POSTed to the listener components. No history, no
+  repeat sends. Components that restart need to get themselves up to
+  date again.
+
+  Multiple listeners might hear a message, and in many cases they need
+  to coordinate which one will handle it. Maybe it's better for only
+  one listener to get the message, but how do we route the right
+  triples to the right listeners?
+
+  Everyone could be watching the graph and reacting to the real
+  triples, but this will be more efficient and doesn't demand anything
+  from the rdfstore.
+
+  No responses from these; they're just for background processing.
+  
+  Examples:
+
+    A new file has arrived
+      ?uri :filename ?filename
+
+    A file is an image (and might have exif)
+
+    We made a medium size version of an image, suitable for face and
+    other analysis
+
+    A user has asked for a video transcode right now, so this is more
+    important than other work. This would be a transient triple. I'm
+    not sure if this will be required, though it seems nice for when
+    you first introduce a file tree and start browsing it.
+  
+    A user wants a file to be synced to another service, e.g. flickr
+
+    A user wants a file to be shared
+
+    MAYBE: shared slideshow page change
+    
+components:
+
+  filenotify
+    - notice new files, including over nfs, and get them listed in rdfstore
+    - tools: fileschangedpost 
+      
+  filescan
+    - read a fs file, write more triples about it
+
+
+missing things:
+
+  how do i make a precious new image without fussing with its name?
+  This is like CAS but in the precious store. Sometimes it needs a
+  file-ish thing first, too, like if I want to 'make something new'
+  with inkscape
+
+
+path study:
+
+/set?date=2013-01-01                           (should get the imgs in that set)
+
+/path/of/img1.jpg?date=2013-01-01              (current in path, set in params)
+/path/of/img1.jpg#date=2013-01-01              (current in path, set in hash)
+/path/of/img1.jpg                              (serves the img)
+/path/of/img1.jpg?size=thumb                   (serves the img)
+/path/of/img1.jpg/page                         (serves a set with the img)
+
+/set?date=2013-01-01#/path/of/img1.jpg         (current in hash)
+
+not good; mixed up params
+/set?date=2013-01-01&current=/path/of/img1.jpg (most everything in params)
+
+
+not good; the set filter has unordered parts and can grow larger
+/date/2013-01-01?current=/path/of/img1.jpg     (set in path, current in param)
+

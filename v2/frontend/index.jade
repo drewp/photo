@@ -1,0 +1,35 @@
+doctype html
+html
+  body
+    h1 photo
+    
+    p Newest images
+      div(data-bind="template: {name: 'newest'}")
+
+    p Random images
+      div(data-bind="template: {name: 'randoms'}")
+
+          
+    script(type="text/html", id="randoms")
+      ul(data-bind="foreach: getRandom(3)")
+        li
+          div(data-bind="template: {name: 'thumb'}")
+    
+    script(type="text/html", id="newest")
+      ul(data-bind="foreach: getNewest(3)")
+        li
+          div(data-bind="template: {name: 'thumb'}")
+
+    script(type="text/html", id="thumb")
+      .thumb
+        a(data-bind="attr: {href: uri}")
+          img(data-bind="attr: {src: uri}")
+
+    script(src="static/jquery-1.10.1.js")
+    script(src="static/knockout-2.2.1.debug.js")
+    script(src="static/davis.js")
+    script(src="random.js")
+
+    | Over here are 
+    a(href="http://photo.bigasterisk.com/harlan/")
+      | Harlan's pictures

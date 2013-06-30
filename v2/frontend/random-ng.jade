@@ -1,0 +1,12 @@
+html(ng-app="photo")
+  head
+     script(src="static/angular.min.js")
+     script(src="static/angular-resource.min.js")
+     script(src="random.js")
+  body
+    h1 random pics
+
+    ul(ng-controller="Randoms")
+      li(ng-repeat="uri in ")
+        thumb(uri="{{uri}}")
+    

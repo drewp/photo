@@ -1,0 +1,4 @@
+cd front
+../node_modules/nodefront/nodefront.js serve -clo build 8033 0.0.0.0
+
+
