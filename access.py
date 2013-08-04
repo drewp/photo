@@ -136,15 +136,9 @@ def viewableViaPerm(graph, uri, agent):
     return False
 
 @print_timing
-def agentImageSetCheck(graph, agent, photo):
-    """
-    does this agent (or one of its classes) have permission to
-    view some imageset that (currently) includes the image?
-
-    returns an imageset URI or None
-    """
-    
-    for row in graph.queryd("""
+def maySee(graph, agent):
+    """resources this agent has access to"""
+    return [row['access'] for row in graph.queryd("""
      SELECT DISTINCT ?access WHERE {
        ?auth acl:mode acl:Read ; acl:accessTo ?access .
        {
@@ -154,15 +148,25 @@ def agentImageSetCheck(graph, agent, photo):
          ?agent a ?agentClass .
        }
      }
-    """, initBindings={'agent' : agent}):
-        maySee = row['access']
-        if 'bigasterisk.com/openidProxySite' in maySee:
+    """, initBindings={'agent' : agent})]
+    
+@print_timing
+def agentImageSetCheck(graph, agent, photo):
+    """
+    does this agent (or one of its classes) have permission to
+    view some imageset that (currently) includes the image?
+
+    returns an imageset URI or None
+    """
+    
+    for res in maySee(graph, agent):
+        if 'bigasterisk.com/openidProxySite' in res:
             # some other statements about permissions got in the
             # graph; it's wasting time to check them as images
             continue
-        log.debug("%r can see %r - is the pic in that set?", agent, maySee)
+        log.debug("%r can see %r - is the pic in that set?", agent, res)
         try:
-            imgSet = ImageSetDesc(graph, agent, maySee)
+            imgSet = ImageSetDesc(graph, agent, res)
         except ValueError:
             # includes permissions for things that aren't photos at all
             continue
