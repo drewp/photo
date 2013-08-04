@@ -293,5 +293,6 @@ log.setLevel(logging.INFO)
 graph = getGraph()
 
 application = service.Application('photo')
-webServer = internet.TCPServer(8031, appserver.NevowSite(Main(graph)))
+webServer = internet.TCPServer(int(os.environ['PORT']),
+                               appserver.NevowSite(Main(graph)))
 webServer.setServiceParent(application)
