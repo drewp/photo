@@ -59,18 +59,6 @@ class Main(rend.Page):
         uriSuffix = uriSuffix.replace(':', '%3A')
         uri = SITE[uriSuffix]
 
-        # interim test version; skips all perm checks
-        def returnVideo(filename):
-            mtime = os.stat(filename).st_mtime
-            return StaticCached(open(filename).read(), "video/ogg", mtime), ()
-
-        if uri.endswith('dl-2010-02-06/DSC_5365.ogv'):
-            return returnVideo("/my/pic/digicam/dl-2010-02-06/DSC_5365.ogv")
-        if uri.endswith('dt/CIMG3501.ogv'):
-            return returnVideo("/my/pic/phonecam/dt/CIMG3501.ogv") 
-        if str(uri) == 'http://photo.bigasterisk.com/proj/giggles.ogv':
-            return returnVideo('/my/pic/proj/giggles.ogv')
-
         return self.imageChild(ctx, uri)
 
     def imageResource(self, uri, ctx):
