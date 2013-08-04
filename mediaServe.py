@@ -10,8 +10,8 @@ from twisted.web import http
 from twisted.internet import reactor
 from mediaresource import MediaResource, getRequestedSize, Video2
 from db import getGraph
-import access
-from ns import RDF, SITE, PHO
+import access, webuser
+from ns import SITE
 from urls import absSiteHost
 
 log = boot.log
@@ -102,7 +102,7 @@ class Main(rend.Page):
         if os.environ.get('PHOTO_FORCE_LOGIN', ''):
             agent = URIRef(os.environ['PHOTO_FORCE_LOGIN'])
         else:
-            agent = access.getUser(ctx)
+            agent = webuser.getUser(ctx)
             
         return access.viewable(self.graph, uri, agent)
 

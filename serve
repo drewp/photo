@@ -12,7 +12,7 @@ from xml.utils import iso8601
 from mediaresource import MediaResource, getRequestedSize
 from rdflib import URIRef
 import auth, networking, restkit
-import access
+import access, webuser
 from db import getGraph
 from urls import absoluteSite, absSiteHost, relPath
 from ns import PHO, SITE, FOAF, SIOC, DC, DCTERMS, SCOT, XS, RDF
@@ -180,7 +180,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
                 req = inevow.IRequest(ctx)
                 req.setHeader('Content-Type', 'application/xhtml+xml')
                 cookie = req.getHeader("cookie") or ''
-                user = access.getUser(ctx)
+                user = webuser.getUser(ctx)
                 try:
                     req.write(story.renderPage(g, topic,
                                                user, 
@@ -225,7 +225,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
         if req.method != 'POST':
             raise ValueError("invalid method")
 
-        user = access.getUser(ctx)
+        user = webuser.getUser(ctx)
         op = ctx.arg('op')
         accessTo = URIRef(ctx.arg('accessTo'))
 

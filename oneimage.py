@@ -21,7 +21,7 @@ from rdflib import URIRef, Variable, Literal
 import auth
 from xml.utils import iso8601
 from tagging import getTagLabels
-import access
+import access, webuser
 from oneimagequery import photoCreated
 from ns import PHO, FOAF, EXIF, SCOT, DC, RDF, DCTERMS
 from urls import localSite
@@ -167,14 +167,14 @@ class tags(object):
     """description too, though you can get that separately if you want"""
     def GET(self):
         img = URIRef(web.input()['uri'])
-        user = access.getUserWebpy(web.ctx.environ)
+        user = webuser.getUserWebpy(web.ctx.environ)
         web.header("Content-Type", "text/json")
         return json.dumps(getTags(graph, user, img))
 
     def PUT(self):
         i = web.input()
         img = URIRef(i['uri'])
-        user = access.getUserWebpy(web.ctx.environ)
+        user = webuser.getUserWebpy(web.ctx.environ)
         saveTags(graph,
                  foafUser=user,
                  img=img,
@@ -217,7 +217,7 @@ class alt(object):
 
         ctx = URIRef(newAltUri + "#create")
         now = Literal(datetime.datetime.now(tzlocal()))
-        creator = access.getUserWebpy(web.ctx.environ)
+        creator = webuser.getUserWebpy(web.ctx.environ)
         if not creator:
             raise ValueError("missing creator")
         

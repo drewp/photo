@@ -6,10 +6,10 @@ and some other photo-site-specific things, but hopefully those can be
 removed
 """
 
-import logging, random, time, datetime, os
+import logging, random, time, datetime
 from dateutil.tz import tzlocal
 from rdflib import URIRef, RDF, Literal
-from nevow import inevow, url
+from nevow import url
 import auth
 from genshi.template import TemplateLoader
 from genshi.output import XHTMLSerializer
@@ -23,21 +23,6 @@ log = logging.getLogger('access')
 
 class NeedsMoreAccess(ValueError):
     pass
-
-def getUser(ctx):
-    return _getUser(inevow.IRequest(ctx).getHeader)
-
-def getUserWebpy(environ):
-    return _getUser(
-        lambda h: environ.get('HTTP_%s' % h.upper().replace('-','_')))
-
-def _getUser(getHeader):
-    if os.environ.get('PHOTO_FORCE_LOGIN', ''):
-        return URIRef(os.environ['PHOTO_FORCE_LOGIN'])
-    agent = getHeader('x-foaf-agent')
-    if agent is None:
-        return None
-    return URIRef(agent)
 
 def agentClassCheck(graph, agent, photo):
     """

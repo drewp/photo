@@ -25,7 +25,7 @@ from edit import writeStatements
 from search import nextDateWithPics
 import tagging, networking
 import auth, access
-from access import getUser
+from webuser import getUser
 from shorturl import hasShortUrlSync
 from lib import print_timing
 from scanFs import videoExtensions
