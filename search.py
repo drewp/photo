@@ -38,6 +38,9 @@ def randomSet(graph, n=3, foafUser=None, seed=None, year=None, tags="without"):
     pass a seed if you want the same set of images repeatedly
 
     pass a year string to limit dates to that year
+
+    todo: this should be doable with sparql SAMPLE, but in a little
+    test, sesame was only giving me pics from the last 2 days.
     """
     rand = random.Random(seed)
     
@@ -45,8 +48,12 @@ def randomSet(graph, n=3, foafUser=None, seed=None, year=None, tags="without"):
     retUris = set()
 
     dates = randomDates(graph, n, rand, year)
-
+    triesLeft = 100
     while len(ret) < n:
+        triesLeft -= 1
+        if triesLeft < 0:
+            break
+            
         if not dates: # accidental dups could exhaust the dates
             dates = randomDates(graph, 3, rand, year)
         d = dates.pop()
@@ -56,7 +63,11 @@ def randomSet(graph, n=3, foafUser=None, seed=None, year=None, tags="without"):
               ?pic dc:date ?d .
               ?pic a foaf:Image;
                    pho:filename ?filename .
-            }""", initBindings={Variable('d') : d})
+            }""", initBindings={
+                # unclear why this happened, but d was arriving as
+                # a Literal string with no datatype and not matching
+                # anything
+                'd' : Literal(d, datatype=XS['date'])})
         if not allPicsThatDay:
             continue
         pick = rand.choice(allPicsThatDay)
@@ -116,14 +127,6 @@ def dateHasPics(graph, date):
         _dateHasPics.add(dlit)
     return ret
 
-def printTime(func):
-    def wrapped(*args, **kw):
-        t1 = time.time()
-        ret = func(*args, **kw)
-        print "%s in %.02f ms" % (func, 1000 * (time.time() - t1))
-        return ret
-    return wrapped
-
 try:
     _topicLabels
 except NameError:
@@ -144,7 +147,7 @@ class Events(rend.Page):
         self.graph = graph
         rend.Page.__init__(self, ctx)
 
-    @printTime
+    @print_timing
     def render_topics(self, ctx, data):
         graph = self.graph
         byClass = {}
@@ -170,7 +173,7 @@ class Events(rend.Page):
             rows.sort()
             yield [r[1] for r in rows]
 
-    @printTime
+    @print_timing
     def render_saveSets(self, ctx, data):
         for row in self.graph.queryd("""
         SELECT DISTINCT ?set ?label WHERE {
@@ -183,7 +186,7 @@ class Events(rend.Page):
                         row.get('label') or row['set']]
                 ]
 
-    @printTime
+    @print_timing
     def render_random(self, ctx, data):
         for randRow in randomSet(self.graph, 3):
             current = randRow['pic']
@@ -216,7 +219,7 @@ class Events(rend.Page):
     def render_seed(self, ctx, data):
         return random.randint(0, 9999999)
 
-    @printTime
+    @print_timing
     def render_newestDirs(self, ctx, data):
         # todo- should use rdf and work over all dirs
         top = '/my/pic/digicam'
@@ -231,7 +234,7 @@ class Events(rend.Page):
             # todo: escaping
             yield T.div[T.a(href=[localSite('/set?dir='), photoUri(dirname)])[dirname]]
 
-    @printTime
+    @print_timing
     def render_newestDates(self, ctx, data, n=5):
         dates = []
         d = datetime.datetime.now() + datetime.timedelta(days=1)
@@ -242,7 +245,7 @@ class Events(rend.Page):
                 date_isoformat(d)]])
         return T.ul[dates]
 
-    @printTime
+    @print_timing
     def render_tags(self, ctx, data):
         freqs = getTagsWithFreqs(self.graph)
         freqs = sorted(freqs.items(), key=lambda (t, n): (-n, t))
