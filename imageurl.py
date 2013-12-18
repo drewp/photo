@@ -89,7 +89,8 @@ class ImageSetDesc(object): # in design phase
                 topic = URIRef('http://photo.bigasterisk.com/tag/%s' % params['tag'])
             elif 'date' in params:
                 if 'span' in params:
-                    if params['span'] == '7d':
+                    # 31d is wrong; you should just pass a date like yyyy-mm
+                    if params['span'] in ['7d', '31d']:
                         topicDict['span'] = params['span']
                     else:
                         raise NotImplementedError
@@ -251,7 +252,7 @@ def photosWithTopic(graph, topicDict, isVideo):
     uri = topicDict['topic']
     q = queryOneTopic(graph, uri)
 
-    if topicDict.get('span') == '7d':
+    if topicDict.get('span') in ['7d', '31d']:
         for otherDay in daysInSpan(topicDict['topic'], topicDict['span']):
             q.extend(queryOneTopic(graph, otherDay))
     
