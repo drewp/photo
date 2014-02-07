@@ -30,7 +30,7 @@ pyparsing==1.5.6
 pystache==0.3.1
 python-dateutil==1.5
 rdfextras==0.2
-rdflib==3.2.1
+rdflib==4.0.1
 requests==1.1.0
 restkit==4.2.0
 socketpool==0.5.2
@@ -39,4 +39,5 @@ tornado==2.3
 web.py==0.37
 wsgiref==0.1.2
 zope.interface==4.0.5
+klein==0.2.0
 pylru==1.0.6
