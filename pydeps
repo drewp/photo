@@ -41,3 +41,4 @@ wsgiref==0.1.2
 zope.interface==4.0.5
 klein==0.2.0
 pylru==1.0.6
+https://github.com/kurtiss/monque/archive/master.zip
