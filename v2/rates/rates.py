@@ -3,7 +3,7 @@ page about rates of images taken, so you can look for interesting
 time ranges
 """
 
-import sys, json, logging
+import sys, json, logging, os
 from collections import defaultdict
 import datetime
 from klein import run, route
@@ -15,14 +15,15 @@ graph = getGraph()
 
 logging.basicConfig(level=logging.DEBUG)
 
-@route('/')
-def index(request):
-    if request.uri != '/':
-        raise NotImplementedError()
-    return File("./")
+@route(r'/<any("", "gui.js"):which>')
+def index(request, which):
+    return File("./%s" % request.uri)
 
-@route('/rates')
-def rates(request):
+_rates = None
+def getRates():
+    global _rates
+    if os.environ.get('PHOTO_CACHE_RATES') and _rates is not None:
+        return _rates
     out = {
         'byWeek': defaultdict(lambda: 0),
         'byMonth': defaultdict(lambda: 0),
@@ -40,7 +41,19 @@ def rates(request):
         out['byDay'][row['date']] += 1
         out['byMonth'][row['date'].rsplit('-', 1)[0]] += 1
         out['byYear'][row['date'].rsplit('-', 2)[0]] += 1
-
-    return json.dumps(out)
+    _rates = out
+    return out
     
-run("0.0.0.0", 8045)
+@route('/rates')
+def rates(request):
+    return json.dumps(getRates())
+
+@route('/heatmap')
+def heatmap(request):
+    import heatmap
+    reload(heatmap)
+    request.setHeader('Content-Type', 'image/png')
+    return heatmap.makeImage(getRates())
+
+if __name__ == '__main__':
+    run("0.0.0.0", 8045)

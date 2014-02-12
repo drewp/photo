@@ -1,4 +1,12 @@
 <!DOCTYPE html>
-<html>
-  
-  </html>
+<html ng-app="app" ng-controller="ctrl">
+  <body>
+    <img src="heatmap" style="border: 1px solid gray">
+    byYear: 
+    <div ng-repeat="(year, count) in data.byYear">
+      {{year}}: {{count}} photos
+    </div>
+    <script src="//bigasterisk.com/lib/angular/angular-1.2.6.min.js"></script>
+    <script src="gui.js"></script>
+  </body>
+</html>

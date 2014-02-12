@@ -42,3 +42,4 @@ zope.interface==4.0.5
 klein==0.2.0
 pylru==1.0.6
 https://github.com/drewp/monque/archive/386dbef64752c4e3814db94d12aa7b75d335cc80.zip
+rpy2==2.3.9
