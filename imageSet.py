@@ -603,7 +603,12 @@ def serviceCallSync(agent, name, uri):
 
 class ImageSetTablet(ImageSet):
     docFactory = loaders.xmlfile("tablet.html")
-          
+
+def toHttps(url):
+    """internal uris are http, but clients need to ask for https"""
+    if url.startswith('http://'):
+        return 'https' + url[4:]
+    
 class RandomImage(rend.Page):
     """redirect to any image with this topic.
 
@@ -628,7 +633,7 @@ class RandomImage(rend.Page):
         # header.
         if req.getHeader('X-Requested-With') == 'XMLHttpRequest':
             req.setHeader('content-type', 'application/json')
-            return json.dumps({'Location' : str(newUrl)})
+            return json.dumps({'Location' : toHttps(str(newUrl))})
         
         req.redirect(newUrl)
         return ''
