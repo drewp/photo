@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf8">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.1/leaflet.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+html {
+height: 100%;
+}
+body {
+display: flex;
+min-height: 100%;
+margin: 0;
+}
+#map { 
+flex: 1 1 auto;
+}
+#status {
+ position: absolute;
+left: 100px;
+top: 0px;
+background: rgba(255,255,255,.5);
+}
+    </style>
+  </head>
+  <body>
+
+    <div id="map"></div>
+    <div id="status"></div>
+    <script src="https://code.jquery.com/jquery-1.10.1.min.js"></script>
+    <script src="https://bigasterisk.com/lib/underscore-1.5.2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.1/leaflet-src.js"></script>
+    <script src="gui.js"></script>
+  </body>
+</html>
