@@ -39,6 +39,9 @@ _lastOpen = None, None
 
 monque = getMonque()
 
+class FailedStatus(str):
+    pass
+
 class MediaResource(object):
     """
     this is one pic or video which can be returned at various scales
@@ -50,7 +53,8 @@ class MediaResource(object):
         return self.graph.contains((self.uri, RDF.type, PHO.Video))
 
     def videoProgress(self):
-        """Done if we have the video, or a string explaining the status"""
+        """Done if we have the video, or a string explaining the status.
+        If the string is a FailedStatus, the job is not progressing"""
 
         log.info("progress on %s" % self.uri)
         if not os.path.exists(self._sourcePath()):
@@ -70,6 +74,8 @@ class MediaResource(object):
         jobs = list(coll.find({"body.message.args" : self.uri}))
         if returnProgress:
             if jobs:
+                if jobs[0]['retries'] == 0:
+                    return FailedStatus('conversion failed; no more retries')
                 return jobs[0].get('progress', 'queued')
             else:
                 return None

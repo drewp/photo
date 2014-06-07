@@ -385,17 +385,23 @@ $(function () {
             refreshCurrentPhoto(picInfo.currentPhotoUri);
                        
 	    if ($(".videoProgress").length) {
-		setTimeout(function () {
-		    if ($(".videoProgress").length) {
-			var p = pathFromWindow();
-			delete _preloaded[p];
-			// this would be better as a reloader that
-			// only updated the featured image part. The
-			// part where the comment box reloads is
-			// especially annoying.
-			gotoPage(p);
-		    }
-		}, 2000);
+                // the json has a real flag for this, but I lost track
+                // of who haas that json anymore
+                if ($(".videoProgress").text().match(/fail/)) {
+                    console.log("no reload");
+                } else {
+		    setTimeout(function () {
+		        if ($(".videoProgress").length) {
+			    var p = pathFromWindow();
+			    delete _preloaded[p];
+			    // this would be better as a reloader that
+			    // only updated the featured image part. The
+			    // part where the comment box reloads is
+			    // especially annoying.
+			    gotoPage(p);
+		        }
+		    }, 5000);
+                }
 	    }
 
             $(".iset.pl").each(function (i, elem) {

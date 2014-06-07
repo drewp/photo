@@ -18,7 +18,7 @@ from nevow import loaders, rend, tags as T, inevow, url, flat
 from rdflib import URIRef, Literal
 from twisted.web.client import getPage
 from isodate.isodates import parse_date, date_isoformat
-from mediaresource import Full, sizes, MediaResource, Done
+from mediaresource import Full, sizes, MediaResource, Done, FailedStatus
 from urls import localSite, absoluteSite
 from imageurl import ImageSetDesc, photosWithTopic, NoSetUri
 from edit import writeStatements
@@ -314,7 +314,9 @@ class View(pystache.view.View):
                                        width=600,
                                        height=600 / w * h))
             else:
-                return dict(videoNotReady=dict(progress=progress))
+                return dict(videoNotReady=dict(
+                    progress=progress,
+                    failed=isinstance(progress, FailedStatus)))
         else:
             try:
                 size = feat.getSize(sizes["large"])
