@@ -24,3 +24,8 @@ initNs = dict(
     exif=Namespace("http://www.kanzaki.com/ns/exif#"),
     acl=Namespace("http://www.w3.org/ns/auth/acl#"),
     )
+
+def bindAll(graph):
+    for p, u in initNs.items():
+        graph.bind(p, u)
+        

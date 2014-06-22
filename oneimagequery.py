@@ -12,14 +12,14 @@ def photoCreated(graph, uri):
     except KeyError:
         pass
 
-    rows = list(graph.queryd("""
+    rows = list(graph.query("""
        SELECT ?t WHERE {
          { ?uri exif:dateTime ?t }
          UNION { ?uri pho:fileTime ?t }
        } ORDER BY ?t LIMIT 1""", initBindings={'uri' : uri}))
     if not rows:
 
-        rows = graph.queryd("""SELECT ?t WHERE {
+        rows = graph.query("""SELECT ?t WHERE {
              ?email a pho:Email ; dcterms:created ?t ; dcterms:hasPart ?uri .
            }""", initBindings={'uri' : uri})
         if not rows:

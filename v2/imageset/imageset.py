@@ -8,8 +8,9 @@ query language in json:
   filter:
     (all non-null filters must be true for each image)
     (images you don't have access to are not visible)
-    tags: [<strings, including '*'>]
-    withoutTags: ['nsfw']
+    tags: [<strings, including '*'>] # must include these
+    withoutTags: ['nsfw']  # must not include these
+    onlyTagged: <list of tags that pics must have a subset of>
     type: 'video'|'image'
     dir: uri
     time: <yyyy-mm-dd>
@@ -27,14 +28,33 @@ query language in json:
     (default is [{time: 'asc'}])
     list can also have
      {uri: 'asc'}
-     {random: <seed>}
+     {random: <seed>} # seed is stable if the 
+    multiple sorts are rare, but maybe something like tag-then-date will come up
 
   page:
     limit: <n>
     after: <uri>|None
       (or)
     skip: <count>
+    TBD: pageWith: <uri>, to get items near this current one and then
+      report back where the scroll position should be
 }
+
+query language in url params:
+    tag= (repeat)
+    hidden=none (remove default withoutTags)
+    withoutTag= (repeat)
+    onlyTagged= (empty means pics with no tags, =foo =bar means pics with
+      a subset of [foo,bar] but no more)
+    type=
+    attrs=uri,time,acl
+    sort=time
+    sort=-time
+    sort=random+3525
+    limit=
+    after=
+    skip=
+some of this is merged with the current-image selection stuff. the paging params probably wouldn't appear
 
 results:
 {
@@ -47,79 +67,190 @@ results:
     count: <len(images)>
     total: <n>
 }
-
 """
+import logging
 from klein import run, route
-import sys, json, itertools, datetime
-from rdflib import Literal
+from twisted.internet import reactor
+import sys, json, itertools, datetime, random, time, sha, itertools
+from rdflib import Literal, URIRef
 sys.path.append("../..")
 
 from db import getGraph
 from requestprofile import timed
 from oneimagequery import photoCreated
+from queryparams import queryFromParams
 
-class ImageSet(object):
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger()
+
+class ImageIndex(object):
+    """
+    holds various indices in memory. reads all pics from the graph
+    once, but then needs update(uri) called on any further changes.
+    """
     def __init__(self, graph):
         self.graph = graph
 
+        # managed by update()
+        self.byUri = {}
+
+        # managed by updateSorts()
+        self.byTime = []
+        self.shuffled = []
+        
+        self._toRead = self._allImages()
+        self._updateMore()
+        
+    def _allImages(self):
+        log.info("finding all images")
+        t1 = time.time()
+        uris = set()
+        for row in self.graph.query(
+                "SELECT DISTINCT ?uri WHERE { ?uri a foaf:Image . }"):
+            uris.add(row['uri'])
+        log.info("found %s images in %s sec", len(uris), time.time() - t1)
+        return uris
+
+    def finishBackgroundIndexing(self):
+        while self._toRead:
+            self.update(self._toRead.pop())
+        self.updateSorts()
+        
+    def _updateMore(self):
+        t1 = time.time()
+        while True:
+            if not self._toRead:
+                break
+            uri = self._toRead.pop()
+            self.update(uri)
+            if time.time() - t1 > .5:
+                break
+
+        self.updateSorts()
+        if not self._toRead:
+            log.info("background indexing is done")
+            return
+        log.info("%s left to index", len(self._toRead))
+        reactor.callLater(.1, self._updateMore)
+
+    def updateSorts(self):
+        self.byTime = self.byUri.values()
+        self.byTime.sort(key=lambda d: (bool(d['t']), d['t'] or d['uri']))
+
+        self.shuffled = self.byTime[:]
+        r = random.Random(987)
+        r.shuffle(self.shuffled)
+        
+    def update(self, uri):
+        # check image first- maybe it was deleted
+        try:
+            t = photoCreated(self.graph, uri)
+        except ValueError:
+            t = None
+        viewableBy = []
+
+        doc = {
+            'uri': uri,
+            't': t,
+            }
+
+        self.byUri[uri] = doc
+
+    # we'll need a fancier updater for when ACL and groups change
+
+def mixed(i, maximum):
+    """i hashed into 0..maximum"""
+    return int(sha.new(str(i)).hexdigest(), 16) % maximum
+    
+class ImageSet(object):
+    """
+    runs queries, mostly on data gathered by ImageIndex, but maybe
+    using the live graph too
+    """
+    def __init__(self, graph, index):
+        self.graph = graph
+        self.index = index
+
     def request(self, query):
-        paging = query.get('paging', {})
-        limit = paging.get('limit', 10)
-        skip = paging.get('skip', 0)
+        paging = {
+            'limit': query.get('paging', {}).get('limit', 10),
+            'skip': query.get('paging', {}).get('skip', 0),
+        }
+        
+        s = query.get('sort', [{'time': 'asc'}])
+
+        allImages = self.imageStream(s)
+        
+        allowedImages = self.viewableStream(allImages)
+        
         images = []
-        for rowNum, row in enumerate(self.graph.query("""
-               SELECT DISTINCT ?uri WHERE {
-                 ?uri a foaf:Image .
-               } ORDER BY ?uri""")):
-            if rowNum < skip:
+        for rowNum, row in enumerate(allowedImages):
+            if rowNum < paging['skip']:
                 continue
-            if len(images) >= limit:
+            if len(images) >= paging['limit']:
                 # keep counting rowNum
                 continue
 
-            images.append({
-                'uri': row.uri,
-                })
-                
-        #for row in rows:
-        #    row['time'] = photoCreated(self.graph, row['uri'])
+            outDoc = {'uri': row['uri']}
+            if row['t'] is not None:
+                outDoc['time'] = row['t'].isoformat()
+            images.append(outDoc)
+
+        try:
+            paging['total'] = rowNum + 1
+        except UnboundLocalError:
+            pass
         
         return {
             'images': images,
-            'paging': {
-                'limit': limit,
-                'skip': skip,
-                'total': rowNum + 1,
-            }
+            'paging': paging,
         }
 
-        
+    def viewableStream(self, imgs):
+        for doc in imgs:
+            # screen out the ones this user can't see
+            yield doc
 
-def newestPics(graph):
-    d = datetime.date.today()
-    while True:
-        rows = list(graph.queryd("""
-               SELECT DISTINCT ?uri WHERE {
-                 ?uri a foaf:Image; dc:date ?d .
-               }""", initBindings={"d": Literal(d)}))
-        for row in rows:
-            row['time'] = photoCreated(graph, row['uri'])
-        rows.sort(key=lambda row: row['time'], reverse=True)
-        for row in rows:
-            row['time'] = row['time'].isoformat()
-            yield row
-        d = d - datetime.timedelta(days=1)
+    def imageStream(self, sorts):
+        if len(sorts) > 1:
+            raise NotImplementedError('multiple sorts')
+        s = sorts[0]
 
-if __name__ == '__main__':
+        if s == {'time': 'asc'}:
+            return self.index.byTime
+        elif s == {'time': 'desc'}:
+            return reversed(self.index.byTime)
+        elif 'random' in s:
+            c = len(self.index.shuffled)
+            offset = mixed(s['random'], c)
+            return itertools.chain(
+                itertools.islice(self.index.shuffled, offset, c),
+                itertools.islice(self.index.shuffled, 0, offset))
+        else:
+            raise NotImplementedError('sort %r' % s)
+
+def main():
     graph = getGraph()
+    graph.query = graph.queryd
+    index = ImageIndex(graph)
+    iset = ImageSet(graph, index)
 
+    @route('/update', methods=['POST'])
+    def update(request):
+        index.update(URIRef(request.args['uri']))
+        return 'indexed'
+    
     @route('/set.json')
     def main(request):
-        if request.args['sort'] == ['new']:
-            pics, elapsed = timed(lambda: list(itertools.islice(newestPics(graph), 0, 3)))
-            return json.dumps({"newest": pics,
-                               "profile": {"newestPics": elapsed}})
-        else:
-            raise NotImplementedError()
+        pairs = []
+        for k, vs in request.args.items():
+            for v in vs:
+                pairs.append((k, v))
+        q = queryFromParams(pairs)
+        result = iset.request(q)
+        return json.dumps(result)
 
     run("0.0.0.0", 8035)
+
+if __name__ == '__main__':
+    main()

@@ -56,4 +56,4 @@ class TestQueryFromParams(unittest.TestCase):
         self.assertEqual([{'random': 0}],
                          queryFromParams([('sort', 'random')])['sort'])
         self.assertEqual([{'random': 123}],
-                         queryFromParams([('sort', 'random+123')])['sort'])
+                         queryFromParams([('sort', 'random 123')])['sort'])

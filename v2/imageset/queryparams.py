@@ -22,8 +22,8 @@ def queryFromParams(params):
             elif k == 'type' and v in ['image', 'video']:
                 qf['type'] = v
             elif k == 'sort':
-                if v.startswith('random+'):
-                    _, seed = v.split('+')
+                if v.startswith('random '):
+                    _, seed = v.split(' ')
                     q.setdefault('sort', []).append({'random': int(seed)})
                 elif v == 'random':
                     q.setdefault('sort', []).append({'random': 0})
