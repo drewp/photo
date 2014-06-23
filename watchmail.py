@@ -18,13 +18,15 @@ class Poller(object):
     def scan(self, mock=False):       
         for f in (path.path("/my/mail/drewp/.photoIncoming/cur").files()+
                   path.path("/my/mail/drewp/.photoIncoming/new").files()):
-            ingest(f.open(), mock=mock, newImageCb=self.onNewImage)
+            try:
+                ingest(f.open(), mock=mock, newImageCb=self.onNewImage)
+            except Exception as e:
+                self.onNewImage("?", extra=" Error during ingest, pic might not be copied into photo site")
             if not mock:
                 f.move("/my/mail/drewp/.photoIncoming.done/new")
         self.lastScan = time.time()
         
-    def onNewImage(self, uri):
-       
+    def onNewImage(self, uri, extra=''):
         c3po = restkit.Resource('http://bang:9040/')
 
         for u in [
@@ -33,7 +35,7 @@ class Poller(object):
             ]:
             c3po.post(path='', payload={
                 'user' : u,
-                'msg' : 'new image from email: %s/page' % uri,
+                'msg' : 'new image from email: %s/page%s' % (uri, extra),
                 'mode' : 'xmpp'
                 }, headers={'content-type' :
                             'application/x-www-form-urlencoded'})

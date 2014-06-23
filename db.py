@@ -1,4 +1,9 @@
+import sys
+sys.path.append('/my/proj/sparqlhttp')
 from sparqlhttp.graph2 import SyncGraph
+
+import pymongo, bson
+sys.modules['pymongo.son'] = bson.son
 
 from monque import Monque
 import networking

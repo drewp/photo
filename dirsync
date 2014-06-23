@@ -7,6 +7,7 @@
 
 import sys, subprocess, os, restkit, logging, urllib
 logging.basicConfig(level=logging.INFO)
+log = logging.getLogger()
 fromDir, toDir = sys.argv[1:3]
 assert fromDir.endswith('/')
 assert toDir.endswith('/')

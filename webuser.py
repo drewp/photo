@@ -10,6 +10,9 @@ def getUserWebpy(environ):
     return _getUser(
         lambda h: environ.get('HTTP_%s' % h.upper().replace('-','_')))
 
+def getUserCyclone(request):
+    return _getUser(request.headers.get)
+
 def _getUser(getHeader):
     if os.environ.get('PHOTO_FORCE_LOGIN', ''):
         return URIRef(os.environ['PHOTO_FORCE_LOGIN'])

@@ -241,7 +241,7 @@ def starFilter(graph, starArg, agent, photos):
         raise NotImplementedError("star == %r" % starArg)
 
 # could easily be wrong after edits
-_photosWithTopic = pylru.lrucache(500)
+_photosWithTopic = pylru.lrucache(2)
 
 def photosWithTopic(graph, topicDict, isVideo):
     """photos can be related to uri in a variety of ways: foaf:depicts,

@@ -23,11 +23,18 @@ components with state:
     - we can point to any existing trees; the layout is not special
     - we sometimes read from here for live data, so performance will sometimes be visible to end users
     - we can serve any file over http
+    API (internal)
+      GET /sourcefs/any/path.jpg (may need to return a modified time we can use to get newer results)
+      GET /something_for_listings_tbd maybe with modified-since time?
     
   blobstore
     - capabilities like gridfs or camlistore.
     - object addresses always come *from* the store, to support CAS.
     - this can serve the images over http
+    - does this handle syncing itself to higher-performance cloud storage?
+    API
+      POST /blob <- file data; content type header; cloud storage policy choices    -> uri
+      GET /{uri} 
     
   rdfstore
     - capabilities like sesame, including sparql/update
@@ -66,9 +73,15 @@ more components:
     - the public gets routes to this web server
     - uses rdf data to know if the requester can see a file or alt
     - can quickly answer allowed/disallowed for a list of files
-    - almost certainly runs a side cache since acl is hard. Need messages about every acl change?
+    - almost certainly runs a side cache since acl is hard. Need
+      messages about every acl change?
     - receive all edits to ACL
-    - this component will serve some paths that aren't under a root name 'aclserve', like just '/some/photo1.jpg'
+    - this component will serve some paths that aren't under a root
+      name 'aclserve', like just '/some/photo1.jpg'. That will be
+      called '/media/some/photo1.jpg' to avoid toplevel clashes.
+    API
+      GET /media/{any}
+      GET 
 
   tags
     - read tags from rdf
@@ -187,6 +200,7 @@ path study:
 /path/of/img1.jpg?size=thumb                   (serves the img)
 /path/of/img1.jpg/page                         (serves a set with the img)
 
+might be good- any other params that don't affect set that need to go in here?
 /set?date=2013-01-01#/path/of/img1.jpg         (current in hash)
 
 not good; mixed up params

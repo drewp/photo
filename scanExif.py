@@ -113,7 +113,7 @@ class ScanExif(object):
             try:
                 dateAndTime = fixTime(vals[timeKey])
                 break
-            except KeyError:
+            except (KeyError, TypeError):
                 pass
         if dateAndTime is not None:
             return [
