@@ -1,3 +1,5 @@
+import sys
+sys.path.append('/my/proj/sparqlhttp')
 from sparqlhttp.graph2 import SyncGraph
 
 import pymongo, bson
@@ -12,5 +14,5 @@ def getGraph():
 
 def getMonque():
     from pymongo import Connection
-    db = Connection(*networking.monqueMongo())['photoQueue']
+    db = Connection('bang', 27017)['photoQueue']
     return Monque(db)
