@@ -8,6 +8,7 @@ from xml.utils import iso8601
 from rdflib import URIRef, Literal, Variable
 log = logging.getLogger()
 from ns import RDF, RDFS, DCTERMS, PHO, SCOT
+import v2.imageset.client
 
 _twf = None
 
@@ -51,7 +52,8 @@ def saveTags(graph, foafUser, img, tagString, desc):
 
     for c in prevContexts:
         graph.remove([(None, None, None)], context=c)
-
+    v2.imageset.client.changed(img)
+        
 def getTagLabels(graph, foafUser, img):
     # check user read perms
     return [r['tag'] for r in graph.queryd(
