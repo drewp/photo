@@ -19,9 +19,15 @@ def searchRoot():
     return os.environ.get('PHOTO_SEARCH',
                           "http://bang:9096/")
 
+def monqueMongo():
+    return serviceHost, 27017
+    
 def shortenerRoot():
     return "http://%s:9079/" % serviceHost
 
+def imageSet():
+    return serviceHost, 8045
+    
 def commentProxy():
     return serviceHost, 9031, "/comments"
 

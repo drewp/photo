@@ -1,0 +1,22 @@
+<link rel="import" href="../elements/photo-image-set.html">
+<link rel="import" href="../elements/photo-thumbnail.html">
+<polymer-element name="photo-random-header" attributes="count">
+  <template>
+    <div>
+      randoms!
+      <button on-click="{{newSeed}}">Load new ones</button>
+    <photo-image-set sort="random" seed="{{seed}}" limit="3" out="{{iset}}"></photo-image-set>
+    </div>
+    <div>
+    <template repeat="{{img in iset.images}}">
+      <photo-thumbnail img="{{img}}"></photo-thumbnail>
+    </template>
+    </div>
+  </template>
+  <script>
+    Polymer("photo-random-header", {
+      ready: function() { this.newSeed(); },
+      newSeed: function() { this.seed = +new Date(); }
+    });
+  </script>
+</polymer-element>

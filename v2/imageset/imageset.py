@@ -71,14 +71,15 @@ results:
 import logging
 from klein import run, route
 from twisted.internet import reactor
-import sys, json, itertools, datetime, random, time, sha, itertools
-from rdflib import Literal, URIRef
+import sys, json, itertools, random, time, sha
+from rdflib import URIRef
 sys.path.append("../..")
 
 from db import getGraph
 from requestprofile import timed
 from oneimagequery import photoCreated
 from queryparams import queryFromParams
+import networking
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
@@ -114,7 +115,7 @@ class ImageIndex(object):
     def finishBackgroundIndexing(self):
         while self._toRead:
             self.update(self._toRead.pop())
-        self.updateSorts()
+        self.updateFinalSorts()
         
     def _updateMore(self):
         t1 = time.time()
@@ -123,20 +124,32 @@ class ImageIndex(object):
                 break
             uri = self._toRead.pop()
             self.update(uri)
-            if time.time() - t1 > .5:
+            if time.time() - t1 > 1:
                 break
 
-        self.updateSorts()
         if not self._toRead:
             log.info("background indexing is done")
+            self.updateFinalSorts()
             return
+        self.updateSorts()
         log.info("%s left to index", len(self._toRead))
-        reactor.callLater(.1, self._updateMore)
+        reactor.callLater(.01, self._updateMore)
 
     def updateSorts(self):
-        self.byTime = self.byUri.values()
-        self.byTime.sort(key=lambda d: (bool(d['t']), d['t'] or d['uri']))
+        now = time.time()
+        if now > getattr(self, '_lastSort', 0) + 30:
+            self._lastSort = now
+            self.byTime = self.byUri.values()
+            self.byTime.sort(key=lambda d: (bool(d['t']), d['t'] or d['uri']))
 
+            if len(self.shuffled) < 1000:
+                self.updateShuffle()
+        
+    def updateFinalSorts(self):
+        self.updateSorts()
+        self.updateShuffle()
+
+    def updateShuffle(self):
         self.shuffled = self.byTime[:]
         r = random.Random(987)
         r.shuffle(self.shuffled)
@@ -250,7 +263,7 @@ def main():
         result = iset.request(q)
         return json.dumps(result)
 
-    run("0.0.0.0", 8035)
+    run("0.0.0.0", networking.imageSet()[1])
 
 if __name__ == '__main__':
     main()
