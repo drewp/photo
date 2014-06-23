@@ -30,7 +30,7 @@ def randomDates(graph, n=3, rand=random, year=None):
 @print_timing
 def randomSet(graph, n=3, foafUser=None, seed=None, year=None, tags="without"):
     """
-    list of dicts with pic, filename, date
+    list of dicts with uri, filename, date
 
     foafUser isn't used yet, but someday it probably will for security
     regarding presence-of-tags
@@ -81,7 +81,7 @@ def randomSet(graph, n=3, foafUser=None, seed=None, year=None, tags="without"):
             continue
 
         retUris.add(pick['pic'])
-        ret.append({'pic': pick['pic'],
+        ret.append({'uri': pick['pic'],
                     'filename' : pick['filename'],
                     'date' : d})
     return ret
@@ -188,9 +188,11 @@ class Events(rend.Page):
 
     @print_timing
     def render_random(self, ctx, data):
+        
         for randRow in randomSet(self.graph, 3):
-            current = randRow['pic']
-            bindings = {Variable("pic") : current}
+            print 'randRow', randRow
+            current = randRow['uri']
+            bindings = {"pic" : current}
             tags = [[T.a(href=['/set?tag=', row['tag']])[row['tag']], ' ']
                     for row in self.graph.queryd(
                         """SELECT DISTINCT ?tag WHERE {

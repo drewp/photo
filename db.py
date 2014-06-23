@@ -1,3 +1,6 @@
+import sys
+sys.path.append("/home/drewp/projects/sparqlhttp")
+sys.path.append('/my/proj/sparqlhttp')
 from sparqlhttp.graph2 import SyncGraph
 
 import pymongo, bson
