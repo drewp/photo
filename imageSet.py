@@ -32,7 +32,7 @@ from scanFs import videoExtensions
 from mediaresource import Video2
 log = logging.getLogger()
 from ns import PHO, FOAF, RDF, RDFS
-import pystache.view # needs a git version newer than 0.3.1. easy_install https://github.com/defunkt/pystache/tarball/f543efac93b753914a20b9daaf84a51382fba445 or newer. Then you need to remove a patch if https://github.com/defunkt/pystache/issues/25 hasn't been addressed already
+from pystache import TemplateSpec, Renderer
 
 @print_timing
 def photoDate(graph, img):
@@ -116,7 +116,7 @@ class ImageSet(rend.Page):
             return json.dumps(view.photosInSetPlus())
           
         
-        ret = view.render()
+        ret = Renderer(search_dirs=['template/']).render(view)
         print "rendered view is %s" % len(ret)
         # after 65k, this gets truncated somewhere! get a new web server
         req.setHeader("Content-Type", "application/xhtml+xml")
@@ -215,13 +215,12 @@ class ImageSet(rend.Page):
         """
 
 
-class View(pystache.view.View):
+class View(TemplateSpec):
     template_name = "imageSet"
-    template_path = "template"
 
     def __init__(self, graph, desc, params, cookie, agent,
                  openidProxyHeader, forwardedFor):
-        pystache.view.View.__init__(self)
+        TemplateSpec.__init__(self)
         self.graph = graph
         self.desc = desc
         self.params, self.cookie, self.agent = params, cookie, agent
