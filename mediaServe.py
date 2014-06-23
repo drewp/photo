@@ -68,6 +68,8 @@ class Main(rend.Page):
         ct = (("video/webm" if size is Video2 else
                "application/binary") if r.isVideo() else
               "image/jpeg")
+        if uri.endswith('webm'):
+            ct = 'video/webm'
         return StaticCached(jpg, ct, mtime)
     
     def imageChild(self, ctx, uri):
