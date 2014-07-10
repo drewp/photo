@@ -5,6 +5,7 @@ from sparqlhttp.graph2 import SyncGraph
 
 import pymongo, bson
 sys.modules['pymongo.son'] = bson.son
+from pymongo import Connection
 
 from monque import Monque
 import networking
@@ -14,6 +15,5 @@ def getGraph():
     return SyncGraph('sesame', networking.graphRepoRoot()+'/photo', initNs=initNs)
 
 def getMonque():
-    from pymongo import Connection
-    db = Connection(*networking.monqueMongo())['photoQueue']
-    return Monque(db)
+    return Monque(connection=Connection(*networking.monqueMongo()),
+                  db='photoQueue')
