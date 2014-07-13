@@ -30,6 +30,9 @@ Polymer("photo-tag-edit", {
         self.$.tags.addEventListener('focus', function () {
             self.tags = self.$.tags.value;
         });
+        $(self.$.tags).keypress(function(e) {
+            if (e.which == 13) { e.preventDefault(); }
+        });
         
         //allTags = JSON.parse(d.allTags);
         var allTags = ['one', 'two', 'three', 'four', 'five'];
