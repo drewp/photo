@@ -1,0 +1,34 @@
+<polymer-element name="icon-checkbox" attributes="value background-image width height">
+  <!--
+  background-image is like url(img.png) where the image has unchecked on
+  the left half and checked on the right. width/height are for half the
+  image (i.e. the size of this element)
+  -->
+  <template>
+    <style>
+      /* make this elemnt as tall as the icon inside */
+     #icon {
+       -webkit-appearance: none;
+       cursor: pointer;
+     }
+     #icon[checked] {
+       background-position: -100% 0;
+     }
+    </style>
+
+    <input id="icon" type="checkbox" name="star" checked="{{value}}">
+  </template>
+  <script>
+    Polymer("icon-checkbox", {
+      ready: function() {
+        var elem = this.$.icon;
+        elem.style.width = this.width;
+        elem.style.height = this.height;
+        elem.style.backgroundImage = this['background-image'];
+      },
+      valueChanged: function() {
+        $(this.$.icon).attr('checked', this.value);
+      }
+    });
+  </script>
+</polymer-element>

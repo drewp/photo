@@ -22,10 +22,7 @@ Polymer("photo-image-set", {
             self.out = js;
             self.status = 'ok';
         });
-
     },
-
-    
     ready: function() {
         this.reloadSet();
     }

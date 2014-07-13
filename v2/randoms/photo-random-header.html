@@ -1,15 +1,26 @@
 <link rel="import" href="../elements/photo-image-set.html">
 <link rel="import" href="../elements/photo-thumbnail.html">
+<link rel="import" href="../elements/photo-tag-edit.html">
 <polymer-element name="photo-random-header" attributes="count">
   <template>
+    <style>
+
+     #row {
+       display: flex;
+       align-items: flex-end;
+       }
+    </style>
     <div>
       randoms!
       <button on-click="{{newSeed}}">Load new ones</button>
     <photo-image-set sort="random" seed="{{seed}}" limit="3" out="{{iset}}"></photo-image-set>
     </div>
-    <div>
+    <div id="row">
     <template repeat="{{img in iset.images}}">
+      <div class="tagImg">
       <photo-thumbnail img="{{img}}"></photo-thumbnail>
+      <div><photo-tag-edit img="{{img}}"></photo-tag-edit></div>
+      </div>
     </template>
     </div>
   </template>

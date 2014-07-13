@@ -1,0 +1,37 @@
+<link rel="import" href="../elements/icon-checkbox.html">
+<polymer-element name="photo-tag-edit" attributes="img">
+  <!-- may include a readonly mode if it thinks you can't write for this img -->
+  <template>
+    <style>
+     form {
+       border: 1px outset gray;
+       padding: 5px;
+       margin: 5px;
+       width: 300px;
+     }
+     icon-checkbox {
+       vertical-align: middle;
+     }
+     .tagMatches span {
+       color: white;
+       background: blue;
+       margin: 2px;
+       padding: 0 2px;
+     }
+    </style>
+    <form>
+      Tags:
+
+      <icon-checkbox
+        background-image="url(/static/star-icon-set/star-gold/star-gold24-pair.png)"
+        width="24px" height="24px"
+        value="{{star}}"></icon-checkbox>
+      
+      <input type="text" id="tags" value="{{tags}}">
+      <span id="status">{{status}}</span>
+    </form>
+  </template>
+  <script src="/static/jquery-2.1.1.min.js"></script>
+  <script src="/static/tag.js"></script>
+  <script src="photo-tag-edit.js"></script>
+</polymer-element>

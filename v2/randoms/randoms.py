@@ -1,3 +1,4 @@
+raise NotImplementedError("replaced by imageset")
 #!../../bin/python
 """
 this is probably also a param on the more-general set selection
