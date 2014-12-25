@@ -64,8 +64,9 @@ def getTags(graph, foafUser, img):
 
     # check user read perms
 
+    strings = graph.objects(img, PHO.tagString)
     return dict(
-        tagString=graph.value(img, PHO.tagString, default=''),
+        tagString='' + ' '.join(strings),
         tags=getTagLabels(graph, foafUser, img),
         desc=graph.value(img, RDFS.comment, default=''),
         )
