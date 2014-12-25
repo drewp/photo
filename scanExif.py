@@ -164,9 +164,12 @@ class ScanExif(object):
             if d/n > 10000:
                 pass # bogus, e.g. from Palm Pre
             else:
-                stmts.append((uri, EXIF['exposureTime'], 
-                              Literal(quotientNoExponent(n, d),
-                                      datatype=XS.decimal)))
+                try:
+                    stmts.append((uri, EXIF['exposureTime'], 
+                                  Literal(quotientNoExponent(n, d),
+                                          datatype=XS.decimal)))
+                except ZeroDivisionError:
+                    log.warn("can't use exposure time %r for %r", vals['Exposure_Time'], uri)
         return stmts
 
 
