@@ -11,8 +11,9 @@ sync to shared disk with names like
 
 """
 import boot
-import sys, os, argparse
+import sys, os, argparse, urllib
 from twisted.python.filepath import FilePath, _secureEnoughString
+from cyclone.httpclient import fetch
 from fileschanged import fileschanged
 log = boot.log
 
@@ -40,6 +41,8 @@ def copy(source, dest, mock):
                              source.getModificationTime()))
     tempDest.moveTo(dest)
     log.info("wrote %s" % dest.path)
+    fetch('http://bang:9042/', postdata=urllib.urlencode([('file', dest.path)]))
+    log.info("posted")
 
 def sync(f, outDir, newerthan, mock):
     out = outDir.child(f.basename().replace(' ', 'T').replace('.', '-', 2))
