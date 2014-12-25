@@ -17,3 +17,8 @@ def getMonque():
     from pymongo import Connection
     db = Connection(*networking.monqueMongo())['photoQueue']
     return Monque(db)
+
+if __name__ == '__main__':
+    getMonque()
+    getGraph().contains((None, None, None))
+    print "connected ok"
