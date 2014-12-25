@@ -64,7 +64,9 @@ def getTags(graph, foafUser, img):
 
     # check user read perms
 
-    strings = graph.objects(img, PHO.tagString)
+    strings = [r['s'] for r in
+               graph.queryd("SELECT ?s WHERE { ?img pho:tagString ?s }",
+                            initBindings={'img': img})]
     return dict(
         tagString='' + ' '.join(strings),
         tags=getTagLabels(graph, foafUser, img),
