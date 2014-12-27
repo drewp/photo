@@ -1,10 +1,12 @@
 Polymer("photo-thumbnail", {
-    ready: function() {
-        var self = this;
-        if (typeof self.img == 'string') {
-            self.img = {uri: self.img};
+    imgChanged: function() {
+        var img = this.img;
+        if (!img) {
+            this.imgSrc = this.uri = null;
+            return;
         }
-        self.imgSrc = self.img.uri.replace('http://', 'https://') + '?size=small';
+        this.uri = (typeof img == 'string') ? img : img.uri;
+        this.imgSrc = this.uri.replace('http://', 'https://') + '?size=small';
         // video marker, uri link, click action
         // preload control, etc
     }

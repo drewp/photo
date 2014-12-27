@@ -20,6 +20,11 @@ Polymer("photo-image-set", {
         }
         $.getJSON('/imageSet/set.json', params, function(js) {
             self.out = js;
+            var i=0;
+            self.out.images.forEach(function(img) {
+                img.i = i;
+                i++;
+            });
             self.status = 'ok';
         });
     },
