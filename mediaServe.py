@@ -3,7 +3,7 @@ requests for photos and videos are routed to this server
 
 """
 import boot
-import urllib, os, sys
+import urllib, os, sys, time
 from nevow import rend, inevow, static, appserver
 from rdflib import URIRef
 from twisted.web import http
@@ -20,9 +20,11 @@ class StaticCached(static.Data):
     """
     from http://twistedmatrix.com/pipermail/twisted-web/2005-March/001358.html
     """
-    def __init__(self, data, mime, mtime):
+    def __init__(self, data, mime, mtime, t1, t2):
         self.mtime = mtime
+        self.t1, self.t2 = t1, t2
         static.Data.__init__(self, data, mime)
+
     def renderHTTP(self, ctx):
         request = inevow.IRequest(ctx)
         request.setLastModified(self.mtime)
@@ -37,7 +39,12 @@ class StaticCached(static.Data):
         # non-public requests, and it has to work with trusted
         # intermediate caches that aren't reachable by users, which is
         # unrealistic security.
-        request.setHeader('Vary', 'Cookie')      
+        request.setHeader('Vary', 'Cookie')
+
+        request.setHeader('x-photo-viewable-time',
+                          '%.1fms' % ((self.t2 - self.t1) * 1000))
+        request.setHeader('x-photo-media-time',
+                          '%.1fms' % ((time.time() - self.t1) * 1000))
 
         return static.Data.renderHTTP(self, ctx)
 
@@ -61,7 +68,7 @@ class Main(rend.Page):
 
         return self.imageChild(ctx, uri)
 
-    def imageResource(self, uri, ctx):
+    def imageResource(self, uri, ctx, t1, t2):
         r = MediaResource(graph, uri)
         size = getRequestedSize(ctx)
         jpg, mtime = r.getImageAndMtime(size)
@@ -70,7 +77,7 @@ class Main(rend.Page):
               "image/jpeg")
         if uri.endswith('webm'):
             ct = 'video/webm'
-        return StaticCached(jpg, ct, mtime)
+        return StaticCached(jpg, ct, mtime, t1, t2)
     
     def imageChild(self, ctx, uri):
         """
@@ -79,14 +86,16 @@ class Main(rend.Page):
 
         in the url, take a tag to show. Display a checkbutton of whether the current image has that tag. Take key input to toggle the button. Post button changes as graph edits. click on the tag to go to an imageset of that tag.
         """
+        t1 = time.time()
         if not self.viewable(uri, ctx):
             request = inevow.IRequest(ctx)
             return self.nonViewable(request), ()
+        t2 = time.time()
 
         if ctx.arg('page'): # old; use {img}/page now
             raise NotImplementedError("request routed to the wrong service")
 
-        return self.imageResource(uri, ctx), ()
+        return self.imageResource(uri, ctx, t1, t2), ()
         
     def viewable(self, uri,  ctx):
         if os.environ.get('PHOTO_FORCE_LOGIN', ''):
