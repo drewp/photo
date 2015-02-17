@@ -88,7 +88,7 @@ class facts(object):
                  '2008-07-22'),
                 ] + auth.birthdays:
                 try:
-                    if (who in allDepicts or tag in allTags):
+                    if (who in allDepicts or Literal(tag) in allTags):
                         name = graph.value(
                             who, FOAF.name, default=graph.label(
                                 who, default=tag))
