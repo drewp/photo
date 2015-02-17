@@ -50,7 +50,9 @@ class MediaResource(object):
         self.graph, self.uri = graph, uri
 
     def isVideo(self):
-        return self.graph.contains((self.uri, RDF.type, PHO.Video))
+        if not hasattr(self, '_isVideo'):
+            self._isVideo = self.graph.contains((self.uri, RDF.type, PHO.Video))
+        return self._isVideo
 
     def videoProgress(self):
         """Done if we have the video, or a string explaining the status.
