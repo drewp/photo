@@ -21,7 +21,7 @@ class Poller(object):
             try:
                 ingest(f.open(), mock=mock, newImageCb=self.onNewImage)
             except Exception as e:
-                self.onNewImage("?", extra=" Error during ingest, pic might not be copied into photo site")
+                self.onNewImage("?", extra=" Error during ingest, pic from %r might not be copied into photo site" % f)
             if not mock:
                 f.move("/my/mail/drewp/.photoIncoming.done/new")
         self.lastScan = time.time()
@@ -36,7 +36,7 @@ class Poller(object):
             c3po.post(path='', payload={
                 'user' : u,
                 'msg' : 'new image from email: %s/page%s' % (uri, extra),
-                'mode' : 'xmpp'
+                'mode' : 'email'
                 }, headers={'content-type' :
                             'application/x-www-form-urlencoded'})
 
