@@ -13,12 +13,14 @@ def photoCreated(graph, uri):
         pass
 
     rows = list(graph.query("""
-       SELECT ?t WHERE {
+       SELECT ?t ?mail WHERE {
          { ?uri exif:dateTime ?t }
-         UNION { ?uri pho:fileTime ?t }
+         UNION { ?uri pho:fileTime ?t } .
+         OPTIONAL { ?mail dcterms:hasPart ?uri }
        } ORDER BY ?t LIMIT 1""", initBindings={'uri' : uri}))
-    if not rows:
-
+    # wrong: exif datetime is preferred over email time, but this is
+    # still picking email time.
+    if not rows or rows[0]['mail']:
         rows = graph.query("""SELECT ?t WHERE {
              ?email a pho:Email ; dcterms:created ?t ; dcterms:hasPart ?uri .
            }""", initBindings={'uri' : uri})
