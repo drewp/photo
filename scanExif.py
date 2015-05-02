@@ -89,6 +89,9 @@ class ScanExif(object):
         xml = xml.replace("<User_Comment>\x12\xf8\x0f;</User_Comment>", "")
         xml = xml.replace("<User_Comment>\x12\xf8\x0f;\x01</User_Comment>", "")
 
+        # from note 4, selfie mode
+        xml = xml.replace("<User_Comment>\x11\xab\x11\xab</User_Comment>", "")
+        
         try:
             root = ElementTree.fromstring(xml)
         except ElementTree.ParseError, e:
