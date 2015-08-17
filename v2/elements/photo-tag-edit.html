@@ -1,8 +1,10 @@
+<link rel="import" href="https://bigasterisk.com/lib/polymer/1.0.9/polymer/polymer.html">
 <link rel="import" href="../elements/icon-checkbox.html">
-<polymer-element name="photo-tag-edit" attributes="img">
-  <!-- may include a readonly mode if it thinks you can't write for this img -->
-  <template>
-    <style>
+
+<dom-module id="photo-tag-edit">
+  <link rel="stylesheet" href="/randoms/aehlke-tag-it-6ccd2de/css/jquery.tagit.css">
+  <link rel="stylesheet" href="/randoms/aehlke-tag-it-6ccd2de/css/tagit.ui-zendesk.css">
+  <style>
      form {
        border: 1px outset gray;
        padding: 5px;
@@ -19,19 +21,18 @@
        padding: 0 2px;
      }
     </style>
+  <template>
     <form>
       Tags:
 
-      <icon-checkbox
-        background-image="url(/static/star-icon-set/star-gold/star-gold24-pair.png)"
-        width="24px" height="24px"
-        value="{{star}}"></icon-checkbox>
+      <icon-checkbox background-image="url(/static/star-icon-set/star-gold/star-gold24-pair.png)" width="24px" height="24px" value="{{star}}"></icon-checkbox>
       
-      <input type="text" id="tags" value="{{tags}}">
+      <input type="text" id="tags">
       <span id="status">{{status}}</span>
     </form>
   </template>
   <script src="/static/jquery-2.1.1.min.js"></script>
-  <script src="/static/tag.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js" type="text/javascript" charset="utf-8"></script>
+  <script src="/randoms/aehlke-tag-it-6ccd2de/js/tag-it.min.js" type="text/javascript" charset="utf-8"></script>
   <script src="photo-tag-edit.js"></script>
-</polymer-element>
+</dom-module>

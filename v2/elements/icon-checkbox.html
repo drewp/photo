@@ -1,11 +1,7 @@
-<polymer-element name="icon-checkbox" attributes="value background-image width height">
-  <!--
-  background-image is like url(img.png) where the image has unchecked on
-  the left half and checked on the right. width/height are for half the
-  image (i.e. the size of this element)
-  -->
-  <template>
-    <style>
+<link rel="import" href="https://bigasterisk.com/lib/polymer/1.0.9/polymer/polymer.html"></script>
+
+<dom-module id="icon-checkbox">
+  <style>
       /* make this elemnt as tall as the icon inside */
      #icon {
        -webkit-appearance: none;
@@ -15,20 +11,31 @@
        background-position: -100% 0;
      }
     </style>
+  <template>
 
-    <input id="icon" type="checkbox" name="star" checked="{{value}}">
+    <input id="icon" type="checkbox" name="star" checked="{{value::change}}">
   </template>
   <script>
-    Polymer("icon-checkbox", {
-      ready: function() {
+    Polymer({
+      is: 'icon-checkbox',
+      properties: {
+        backgroundImage: { notify: true },
+        height: { notify: true },
+        value: {
+          notify: true,
+          observer: 'valueChanged'
+        },
+        width: { notify: true }
+      },
+      ready: function () {
         var elem = this.$.icon;
         elem.style.width = this.width;
         elem.style.height = this.height;
-        elem.style.backgroundImage = this['background-image'];
+        elem.style.backgroundImage = this.backgroundImage;
       },
-      valueChanged: function() {
+      valueChanged: function () {
         $(this.$.icon).attr('checked', this.value);
       }
     });
   </script>
-</polymer-element>
+</dom-module>

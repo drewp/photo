@@ -1,6 +1,7 @@
-<polymer-element name="photo-thumbnail" attributes="img">
-  <template>
-    <style>
+<link rel="import" href="https://bigasterisk.com/lib/polymer/1.0.9/polymer/polymer.html"></script>
+
+<dom-module id="photo-thumbnail">
+  <style>
       .thumbnail {
        margin: 3px;
        border: 1px solid gray;
@@ -13,10 +14,11 @@
        background: gray;
      }
     </style>
+  <template>
     <div class="thumbnail">
-      <div class="img"><a href="{{uri}}"><img src="{{imgSrc}}"></a></div>
-      <div class="below"><a href="{{uri}}/page">Page for this image</a></div>
+      <div class="img"><a href$="{{uri}}"><img src="{{imgSrc}}"></a></div>
+      <div class="below"><a href$="{{computeHref(uri)}}">Page for this image</a></div>
     </div>
   </template>
   <script src="photo-thumbnail.js"></script>
-</polymer-element>
+</dom-module>

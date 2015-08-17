@@ -1,33 +1,44 @@
+<link rel="import" href="https://bigasterisk.com/lib/polymer/1.0.9/polymer/polymer.html"></script>
+
 <link rel="import" href="../elements/photo-image-set.html">
 <link rel="import" href="../elements/photo-thumbnail.html">
 <link rel="import" href="../elements/photo-tag-edit.html">
-<polymer-element name="photo-random-header" attributes="count">
-  <template>
-    <style>
 
-     #row {
-       display: flex;
-       align-items: flex-end;
-       }
-    </style>
+<dom-module id="photo-random-header">
+  <style>
+   #row {
+     display: flex;
+     align-items: flex-end;
+   }
+  </style>
+  <template>
     <div>
       randoms!
-      <button on-click="{{newSeed}}">Load new ones</button>
-    <photo-image-set sort="random" seed="{{seed}}" limit="3" out="{{iset}}"></photo-image-set>
+      <button on-click="newSeed">Load new ones</button>
+      <photo-image-set sort="random" seed="{{seed}}" limit="3" out="{{iset}}" only-tagged=""></photo-image-set>
     </div>
     <div id="row">
-    <template repeat="{{img in iset.images}}">
-      <div class="tagImg">
-      <photo-thumbnail img="{{img}}"></photo-thumbnail>
-      <div><photo-tag-edit img="{{img}}"></photo-tag-edit></div>
-      </div>
-    </template>
+      <template is="dom-repeat" items="{{iset.images}}">
+        <div class="tagImg">
+          <photo-thumbnail img="{{item}}"></photo-thumbnail>
+          <div><photo-tag-edit img="{{item}}"></photo-tag-edit></div>
+        </div>
+      </template>
     </div>
   </template>
   <script>
-    Polymer("photo-random-header", {
-      ready: function() { this.newSeed(); },
-      newSeed: function() { this.seed = +new Date(); }
-    });
+   Polymer({
+     is: 'photo-random-header',
+     properties: {
+       count: { notify: true },
+       iset: { type: Object }
+     },
+     ready: function () {
+       this.newSeed();
+     },
+     newSeed: function () {
+       this.seed = +new Date();
+     }
+   });
   </script>
-</polymer-element>
+</dom-module>
