@@ -1,13 +1,19 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <link rel="import" href="/static/polymer/components/bower_components/core-list/core-list.html">
-    <link rel="import" href="photo-image-set.html">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+      <script src="https://bigasterisk.com/lib/jquery-2.0.3.min.js"></script>
+    <script src="https://bigasterisk.com/lib/polymer/0.5.2/webcomponentsjs/webcomponents.js"></script>
+    <link rel="import" href="https://bigasterisk.com/lib/polymer/0.5.2/polymer/polymer.html">
+    <link rel="import" href="https://bigasterisk.com/lib/polymer/0.5.2/core-list/core-list.html">
+    <link rel="import" href="photo-image-set.html?v2">
     <link rel="import" href="photo-thumbnail.html">
     <style>
      .imageRow {
-       width: 460px;
-       height: 320px;
+       width: 266px;
+       height: 230px;
        border-bottom: 1px solid #ddd;
        padding: 4px;
        overflow: hidden;
@@ -15,22 +21,31 @@
     </style>
   </head>
   <body fit layout vertical>
+    top of screen
+    <div id="error"></div>
+    
     <template is="auto-binding">
       <h2>imageset search demo:</h2>
       <div flex layout vertical>
-        <photo-image-set sort="random" seed="{{seed}}" limit="1000" out="{{iset}}"></photo-image-set>
+        <photo-image-set sort="random" seed="{{seed}}" limit="100" out="{{iset}}"></photo-image-set>
         <div>found {{iset.images.length}}</div>
-        <div flex layout vertical relative>
-        <core-list data="{{iset.images}}" fit grid="true" width="460">
-          <template>
-            <div class="imageRow">
-              {{index}} {{model.i}} {{model.uri}}
-              <photo-thumbnail img="{{model.uri}}"></photo-thumbnail>
-            </div>
-          </template>
-        </core-list>
+        <div flex layout vertical relative style="height: 500px; overflow: auto">
+          <core-list data="{{iset.images}}" grid="true"  width="266" height="230" style="height: 500px">
+            <template>
+              <div class="imageRow">
+                row
+                <photo-thumbnail img="{{(index + 1) && model}}"></photo-thumbnail>
+              </div>
+            </template>
+          </core-list>
         </div>
       </div>
+      <div>bottom of screen</div>
     </template>
+    <script>
+     setInterval(function() {
+        $("#error").text($("core-list")[0].getScrollTop());
+       }, 500);
+      </script>
   </body>
 </html>
