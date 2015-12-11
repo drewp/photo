@@ -13,6 +13,6 @@ def videoSize(filename, probe=None):
     """also works for jpg. i'm not sure if it's slow"""
     if probe is None:
         probe = avprobe(filename)
-    m = re.search(r'Video.*?(\d+)x(\d+)', probe)
+    m = re.search(r'Video.*?([1-9]\d+)x(\d+)', probe)
     w, h = map(int, m.groups())
     return w, h
