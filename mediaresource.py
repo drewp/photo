@@ -4,7 +4,6 @@ depends on exiftool program from libimage-exiftool-perl ubuntu package
 from __future__ import division
 import os, hashlib, time, random, string, subprocess, urllib, re, logging, tempfile
 from twisted.python.util import sibpath
-from db import getMonque
 from StringIO import StringIO
 import Image
 from lib import print_timing
@@ -13,16 +12,15 @@ from scanFs import videoExtensions
 from dims import fitSize, videoSize
 log = logging.getLogger()
 from urls import photoUri
-
-class StillEncoding(ValueError):
-    pass
-
-class Done(object):
-    """video is done encoding"""
+import worker
+from worker import makeDirToThumb
 
 class Full(object): pass
 class Video2(object): "half-size video"
 
+class StillEncoding(ValueError):
+    pass
+    
 sizes = {'thumb' : 75,
          'medium' : 250,
          'large' : 600,
@@ -37,10 +35,6 @@ def getRequestedSize(ctx):
 
 _lastOpen = None, None
 
-monque = getMonque()
-
-class FailedStatus(str):
-    pass
 
 class MediaResource(object):
     """
@@ -53,36 +47,6 @@ class MediaResource(object):
         if not hasattr(self, '_isVideo'):
             self._isVideo = self.graph.contains((self.uri, RDF.type, PHO.Video))
         return self._isVideo
-
-    def videoProgress(self):
-        """Done if we have the video, or a string explaining the status.
-        If the string is a FailedStatus, the job is not progressing"""
-
-        log.info("progress on %s" % self.uri)
-        if not os.path.exists(self._sourcePath()):
-            return "source file %r not found" % self._sourcePath()
-        if os.path.exists(self._thumbPath(Video2)):
-            return Done
-
-        progress = self.hasQueuedJob(returnProgress=True)
-        if progress is not None:
-            return progress
-
-        return "no job found"
-
-    def hasQueuedJob(self, returnProgress=False):
-        """is there a celery job already running or finished for this uri?"""
-        coll = monque.get_queue_collection(monque._workorder_defaults['queue'])
-        jobs = list(coll.find({"body.message.args" : self.uri}))
-        if returnProgress:
-            if jobs:
-                if jobs[0]['retries'] == 0:
-                    return FailedStatus('conversion failed; no more retries')
-                return jobs[0].get('progress', 'queued')
-            else:
-                return None
-        else:
-            return bool(jobs)
 
     def getSize(self, size):
         """pass photo size or thumb boundary size, get (w,h)
@@ -97,18 +61,12 @@ class MediaResource(object):
         # if it's Full, you can just get the size of the source file;
         # you don't have to strip the exif!
 
+        
         jpg, mtime = self.getImageAndMtime(size)
-        return Image.open(StringIO(jpg)).size
+        img = Image.open(StringIO(jpg))
+        return img.size
 
-    def requestVideo(self):
-        """client wants to render a <video> tag of this resource. It
-        will next ask for videoProgress and decide what to do from
-        there, but this method is where we trigger a job if needed"""
-        if (not os.path.exists(self._thumbPath(Video2)) and
-            not self.hasQueuedJob()):
-            self.enqueueVideoEncode()
-
-    def getImageAndMtime(self, size):
+    def getImageAndMtime(self, size, useMp4=False):
         """
         most important method.
 
@@ -129,7 +87,7 @@ class MediaResource(object):
                 try:
                     return self._returnCached(size)
                 except IOError:
-                    self.enqueueVideoEncode()                
+                    self.videoProgress()
                     raise StillEncoding()
             else:
                 raise NotImplementedError(
@@ -158,64 +116,14 @@ class MediaResource(object):
         enqueueVideoEncode for a queued encode. """
 
         if self.isVideo():
-            self.enqueueVideoEncode()
+            self.videoProgress()
         else:
             for size in [75,250,600]:
                 self.getImageAndMtime(size)
 
-    def enqueueVideoEncode(self):
-        """non-blocking. starts a video encoding if we don't have one"""
-        thumbPath = self._thumbPath(Video2)
-        if not os.path.exists(thumbPath) and not self.hasQueuedJob():
-            log.info("%r didn't exist; enqueuing a new encode job", thumbPath)
-            # there may be one running, and we just started a second
-            # one! look at the job list here.
-
-            # this could start a second conversion while the first is going on!
-            _makeDirToThumb(thumbPath)
-
-            # live site asking for a video
-
-            # if existing job, figure out its progress and don't make a new one
-            # else:
-
-            import worker
-            monque.enqueue(worker.runVideoEncode(self.uri))
-
-    def runVideoEncode(self, onProgress=None):
-        """block for the whole encode process"""
-        sourcePath = self._sourcePath()
-        thumbPath = self._thumbPath(Video2)
-        log.info("encodevideo %s %s" % (sourcePath, thumbPath))
-        p = subprocess.Popen(['/my/site/photo/encode/encodevideo',
-                               sourcePath, thumbPath],
-                             stderr=subprocess.PIPE)
-        buf = ""
-        allStderr = ""
-        while True:
-            chunk = p.stderr.read(1)
-            if not chunk:
-                break
-            buf += chunk
-            allStderr += chunk
-            if buf.endswith('\r'):
-                if onProgress:
-                    m = re.search(
-                        r'frame= *(\d+).*fps= *(\d+).*time= *([\d\.]+)', buf)
-                    if m is None:
-                        onProgress("running")
-                    else:
-                        onProgress("encoded %s sec so far, %s fps" %
-                                   (m.group(3), m.group(2)))
-                buf = ""
-        log.info("encodevideo finished")
-        if p.poll():
-            log.warn("all the stderr output: %s" % allStderr)
-            raise ValueError("process returned %s" % p.poll())
-
     def _fullVideoFile(self):
         # might be 100s of MBs!
-        s = self._sourcePath()
+        s = self.sourcePath()
         return open(s).read(), os.path.getmtime(s)
 
     def _strippedFullRes(self):
@@ -225,14 +133,22 @@ class MediaResource(object):
         should probably be moved inside of _runPhotoResize to be more
         transparent of an optimization
         """
-        s = self._sourcePath()
+        s = self.sourcePath()
         return jpgWithoutExif(s), os.path.getmtime(s)
 
+    def videoProgress(self):
+        """
+        client wants to render a <video> tag of this resource. Either
+        we're ready for it to call feat.getSize(Video2) and serve a
+        <video> tag, or we're mid-run (and we have a progress report).
+        """
+        return worker.videoProgress(self.sourcePath(), self._thumbPath(Video2))
+                
     def _runVideoThumbnail(self):
         # this is not caching yet but it should
         tf = tempfile.NamedTemporaryFile()
         subprocess.check_call(['/usr/bin/ffmpegthumbnailer',
-                               '-i', self._sourcePath(),
+                               '-i', self.sourcePath(),
                                '-o', tf.name,
                                '-c', 'jpeg',
                                '-s', str(sizes['thumb'])])
@@ -243,7 +159,7 @@ class MediaResource(object):
         global _lastOpen
 
         thumbPath = self._thumbPath(maxSize)
-        _makeDirToThumb(thumbPath)
+        makeDirToThumb(thumbPath)
         
         log.info("resizing %s to %s in %s" % (self.uri, maxSize, thumbPath))
 
@@ -295,13 +211,13 @@ class MediaResource(object):
             initBindings={'uri' : self.uri})
         if not sources:
             isAlt = False
-            source = self._sourcePath()
+            source = self.sourcePath()
             ext = self.uri
         else:
             isAlt = True
             up = MediaResource(self.graph, sources[0]['source'])
             # this could repeat- alts of alts. not handled yet.
-            source = up._sourcePath()
+            source = up.sourcePath()
             ext = up.uri
         
         img = Image.open(source)
@@ -345,7 +261,7 @@ class MediaResource(object):
             cksum = hashlib.md5(thumbUrl).hexdigest()
             return "/var/cache/photo/%s/%s/%s" % (cksum[:2], cksum[2:4], cksum[4:])
 
-    def _sourcePath(self):
+    def sourcePath(self):
         """filesystem path to the source image"""
         # uri like http://photo.bigasterisk.com/digicam/housewarm/00023.jpg
         #         means /my/pic/digicam/housewarm/00023.jpg
@@ -354,16 +270,9 @@ class MediaResource(object):
             self.uri[len("http://photo.bigasterisk.com/"):])
 
     def _sourceExists(self):
-        return os.path.exists(self._sourcePath())
+        return os.path.exists(self.sourcePath())
 
 
-def _makeDirToThumb(path):
-    try:
-        os.makedirs(os.path.split(path)[0])
-    except OSError:
-        pass # if the dir can't be made (as opposed to exists
-             # already), we'll get an error later
-    
 def jpgWithoutExif(filename):
     """this is meant to remove GPS data, and I'm just removing
     everything.

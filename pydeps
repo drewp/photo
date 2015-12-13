@@ -14,10 +14,11 @@ klein==0.2.3
 lxml==3.1beta1
 mock==1.0.1
 nose==1.3.3
-git+git://github.com/drewp/monque.git@386dbef64752c4e3814db94d12aa7b75d335cc80
+#git+git://github.com/drewp/monque.git@386dbef64752c4e3814db94d12aa7b75d335cc80
+celery==3.1.19
 pyinotify==0.9.4
 pylru==1.0.6
-pymongo==2.7.1
+pymongo==3.2
 pystache==0.5.4
 python-dateutil==2.2
 rdflib==4.1.2

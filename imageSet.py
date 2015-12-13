@@ -18,7 +18,8 @@ from nevow import loaders, rend, tags as T, inevow, url, flat
 from rdflib import URIRef, Literal
 from twisted.web.client import getPage
 from isodate.isodates import parse_date, date_isoformat
-from mediaresource import Full, sizes, MediaResource, Done, FailedStatus
+from mediaresource import Full, sizes, MediaResource
+from worker import Done, FailedStatus
 from urls import localSite, absoluteSite
 from imageurl import ImageSetDesc, photosWithTopic, NoSetUri
 from edit import writeStatements
@@ -305,7 +306,6 @@ class View(TemplateSpec):
         feat = MediaResource(self.graph, current)
 
         if feat.isVideo():
-            feat.requestVideo()
             progress = feat.videoProgress()
             if progress is Done:
                 w, h = feat.getSize(Video2)
