@@ -128,7 +128,7 @@ class ImageSet(rend.Page):
             return dict((k, getattr(view, k)()) for k in keys)
         return {
             'topBar' : v("setLabel storyModeUrl intro".split()),
-            'featured' : v("currentLabel prevNextDateButtons stepButtons featured actionsAllowed aclWidget uploadButton publicShareButton related otherSizeLinks link debugRdf ".split()),
+            'featured' : v("currentLabel prevNextDateButtons stepButtons featured actionsAllowed aclWidget uploadButton publicShareButton related otherSizeLinks link debugRdf localPath".split()),
             'featuredMeta' : v("facts allowedToWriteMeta".split()),
             # this one should be omitted when the client already had the right set
             'photosInSet' : v(" starLinkAll starLinkOnly photosInSet setAclWidget".split()),
@@ -424,6 +424,12 @@ class View(TemplateSpec):
                         }.get(s, str(sizes[s])))
             for s in avail]
 
+    def localPath(self):
+        cur = self.desc.currentPhoto()
+        if cur is None:
+            return '(none)'
+        return MediaResource(self.graph, cur).sourcePath()
+        
     def link(self):
         current = self.desc.currentPhoto()
         if current is None:
