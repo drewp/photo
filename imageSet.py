@@ -537,7 +537,8 @@ class View(TemplateSpec):
         current = self.desc.currentPhoto()
         if not current:
             return None
-        return 'http://bang:8080/openrdf-workbench/repositories/photo/explore?' +urllib.urlencode([('resource', '<'+current+'>')])
+        param = '<%s>' % current
+        return 'http://bang:8080/openrdf-workbench/repositories/photo/explore?' +urllib.urlencode([('resource', param)])
 
     def nextImagePreload(self):
         _, nextImg = self.prevNext()
