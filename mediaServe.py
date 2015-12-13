@@ -71,10 +71,19 @@ class Main(rend.Page):
     def imageResource(self, uri, ctx, t1, t2):
         r = MediaResource(graph, uri)
         size = getRequestedSize(ctx)
-        jpg, mtime = r.getImageAndMtime(size)
-        ct = (("video/webm" if size is Video2 else
-               "application/binary") if r.isVideo() else
-              "image/jpeg")
+        useMp4 = ctx.arg('type') == 'mp4'
+        jpg, mtime = r.getImageAndMtime(size, useMp4=useMp4)
+
+        if r.isVideo():
+            if size is Video2:
+                if useMp4:
+                    ct = 'video/mp4'
+                else:
+                    ct = 'video/webm'
+            else:
+                ct = 'application/binary'
+        else:
+            ct = 'image/jpeg'
         if uri.endswith('webm'):
             ct = 'video/webm'
         return StaticCached(jpg, ct, mtime, t1, t2)

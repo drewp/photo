@@ -87,7 +87,7 @@ class MediaResource(object):
                 return self._fullVideoFile()
             elif size is Video2:
                 try:
-                    return self._returnCached(size)
+                    return self._returnCached(size, useMp4=useMp4)
                 except IOError:
                     self.videoProgress()
                     raise StillEncoding()
@@ -107,8 +107,8 @@ class MediaResource(object):
                     jpg = self._runPhotoResize(size)
                     return jpg.getvalue(), time.time()
 
-    def _returnCached(self, size):
-        thumbPath = self._thumbPath(size)
+    def _returnCached(self, size, useMp4=False):
+        thumbPath = self._thumbPath(size, useMp4=useMp4)
         f = open(thumbPath)
         return f.read(), os.path.getmtime(thumbPath)
 
@@ -254,10 +254,11 @@ class MediaResource(object):
                             int(w * desc[PHO.x2].toPython()),
                             int(h * desc[PHO.y2].toPython())))
 
-    def _thumbPath(self, maxSize):
+    def _thumbPath(self, maxSize, useMp4=False):
         if maxSize is Video2:
             h = hashlib.md5(self.uri + "?size=video2").hexdigest()
-            return '/var/cache/photo/video/%s/%s.webm' % (h[:2], h[2:])
+            ext = 'mp4' if useMp4 else 'webm'
+            return '/var/cache/photo/video/%s/%s.%s' % (h[:2], h[2:], ext)
         else:
             thumbUrl = self.uri + "?size=%s" % maxSize
             cksum = hashlib.md5(thumbUrl).hexdigest()

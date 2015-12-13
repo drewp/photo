@@ -29,7 +29,11 @@
             {{#featured}}
 
             {{#video}}
-            <video src="{{src}}" controls="1" preload="1" width="{{width}}" height="{{height}}"/>
+              <video controls="1" preload="1" width="{{width}}" height="{{height}}">
+                {{#sources}}
+                  <source src="{{src}}" type="{{type}}"></source>
+                {{/sources}}
+              </video>
             {{/video}}
             {{#videoNotReady}}
             <div class="videoProgress">Video is loading: {{progress}}</div>

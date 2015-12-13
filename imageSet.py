@@ -309,9 +309,14 @@ class View(TemplateSpec):
             progress = feat.videoProgress()
             if progress is Done:
                 w, h = feat.getSize(Video2)
-                return dict(video=dict(src=currentLocal+"?size=video2",
-                                       width=600,
-                                       height=600 / w * h))
+                return dict(
+                    video=dict(
+                        sources=[
+                            dict(src=currentLocal+"?size=video2", type='video/webm'),
+                            dict(src=currentLocal+"?size=video2&type=mp4", type='video/mp4')
+                        ],
+                        width=600,
+                        height=600 / w * h))
             else:
                 return dict(videoNotReady=dict(
                     progress=progress,
@@ -319,7 +324,9 @@ class View(TemplateSpec):
         else:
             try:
                 size = feat.getSize(sizes["large"])
-            except (ValueError, IOError):
+            except (ValueError, IOError) as e:
+                log.warn('current=%r', current)
+                import traceback;traceback.print_exc()
                 size = (0,0)
             marg = (602 - 2 - size[0]) // 2
             return dict(image=dict(
