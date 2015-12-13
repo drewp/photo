@@ -5,7 +5,7 @@ from logging import getLogger, WARN, INFO, basicConfig
 getLogger("restkit.client").setLevel(WARN)
 getLogger("restkit.conn").setLevel(WARN)
 getLogger("timing").setLevel(WARN)
-basicConfig(level=INFO)
+basicConfig(level=INFO, format="%(asctime)s %(levelname)s %(name)s %(filename)s:%(lineno)d %(message)s")
 
 log = getLogger()
 
