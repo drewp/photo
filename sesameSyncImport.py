@@ -10,6 +10,7 @@ from sparqlhttp.syncimport import SyncImport, IMP
 from _xmlplus.utils import iso8601
 from scanFs import ScanFs
 from scanExif import ScanExif
+from mediaresource import MediaResource
 from fileschanged import allFiles
 from picdirs import picSubDirs
 import networking
@@ -81,6 +82,9 @@ def onChange(filename):
         if picUri is not None:
             # this will fail on videos (though i wish i could get the Pre metadata out of them)
             scanExif.addPic(picUri, rerunScans=True)
+            mr = MediaResource(graph, picUri)
+            if mr.isVideo():
+                mr.videoProgress()
             # todo: freshen thumbs here too? that should be on a lower
             # priority queue than getting the exif/file data
 
@@ -129,6 +133,7 @@ class FileChanged(PrettyErrorHandler, cyclone.web.RequestHandler):
         fileArg = self.get_argument("file")
         if not fileArg:
             raise ValueError("missing file")
+        log.info('post onChange(%r)' % fileArg)
         onChange(fileArg)
         self.write('ok\n')
         
