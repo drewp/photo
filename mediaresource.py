@@ -42,6 +42,8 @@ class MediaResource(object):
     """
     def __init__(self, graph, uri):
         self.graph, self.uri = graph, uri
+        if uri is None:
+            raise TypeError
 
     def isVideo(self):
         if not hasattr(self, '_isVideo'):
