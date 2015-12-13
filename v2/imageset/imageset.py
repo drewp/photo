@@ -251,6 +251,7 @@ def main():
     @route('/update', methods=['POST'])
     def update(request):
         index.update(URIRef(request.args['uri']))
+        # schedule updateSorts? maybe they need to schedule themselves
         return 'indexed'
     
     @route('/set.json')
