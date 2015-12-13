@@ -1,7 +1,6 @@
 Genshi==0.7
 Nevow==0.10.0
-PIL==1.1.7
-PyXML==0.8.4
+Pillow==3.0.0
 Twisted==14.0.0
 argparse==1.2.1
 cyclone==1.1

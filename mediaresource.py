@@ -5,7 +5,7 @@ from __future__ import division
 import os, hashlib, time, random, string, subprocess, urllib, re, logging, tempfile
 from twisted.python.util import sibpath
 from StringIO import StringIO
-import Image
+from PIL import Image
 from lib import print_timing
 from ns import RDF, PHO
 from scanFs import videoExtensions
