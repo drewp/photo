@@ -1,0 +1,3 @@
+#!/bin/zsh
+
+for x ($@) { curl -d file=`urlquote $x:A` http://bang:9042/ }
