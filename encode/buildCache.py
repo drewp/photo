@@ -18,7 +18,7 @@ testing? use this to remove the last 24h of thumbs:
 import sys
 sys.path.append("/my/site/photo")
 import boot
-import subprocess, time, optparse, logging
+import subprocess, time, optparse, logging, traceback
 from multiprocessing.dummy import Pool, Queue, Process
 
 from urls import photoUri
@@ -33,22 +33,28 @@ def ProgressReport(q, total):
     lastReportStart = time.time()
     lastReportFiles = 0
     reportStep = 5
-   
-    for item in iter(q.get, 'END'):
-        seen = seen + 1
-        now = time.time()
-        if now > lastReportStart + reportStep:
-            perFile = (now - lastReportStart) / (seen - lastReportFiles)
-            log.info("finished %s of %s: %s, est %s min left" %
-                     (seen, total, item, round((total - seen) * perFile / 60)))
-            lastReportStart = now
+    try:
+        for item in iter(q.get, 'END'):
+            seen = seen + 1
+            now = time.time()
+            if now > lastReportStart + reportStep:
+                perFile = (now - lastReportStart) / (seen - lastReportFiles)
+                log.info("finished %s of %s: %s, est %s min left" %
+                         (seen, total, item, round((total - seen) * perFile / 60)))
+                lastReportStart = now
+    except Exception:
+        traceback.print_exc()
+        raise
+        
+    log.info("reporter is done")
 
 def findFiles(opts):
     cmd = ["/usr/bin/find"]
     cmd += picSubDirs(quick=opts.quick)
     cmd += "-regextype posix-egrep -name .xvpics -prune -type f -o".split()
+    exts = videoExtensions if opts.video else (imageExtensions + videoExtensions)
     cmd += ['(', '-iregex',
-            r'.*\.(%s)' % '|'.join(e.strip('.') for e in imageExtensions + videoExtensions), ')']
+            r'.*\.(%s)' % '|'.join(e.strip('.') for e in exts), ')']
     log.debug(repr(cmd))
     files = [f.strip() for f in subprocess.Popen(cmd,
                      stdout=subprocess.PIPE).communicate()[0].splitlines()]
@@ -68,20 +74,23 @@ class Build(object):
         files = findFiles(opts)
 
         self.progressQueue = Queue()
-        Process(target=ProgressReport, args=(self.progressQueue, len(files))).start()
+        reporter = Process(target=ProgressReport,
+                           args=(self.progressQueue, len(files)))
+        reporter.start()
         result = pool.map(self.cacheFile, enumerate(files), chunksize=5)
-        #result = []
-        #for x in enumerate(files):
-        #    self.cacheFile(x)
-
         self.progressQueue.put('END')
-        print "finished, %s results" % len(result)
+        log.info("finished, %s results", len(result))
+        reporter.join()
 
     def cacheFile(self, (i, filename)):
         log.debug("cacheFile %s" % filename)
-        uri = photoUri(filename)
-        m = MediaResource(self.graph, uri)
-        m.cacheAll()
+        try:
+            uri = photoUri(filename)
+            m = MediaResource(self.graph, uri)
+            m.cacheAll()
+        except Exception:
+            traceback.print_exc()
+            
         self.progressQueue.put("%s" % filename)
 
 
@@ -90,7 +99,7 @@ if __name__ == '__main__':
     parser.add_option("--quick", action="store_true", help="only scan a few files")
     parser.add_option("--pat", help="only scan files with this substring")
     parser.add_option("-d", action="store_true", help="debug logs")
-    parser.add_option("--grid", action="store_true", help="run resizes as jobs on SGE grid")
+    parser.add_option("--video", action="store_true", help="just videos")
     opts, args = parser.parse_args()
 
     log = boot.log
