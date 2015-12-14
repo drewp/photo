@@ -168,9 +168,9 @@ class MediaResource(object):
         # this is meant to reduce decompress calls when we're making
         # multiple resizes of a new image
         if _lastOpen[0] == self.uri:
-            img, ext, isAlt = _lastOpen[1], self.uri, _lastOpen[2]
+            img, isAlt = _lastOpen[1], _lastOpen[2]
         else:
-            img, ext, isAlt = self._getSourceImage()
+            img, isAlt = self._getSourceImage()
             _lastOpen = self.uri, img, isAlt
 
         if maxSize is not Full:
@@ -180,11 +180,10 @@ class MediaResource(object):
             img = img.resize((outW, outH), Image.ANTIALIAS)
 
         jpg = StringIO()
-        jpg.name = ext # just for the extension
         q = 80
         if maxSize <= 100:
             q = 60
-        img.save(jpg, quality=q)
+        img.save(jpg, format='jpeg', quality=q)
 
         if maxSize is Full and not isAlt:
             # don't write copies of the full jpegs, but alts are
@@ -201,8 +200,7 @@ class MediaResource(object):
         
     def _getSourceImage(self):
         """get PIL image for the source. This is at full size still,
-        but includes any alt processing. Also returns an extension for
-        passing to Image.save, and also isAlt
+        but includes any alt processing. Also returns isAlt
 
         inefficient because we load full-res images just to get a
         smaller version of a face crop, for example. we should figure
@@ -214,20 +212,18 @@ class MediaResource(object):
         if not sources:
             isAlt = False
             source = self.sourcePath()
-            ext = self.uri
         else:
             isAlt = True
             up = MediaResource(self.graph, sources[0]['source'])
             # this could repeat- alts of alts. not handled yet.
             source = up.sourcePath()
-            ext = up.uri
         
         img = Image.open(source)
 
         if isAlt:
             img = self._performAltProcess(img)
             
-        return img, ext, isAlt
+        return img, isAlt
 
     def _performAltProcess(self, img):
         desc = {}
