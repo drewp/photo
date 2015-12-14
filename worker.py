@@ -58,6 +58,7 @@ def videoEncode(self, sourcePath, thumbPath):
     try:
         _runVideoEncode(sourcePath, thumbPath, onProgress=onProgress)
     except Exception as e:
+        log.warn("_runVideoEncode(%r, %r) -> %r", sourcePath, thumbPath, e)
         raise self.retry(exc=e)
 
 def _runVideoEncode(sourcePath, thumbPath, onProgress):
