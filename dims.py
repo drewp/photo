@@ -3,7 +3,11 @@ import subprocess, re
 
 def fitSize(w, h, maxW, maxH):
     scl = min(maxW / w, maxH / h)
-    return int(round(w * scl)), int(round(h * scl))
+    outW, outH = int(round(w * scl)), int(round(h * scl))
+    if outW % 2: outW += 1
+    if outH % 2: outH += 1
+    return outW, outH
+    
 
 def avprobe(filename):
     return subprocess.Popen(['/usr/bin/avprobe', filename],
