@@ -1,7 +1,7 @@
 Polymer({
     is: 'photo-image-set',
     properties: {
-        limit: { notify: true },
+        limit: { notify: true, observer: 'reloadSet' },
         out: {
             type: Object,
             value: function () {
@@ -27,6 +27,7 @@ Polymer({
     },
     reloadSet: function () {
         var self = this;
+        // if status==loading AND all params match, we could return here
         self.status = 'loading';
         params = {};
         [
@@ -43,7 +44,7 @@ Polymer({
         if (self.seed && params.sort == 'random') {
             params.sort = 'random ' + self.seed;
         }
-        $.getJSON('/imageSet/set.json', params, function (js) {
+        $.getJSON('https://photo.bigasterisk.com/imageSet/set.json', params, function (js) {
             self.out = js;
             var i = 0;
             self.out.images.forEach(function (img) {
