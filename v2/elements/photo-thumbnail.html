@@ -2,22 +2,28 @@
 
 <dom-module id="photo-thumbnail">
   <style>
-      .thumbnail {
-       margin: 3px;
-       border: 1px solid gray;
-     }
-     .thumbnail > .img {
-       text-align: center;
-     }
-     .thumbnail > div.below {
-       font-size: 80%;
-       background: gray;
-     }
+   :host {
+     display: inline-block;
+   }
+   .thumbnail {
+     margin: 3px;
+     border: 1px solid gray;
+   }
+   img {
+     width: 100%;
+   }
+   .thumbnail > .img {
+     text-align: center;
+   }
+   .thumbnail > div.below {
+     font-size: 80%;
+     background: gray;
+   }
     </style>
   <template>
     <div class="thumbnail">
       <div class="img"><a href$="{{uri}}"><img src="{{imgSrc}}"></a></div>
-      <div class="below"><a href$="{{computeHref(uri)}}">Page for this image</a></div>
+      <template is="dom-if" if="{{uri}}"><div class="below"><a href$="{{computeHref(uri)}}">Page for this image</a></div></template>
     </div>
   </template>
   <script src="photo-thumbnail.js"></script>
