@@ -279,7 +279,7 @@ $(function () {
     var refresh = {
         startup: function () {
             $(window).keydown(function (e) {
-	        var tt = e.target.tagName;
+	        var tt = e.target.tagName.toUpperCase();
 	        if (!e.ctrlKey && (tt == 'TEXTAREA' || tt == 'INPUT')) {
 	            // no arrow key flips in the text boxes (unless you add ctrl)
 	            return true;
