@@ -87,6 +87,7 @@ class Build(object):
         try:
             uri = photoUri(filename)
             m = MediaResource(self.graph, uri)
+            # video extension but not isVideo? where do we correct that?
             m.cacheAll()
         except Exception:
             traceback.print_exc()
