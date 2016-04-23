@@ -51,7 +51,30 @@ class ScanFs(object):
         if os.path.exists(filename) and filenameIsImage(filename):
             return self.addPicFile(filename)
 
-        #todo: if file disappeared, clean it out of the graph
+        if not os.path.exists(filename):
+            # todo: might we have heard about it before we can see it on nfs?
+            self.fileDisappeared(filename)
+
+    def fileDisappeared(self, filename):
+        log.info('file %r is gone', filename)
+        filename = os.path.abspath(filename)
+        fileUri = uriOfFilename(self.rootUri, self.topDir, filename)
+
+        for ctx in [URIRef("http://photo.bigasterisk.com/scan/exif"),
+                    URIRef("http://photo.bigasterisk.com/scan/fs")
+        ]:
+            # need 2 remove passes because the graph.remove call only
+            # works in 1 ctx at once.
+            toRemove = []
+            for row in self.graph.queryd('''
+              SELECT ?p ?o WHERE {
+                GRAPH ?g { ?s ?p ?o }
+              }''', initBindings={'g': ctx, 's': fileUri}):
+                toRemove.append((fileUri, row['p'], row['o']))
+            log.info('removing %s triples from %r for %r', len(toRemove), ctx, fileUri)
+            log.info(toRemove)
+            self.graph.remove(toRemove, context=ctx)
+        # todo: not removing tags or deeper gps statements
 
     def addPicFile(self, filename):
         filename = os.path.abspath(filename)
@@ -100,6 +123,6 @@ class ScanFs(object):
         except ValueError:
             pass
         
-        self.graph.add(stmts,
+        self.graph.add(triples=stmts,
                        context=URIRef("http://photo.bigasterisk.com/scan/fs"))
         return dirUri
