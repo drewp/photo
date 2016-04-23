@@ -18,10 +18,6 @@ from xml.parsers.expat import ExpatError
 from ns import PHO, DC, XS, EXIF, WGS, RDF
 
 log = logging.getLogger('scanExif')
-log.setLevel(logging.DEBUG)
-
-def quotientNoExponent(n, d):
-    return "{0:f}".format(Decimal(n) / Decimal(d))
 
 class ScanExif(object):
     def __init__(self, graph):
@@ -80,10 +76,12 @@ class ScanExif(object):
         assert filename.startswith('/'), "%r not an absolute path" % filename
 
         cmd = ["exif", "-x", filename]
-        log.info("running %r" % cmd)
+        log.debug("running %r" % cmd)
         xml = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
         if not xml:
             raise ValueError("no result from exif")
+        if not xml.strip().endswith('</exif>'):
+            raise ValueError('incomplete xml')
 
         # galaxy note 2 puts these in, and then the xml doesn't parse
         xml = xml.replace("<User_Comment>\x12\xf8\x0f;</User_Comment>", "")
@@ -91,6 +89,11 @@ class ScanExif(object):
 
         # from note 4, selfie mode
         xml = xml.replace("<User_Comment>\x11\xab\x11\xab</User_Comment>", "")
+
+        # from HP Scanjet 5590
+        xml = xml.replace('<Reference_Black/White>', '<Reference_Black_White>')
+        xml = xml.replace('</Reference_Black/White>', '</Reference_Black_White>')
+
         
         try:
             root = ElementTree.fromstring(xml)
@@ -163,18 +166,13 @@ class ScanExif(object):
     def exposureStatements(self, uri, vals):
         stmts = []
         if 'Exposure_Time' in vals:
-            n, d = map(Decimal, vals['Exposure_Time'].split(' ')[0].split('/'))
-            if d/n > 10000:
-                pass # bogus, e.g. from Palm Pre
-            else:
-                try:
-                    stmts.append((uri, EXIF['exposureTime'], 
-                                  Literal(quotientNoExponent(n, d),
-                                          datatype=XS.decimal)))
-                except ZeroDivisionError:
-                    log.warn("can't use exposure time %r for %r", vals['Exposure_Time'], uri)
+            try:
+                stmts.append((uri, EXIF['exposureTime'], 
+                              Literal(parseExposureTime(vals['Exposure_Time']),
+                                      datatype=XS.decimal)))
+            except (ZeroDivisionError, ValueError) as e:
+                log.warn("can't use exposure time %r for %r: %r", vals['Exposure_Time'], uri, e)
         return stmts
-
 
     def fileTimeStatements(self, uri, filename):
         dt = datetime.datetime.fromtimestamp(os.path.getmtime(filename))
@@ -183,6 +181,27 @@ class ScanExif(object):
         return [(uri, PHO.fileTime, dateLit),
                 (uri, DC.date, Literal(dateLit.split('T')[0],
                                        datatype=XS.date))]
+
+def quotientNoExponent(n, d):
+    return "{0:.10g}".format(Decimal(n) / Decimal(d))
+
+def parseExposureTime(s):
+    """
+    >>> parseExposureTime('1/373 sec.')
+    '0.002680965147'
+    >>> parseExposureTime('1/4 sec.')
+    '0.25'
+    """
+    num, unit = s.split(' ')
+    if unit != 'sec.':
+        raise ValueError('unknown time unit')
+    if '/' in num:
+        n, d = map(Decimal, num.split('/'))
+    else:
+        n, d = int(num), 1
+    if d/n > 10000:
+        raise ValueError('too big') # e.g. from Palm Pre
+    return quotientNoExponent(n, d)
         
 def floatFromDms(compass, dms):
     d, m, s = map(Decimal, dms.split(', '))
@@ -196,7 +215,8 @@ def fixTime(exifTime):
     return "%s-%s-%sT%s:%s:%s" % tuple(words)
 
 if __name__ == '__main__':
-    import sys, pprint
+    import sys, pprint, doctest
+    doctest.testmod()
     logging.basicConfig(level=logging.DEBUG)
     class PrintStmts(object):
         def add(self, *args, **kw):
