@@ -118,7 +118,8 @@ class MediaResource(object):
         enqueueVideoEncode for a queued encode. """
 
         if self.isVideo():
-            self.videoProgress()
+            ret = self.videoProgress()
+            log.info("cacheAll %r -> %r", self.uri, ret)
         else:
             for size in [75,250,600]:
                 self.getImageAndMtime(size)
