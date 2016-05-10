@@ -41,8 +41,13 @@ $(function () {
         $("#photosInSet > a[about='"+uri+"'] > span").addClass("current");
     }
 
+    function rootUrl(url) {
+        var loc = window.location;
+        return url.replace(new RegExp("^" + loc.protocol + '//' + loc.host), '');
+    }
+
     function rebuildThisPage() {
-        var thisPath = window.location.pathname + window.location.search;
+        var thisPath = rootUrl(window.location.pathname + window.location.search);
         // wrong: in the case of random set, putting tags on this
         // image changes the set for all the other images too
         delete _preloaded[thisPath];
@@ -135,6 +140,7 @@ $(function () {
     }
 
     function getNewPageContents(newPath, cb, eb) {
+        newPath = rootUrl(newPath);
         if (_preloaded[newPath]) {
             if (cb) {
                 cb(_preloaded[newPath]);
@@ -179,7 +185,7 @@ $(function () {
 
     function pathFromWindow() {
 	var loc = window.location;
-	return loc.href.slice(loc.protocol.length + "//".length + loc.host.length);
+	return rootUrl(loc.href);
     }
 
     function gotoPage(newPath) {
@@ -189,6 +195,7 @@ $(function () {
 	var loading = $("<span>").text("Loading..");
 	$("#activity").append(loading);
         var loc = window.location;
+
         var newUrl = loc.protocol + '//' + loc.host + newPath;
 
         function ajaxUpdateFailed() {
