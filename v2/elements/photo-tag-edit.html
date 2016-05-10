@@ -1,5 +1,6 @@
 <link rel="import" href="https://bigasterisk.com/lib/polymer/1.0.9/polymer/polymer.html">
 <link rel="import" href="../elements/icon-checkbox.html">
+<link rel="import" href="https://bigasterisk.com/lib/polymer/1.0.9/iron-autogrow-textarea/iron-autogrow-textarea.html">
 
 <dom-module id="photo-tag-edit">
   <link rel="stylesheet" href="/randoms/aehlke-tag-it-6ccd2de/css/jquery.tagit.css">
@@ -23,11 +24,19 @@
     </style>
   <template>
     <form>
-      Tags:
-
-      <icon-checkbox background-image="url(/static/star-icon-set/star-gold/star-gold24-pair.png)" width="24px" height="24px" value="{{star}}"></icon-checkbox>
-      
-      <input type="text" id="tags">
+      <div>
+        Tags:
+        <icon-checkbox
+          background-image="url(/static/star-icon-set/star-gold/star-gold24-pair.png)"
+          width="24px" height="24px"
+          value="{{star}}"></icon-checkbox>
+        <input type="text" id="tags">
+      </div>
+      <div>
+        Description:
+        <iron-autogrow-textarea id="desc" rows="2" style='width: 100%'
+                                speech="on"></textarea>
+      </div>
       <span id="status">{{status}}</span>
     </form>
   </template>

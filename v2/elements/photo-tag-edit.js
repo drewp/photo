@@ -8,6 +8,55 @@ function urlForImg(img, append) {
 }
 
 
+/*
+Wrapper on tagit that can be used before setAvailableTags is called,
+even though the real widget is only created at setAvailableTags time
+(since I don't know how to update its available-tag list)
+*/
+function TagitWidget(elem, onTagsChanged) {
+    this.t = null;
+    this.elem = elem;
+    this.onTagsChanged = onTagsChanged;
+    this.initialTags = [];
+    this.initialOnDone = null;
+}
+TagitWidget.prototype.setAvailableTags = function(availableTags) {
+    if (this.t !== null) throw new Error("already setAvailableTags");
+    this.t = $(this.elem).tagit({
+        autocomplete: { delay: 0 },
+        availableTags: availableTags,
+        singleField: true,
+        singleFieldDelimeter: ' ',
+        afterTagAdded: function(ev, edit) {
+            this.onTagsChanged();
+        }.bind(this),
+        afterTagRemoved: function(ev, edit) {
+            this.onTagsChanged();
+        }.bind(this)
+    });
+    this.setTags(this.initialTags, this.initialOnDone);
+};
+TagitWidget.prototype.setTags = function(tags, onDone) {
+    if (this.t == null) {
+        this.initialTags = tags;
+        this.initialOnDone = onDone;
+        return;
+    }
+    
+    this.t.tagit('removeAll');
+    tags.forEach(function(tag) {
+        this.t.tagit('createTag', tag);
+    }.bind(this));
+    if (onDone) {
+        onDone();
+    }
+};
+TagitWidget.prototype.getTags = function() {
+    if (this.t == null) {
+        return this.initialTags;
+    }
+    return this.t.tagit('assignedTags')
+};
 
 
 /*
@@ -43,31 +92,24 @@ Polymer({
     },
     ready: function () {
         var self = this;
+        self.widget = new TagitWidget(self.$.tags, self.tagsChanged.bind(self));
+
+        // todo: these may be available in a page global already
         $.getJSON('/allTags', function(result) {
-            $(self.$.tags).tagit({
-                autocomplete: { delay: 0 },
-                availableTags: result.tags,
-                singleField: true,
-                singleFieldDelimeter: ' ',
-                afterTagAdded: function(ev, edit) {
-                    self.tagsChanged();
-                },
-                afterTagRemoved: function(ev, edit) {
-                    self.tagsChanged();
-                }
-            });
-            self.tagitReady = true;
+            self.widget.setAvailableTags(result.tags);
         });
+        self.$.desc.addEventListener('value-changed', self.tagsChanged.bind(self))
     },
     imgChanged: function () {
         this.loadTags();
     },
+
     loadTags: function () {
         // (img might already have tags attr, depending on how we loaded it)
         var self = this;
         self.status = 'loading...';
         self.saveEnabled = false;
-        $.getJSON(urlForImg(this.img, 'tags'), function (result) {
+        $.getJSON(urlForImg(self.img, 'tags'), function (result) {
             var tagString = result.tagString;
             // turns '*' tag into the star icon setting
             tagString = ' ' + tagString + ' ';
@@ -75,33 +117,19 @@ Polymer({
             self.star = sansStar != tagString;
             sansStar = sansStar.replace(/^ +/, '').replace(/ +$/, '');
             self.tags = sansStar.split(/\s+/);
-            self.status = 'ok';
-            self.saveEnabled = true;
-
-            self.setInitialTagList(self.tags);
-        });
-    },
-    setInitialTagList: function(tags) {
-        var self = this;
-        
-        if (self.tagitReady) {
-            $(self.$.tags).tagit('removeAll');
-            self.tags.forEach(function(t) {
-                $(self.$.tags).tagit('createTag', t);
+            self.widget.setTags(self.tags, function() {
+                self.saveEnabled = true;
             });
+            self.$.desc.value = result.desc;
+            self.status = 'ok';
             // tag should be readOnly until this point, but that doesn't work:
             // https://github.com/aehlke/tag-it/issues/249
             // https://github.com/aehlke/tag-it/issues/329
-
-        } else {
-            // we might finish before /allTags did, and I don't know
-            // how to update the tag list on a tagit
-            setTimeout(function() { self.setInitialTagList(tags); }, 200);
-        }
+        });
     },
     tagsChanged: function () {
         if (!this.saveEnabled) return;
-        this.tags = $(this.$.tags).tagit('assignedTags');
+        this.tags = this.widget.getTags();
         this.queueWrite();
     },
     queueWrite: function () {
@@ -109,7 +137,8 @@ Polymer({
         // note that we might be on a different img by the time the save happens
         self.pendingWrites[self.img.uri] = {
             tags: self.tags,
-            star: self.star
+            star: self.star,
+            desc: self.$.desc.value
         };
         self.status = 'edited';
         if (self.writeTimeout) {
@@ -119,23 +148,32 @@ Polymer({
         self.writeTimeout = setTimeout(self.flushWrites.bind(self), 500);
     },
     flushWrites: function () {
-        var self = this;
-        $.each(self.pendingWrites, function eachWrite(uri, data) {
-            self.saveTags(uri, data);
-        });
-        self.pendingWrites = {};
+        $.each(this.pendingWrites, function eachWrite(uri, data) {
+            this.saveTags(uri, data);
+        }.bind(this));
+        this.pendingWrites = {};
+    },
+    fullTagString: function(tags, star) {
+        return tags.join(' ') + (star ? ' *' : '');
     },
     saveTags: function (uri, data) {
-        var self = this;
-        self.status = 'saving...';
-        var fullTagString = data.tags.join(' ') + (data.star ? ' *' : '');
+        this.status = 'saving...';
+        var fullTagString = this.fullTagString(data.tags, data.star);
         $.ajax({
             type: 'PUT',
             url: urlForImg({ uri: uri }, 'tags'),
-            data: { tags: fullTagString },
+            data: { tags: fullTagString,
+                    desc: data.desc },
             success: function (data) {
-                self.status = 'ok';
-            },
+                this.status = 'ok';
+
+                // todo: tag links need to be linked to here. This
+                // element should have an output tags attribute that
+                // can be bound to.
+                if (window.rebuildThisPage) {
+                    window.rebuildThisPage();
+                }
+            }.bind(this),
             dataType: 'json'
         });
     }
