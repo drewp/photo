@@ -120,7 +120,7 @@ class ImageSet(rend.Page):
         ret = Renderer(search_dirs=['template/']).render(view)
         print "rendered view is %s" % len(ret)
         # after 65k, this gets truncated somewhere! get a new web server
-        req.setHeader("Content-Type", "application/xhtml+xml")
+        req.setHeader("Content-Type", "text/html")
         return ret.encode('utf8')
 
     def templateData(self, view):
