@@ -129,7 +129,7 @@ class ImageSet(rend.Page):
         return {
             'topBar' : v("setLabel storyModeUrl intro".split()),
             'featured' : v("currentLabel prevNextDateButtons stepButtons featured actionsAllowed aclWidget uploadButton publicShareButton related otherSizeLinks link debugRdf localPath".split()),
-            'featuredMeta' : v("facts allowedToWriteMeta".split()),
+            'featuredMeta' : v("facts allowedToWriteMeta currentImgJson".split()),
             # this one should be omitted when the client already had the right set
             'photosInSet' : v(" starLinkAll starLinkOnly photosInSet setAclWidget".split()),
             'pageJson' : v(["pageJson"]),
@@ -449,7 +449,12 @@ class View(TemplateSpec):
     def allowedToWriteMeta(self):
         return (self.agent is not None and
                 tagging.allowedToWrite(self.graph, self.agent))
-   
+
+    def currentImgJson(self):
+        p = self.desc.currentPhoto()
+        obj = {'uri': p} if p else None
+        return json.dumps(obj)
+        
     def starLinkAll(self):
         if self.params['star'] is None:
             return ''

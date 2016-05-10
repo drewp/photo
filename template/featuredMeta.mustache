@@ -17,6 +17,11 @@
             <div>Description: <textarea id="desc"></textarea></div>
             {{#allowedToWriteMeta}}<div><button id="saveMeta">save</button> <span id="saveStatus"></span></div>{{/allowedToWriteMeta}}
           </div>
+
+          <link rel="import" href="../elements/photo-tag-edit.html"></link>
+
+          <photo-tag-edit img='{{currentImgJson}}'></photo-tag-edit>
+          
         </td>
         <td>
           <div id="commentsFade">
