@@ -16,7 +16,7 @@ log = logging.getLogger('scanFs')
 log.setLevel(logging.DEBUG)
 
 # these also appear in nginx_route.conf
-imageExtensions = ('.jpg', '.gif', '.jpeg')
+imageExtensions = ('.jpg', '.gif', '.jpeg', '.png')
 videoExtensions = ('.mp4','.avi','.mov','.webm')
 
 def uriOfFilename(rootUri, root, filename):
