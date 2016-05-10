@@ -50,10 +50,12 @@ class ScanFs(object):
 
         if os.path.exists(filename) and filenameIsImage(filename):
             return self.addPicFile(filename)
-
-        if not os.path.exists(filename):
+        elif not os.path.exists(filename):
             # todo: might we have heard about it before we can see it on nfs?
+            log.info("%r disappeared", filename)
             self.fileDisappeared(filename)
+        else:
+            log.info("no action for %r", filename)
 
     def fileDisappeared(self, filename):
         log.info('file %r is gone', filename)
@@ -126,3 +128,13 @@ class ScanFs(object):
         self.graph.add(triples=stmts,
                        context=URIRef("http://photo.bigasterisk.com/scan/fs"))
         return dirUri
+
+if __name__ == '__main__':
+    import sys, pprint
+    logging.basicConfig(level=logging.DEBUG)
+    class PrintStmts(object):
+        def contains(self, *args):
+            return False
+        def add(self, *args, **kw):
+            pprint.pprint(("graph add", args, kw))
+    ScanFs(PrintStmts(), '/my/pic').addPicFile(sys.argv[1])
