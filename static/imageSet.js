@@ -35,60 +35,6 @@ $(function () {
 	$('#add-uri').val(newUri);
     }
 
-    function getTagString() {
-	// turns star into a '*' tag
-	return $("#tags").val() + ($("#starTag").hasClass("set") ? " *" : "");
-    }
-    function setTags(tagString) {
-	// turns '*' tag into the star icon setting
-	tagString = " " + tagString + " ";
-	var sansStar = tagString.replace(/ \*(?= )/g, "");
-	if (sansStar != tagString) {
-	    $("#starTag").addClass("set");
-	} else {
-	    $("#starTag").removeClass("set");
-	}
-	sansStar = sansStar.replace(/^ +/, "").replace(/ +$/, "");
-	$("#tags").val(sansStar);
-    }
-
-    function saveTagsAndDesc() {
-	$("#saveStatus").text("");
-	$("#saveMeta").attr('disabled', true);
-	$.ajax({
-	    type: 'PUT',
-	    url: picInfo.relCurrentPhotoUri + "/tags",
-	    data : {
-		tags: getTagString(),
-		desc: $("#desc").val()},
-	    success: function(data) {
-		$("#saveStatus").text("ok");
-                rebuildThisPage(); // besides being inefficient, this also resets a currently-playing video. It ought to only refresh featureMeta, facts, and tags
-		refreshTagsAndDesc(data);
-	    },
-	    dataType: "json",
-	});
-    };
-
-    function tagsOrDescChanged(event) {
-	// I mean to catch any change, including mouse paste
-	$("#saveMeta")[0].disabled = false;
-	$("#saveMeta").removeAttr('disabled');
-
-	if (event && event.keyCode == '13') {
-	    saveTagsAndDesc();
-	    $("#tags,#desc").blur();
-	    return false;
-	}
-	return true;
-    }
-
-    function refreshTagsAndDesc(data) {
-	setTags(data.tagString);
-	$("#desc").val(data.desc);
-	$("#saveMeta").attr("disabled", "disabled");
-    }
-
     function refreshCurrentPhoto(uri) {
         /* light up this one in the photosInSet collection */
         $("#photosInSet > a > span.current").removeClass("current").addClass("not-current");
@@ -102,7 +48,7 @@ $(function () {
         delete _preloaded[thisPath];
         gotoPage(thisPath);
     }
-
+    window.rebuildThisPage = rebuildThisPage;
 
     function relatedPreview(relatedLink) {
         // use preloadContents instead!
@@ -352,24 +298,6 @@ $(function () {
 	              }, "html");
             }
 
-            $("#starTag").click(function () {
-	        $("#starTag").toggleClass("set");
-	        tagsOrDescChanged();
-	        saveTagsAndDesc();
-            });
-            $("#saveMeta").click(saveTagsAndDesc);
-
-            $("#tags,#desc").keypress(function(event) {
-	        return tagsOrDescChanged(event);
-            });
-
-            if (picInfo.tags) {
-                refreshTagsAndDesc(picInfo.tags);
-            }
-
-            setGlobalTags(allTags);
-            $("#tags").tagSuggest({});
-
             // should be a live bind (most of these should)
             $(".iset").click(function () { 
                 gotoPage($(this).attr("href"));
@@ -381,7 +309,6 @@ $(function () {
                 return false;
             });
 
-            //$("#tags").focus(); // too much page bumping. avoidable?
             refreshCurrentPhoto(picInfo.currentPhotoUri);
                        
 	    if ($(".videoProgress").length) {

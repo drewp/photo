@@ -105,9 +105,7 @@ div.tagging div:nth-child(1) {
     width:260px;
 }
 #desc {
-    vertical-align: baseline;
-    width:308px;
-    height:53px;
+
 }
 #featuredMeta td {
     vertical-align: top;
