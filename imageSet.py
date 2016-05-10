@@ -523,15 +523,11 @@ class View(TemplateSpec):
     @print_timing
     def pageJson(self):
         prev, next = self.prevNext()
-        allTags = self.tagList() if (
-            self.agent is not None and
-            tagging.allowedToWrite(self.graph, self.agent)) else []
 
         return dict(picInfo=json.dumps(self.picInfoJson()),
                     prev=json.dumps(self.desc.otherImageUrl(prev)),
                     next=json.dumps(self.desc.otherImageUrl(next)),
                     preloadImg=json.dumps(self.nextImagePreload()),
-                    allTags=json.dumps(allTags),
                     )
 
     @print_timing

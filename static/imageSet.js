@@ -99,7 +99,6 @@ $(function () {
                     picInfo = JSON.parse(d.picInfo);
                     arrowPages = {prev: JSON.parse(d.prev), 
                                   next: JSON.parse(d.next)};
-                    allTags = JSON.parse(d.allTags);
 		    preloadImg = JSON.parse(d.preloadImg);
                 } else if (tmpl == "client") {
                     // not a template
