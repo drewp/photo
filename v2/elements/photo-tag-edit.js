@@ -34,6 +34,11 @@ TagitWidget.prototype.setAvailableTags = function(availableTags) {
             this.onTagsChanged();
         }.bind(this)
     });
+
+    // this may not have any effect
+    var i = this.elem.parentElement.querySelector("input.ui-autocomplete-input");
+    i.setAttribute('autocapitalize', 'none');
+    
     this.setTags(this.initialTags, this.initialOnDone);
 };
 TagitWidget.prototype.setTags = function(tags, onDone) {
