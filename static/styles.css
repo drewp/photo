@@ -96,17 +96,14 @@ div.tagging div:nth-child(1) {
     height: 3.3em;
 }
 
-#tags, #desc {
-    border:1px outset gray;
-    padding:5px;
+ul.tagit {
+    background: white !important;
 }
-
-#tags {
-    width:260px;
+   
+.tagit-autocomplete a {
+    color: #242452;
 }
-#desc {
-
-}
+   
 #featuredMeta td {
     vertical-align: top;
 }

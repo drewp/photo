@@ -1,0 +1,43 @@
+<link rel="import" href="https://bigasterisk.com/lib/polymer/1.0.9/iron-ajax/iron-ajax.html"></script>
+
+<dom-module id="photo-related-links">
+  <template>
+    <style>
+     table { border-collapse: collapse; }
+     th {
+       vertical-align: top;
+       text-align: right;
+     }
+     th, td {
+       border-top: 1px solid #1d3c5a;
+       padding-bottom: 4px;
+       padding-top: 3px;
+     }
+     ul { -webkit-padding-start: 2em; }
+    </style>
+    <iron-ajax id="getLinks"
+               url="{{linksUrl}}"
+               auto
+               last-response="{{response}}"></iron-ajax>
+
+    <table>
+      <template is="dom-repeat" items="{{response.links}}">
+        <tr class$="related-{{item.0}}">
+          <th>
+            {{item.0}}
+          </th>
+          <td>
+            <ul>
+              <template is="dom-repeat" items="{{item.1}}">
+                <li><a class="iset pl" href="{{item.uri}}">{{item.label}}</a></li>
+              </template>
+            </ul>
+          </td>
+        </tr>
+      </template>
+    </table>
+
+  </template>
+  <script src="photo-related-links.js"></script>
+</dom-module>
+

@@ -95,11 +95,7 @@
             <div class="ac">
               More images:
               <ul id="related">
-                {{#related}}
-                <li class="related-{{kind}}">
-                  {{kind}} <a class="iset pl" href="{{uri}}">{{label}}</a>
-                </li>
-                {{/related}}
+                <photo-related-links img="{{currentImgJson}}"></photo-related-links>
               </ul>
             </div>
 

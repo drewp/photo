@@ -83,6 +83,7 @@
         <script type="text/javascript" src="/static/imageSet.js?v=44"></script>
         <script type="text/javascript" src="/static/mustache.min.js"></script>
         <link rel="import" href="../elements/photo-tag-edit.html"></link>
+        <link rel="import" href="../elements/photo-related-links.html"></link>
 
         <div>
           Preloaded pages:
@@ -96,6 +97,11 @@
          Polymer({
            is: "photo-imageset-page",
            properties: {
+           },
+           ready: function() {
+             this.querySelector("photo-tag-edit").addEventListener('tags-saved', function() {
+               this.querySelector("photo-related-links").reload();
+             }.bind(this));
            }
          });
        });

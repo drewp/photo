@@ -128,7 +128,7 @@ class ImageSet(rend.Page):
             return dict((k, getattr(view, k)()) for k in keys)
         return {
             'topBar' : v("setLabel storyModeUrl intro".split()),
-            'featured' : v("currentLabel prevNextDateButtons stepButtons featured actionsAllowed aclWidget uploadButton publicShareButton related otherSizeLinks link debugRdf localPath".split()),
+            'featured' : v("currentLabel currentImgJson prevNextDateButtons stepButtons featured actionsAllowed aclWidget uploadButton publicShareButton otherSizeLinks link debugRdf localPath".split()),
             'featuredMeta' : v("facts allowedToWriteMeta currentImgJson".split()),
             # this one should be omitted when the client already had the right set
             'photosInSet' : v(" starLinkAll starLinkOnly photosInSet setAclWidget".split()),
@@ -391,19 +391,6 @@ class View(TemplateSpec):
             if short:
                 return dict(hasLink=dict(short=short))
         return dict(makeLink=dict(show=True))
-
-    def related(self):
-        try:
-            js = serviceCallSync(self.agent, 'links', self.desc.currentPhoto())
-        except ValueError:
-            return []
-
-        ret = []
-        for kind, links in json.loads(js)['links']:
-            for link in links:
-                ret.append(dict(kind=kind, uri=link['uri'],
-                                label=link['label']))
-        return ret
 
     def facts(self, p=None):
         try:

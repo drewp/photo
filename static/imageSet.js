@@ -53,45 +53,6 @@ $(function () {
         delete _preloaded[thisPath];
         gotoPage(thisPath);
     }
-    window.rebuildThisPage = rebuildThisPage;
-
-    function relatedPreview(relatedLink) {
-        // use preloadContents instead!
-        var div = $("<div>").addClass("relatedPreview");
-        div.append("loading...");
-        getNewPageContents(relatedLink, function (data) {
-            div.empty();
-            $.each(data.photosInSet.photosInSet, function (i, thumb) {
-                if (i > 5) {
-                    return;
-                }
-                // could use the video-triangle on here. These should
-                // also be links
-                div.append($("<img>").attr("src", thumb.thumb.src));
-            });
-        });
-        return div;
-    }
-
-    function setupRelatedPreviews() {
-        $("#related > li").each(function (i, li) {
-            li = $(li);
-            var previewDiv;
-            li.hover(function () {
-                previewDiv = relatedPreview(li.find("a").attr("href"));
-		var offset = li.offset();
-                li.append(previewDiv);
-		li.addClass("previewing");
-		previewDiv.offset({left: offset.left - 563, 
-				   top: offset.top - 28})
-            }, function () {
-		// this is removing when they hover over to the
-		// preview div, which is not what i want.
-                previewDiv.remove();
-		li.removeClass("previewing");
-            });
-        });
-    }
 
     function updateSections(data) {
 	$.each(data, function (tmpl, contents) {
@@ -173,7 +134,8 @@ $(function () {
             isPreload: true
         });
     }
-
+    window.getNewPageContents = getNewPageContents; // currently used in photo-related-links
+    
     var runningAjax = [];
     $.ajaxPrefilter(function (opts, orig, jqXHR) {
 	runningAjax.push(jqXHR);
@@ -343,7 +305,6 @@ $(function () {
             });
 	    preloadContents($(".iset.plPri").attr("href"));
             preloadImage(preloadImg);
-            setupRelatedPreviews();
         }
     };
     refresh.startup();

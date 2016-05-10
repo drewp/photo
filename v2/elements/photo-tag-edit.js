@@ -166,13 +166,7 @@ Polymer({
                     desc: data.desc },
             success: function (data) {
                 this.status = 'ok';
-
-                // todo: tag links need to be linked to here. This
-                // element should have an output tags attribute that
-                // can be bound to.
-                if (window.rebuildThisPage) {
-                    window.rebuildThisPage();
-                }
+                this.fire("tags-saved");
             }.bind(this),
             dataType: 'json'
         });
