@@ -56,6 +56,9 @@ TagitWidget.prototype.setTags = function(tags, onDone) {
         onDone();
     }
 };
+TagitWidget.prototype.addTag = function(tag) {
+    this.t.tagit('createTag', tag);
+};
 TagitWidget.prototype.getTags = function() {
     if (this.t == null) {
         return this.initialTags;
@@ -131,6 +134,9 @@ Polymer({
             // https://github.com/aehlke/tag-it/issues/249
             // https://github.com/aehlke/tag-it/issues/329
         });
+    },
+    addTag: function(tag) {
+        this.widget.addTag(tag);
     },
     tagsChanged: function () {
         if (!this.saveEnabled) return;

@@ -252,3 +252,11 @@ span.result {
 li.previewing {
     background: #434343;
 }
+.key {
+    display: inline-block;
+    border: 1px solid gray;
+    border-radius: 3px;
+    margin-left: 3px;
+    padding: 0 3px;
+    background: #101415;
+}

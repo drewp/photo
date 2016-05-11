@@ -515,6 +515,7 @@ class View(TemplateSpec):
                     prev=json.dumps(self.desc.otherImageUrl(prev)),
                     next=json.dumps(self.desc.otherImageUrl(next)),
                     preloadImg=json.dumps(self.nextImagePreload()),
+                    tagHotkeys=json.dumps(auth.tagHotkeys),
                     )
 
     @print_timing

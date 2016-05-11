@@ -12,10 +12,14 @@
     <link rel="import" href="https://bigasterisk.com/lib/polymer/1.0.9/polymer/polymer.html"></script>
 
    <script type="text/javascript" src="{{bestJqueryLink}}"></script>
+   <script type="text/javascript" id="pageJson">
+    {{> pageJson}}
+   </script>
   </head>
   <body>
     <dom-module id="photo-imageset-page">
       <template>
+       
         <div id="ajaxError" style="display:none"></div>
         <div class="loginRow">{{{loginWidget}}}</div>
         
@@ -31,6 +35,16 @@
         <table id="featuredMeta">
           {{> featuredMeta}}
         </table>
+
+        <div>
+          <!-- belongs under photo-tag-edit, but that part of the page
+               is still replaced on incremental loads -->
+          Add tag with shift
+          <template is="dom-repeat" items="[[tagHotkeys]]">
+            <span class="key">[[item.key]]</span>&#8594;[[item.tag]]
+          </template>
+        </div>
+        
         <div id="photosInSet">
           {{> photosInSet}}
         </div>
@@ -75,11 +89,6 @@
         {{! <div> Download a <a rel="nofollow" href="{zipUrl}">.zip file of the full size images on this page</a> {zipSizeWarning} </div>}}
 
         <script type="text/javascript" src="/static/aclwidget.js?v=3"></script>
-        
-        <script type="text/javascript" id="pageJson">
-         {{> pageJson}}
-        </script>
-
         <script type="text/javascript" src="/static/imageSet.js?v=44"></script>
         <script type="text/javascript" src="/static/mustache.min.js"></script>
         <link rel="import" href="../elements/photo-tag-edit.html"></link>
@@ -97,6 +106,7 @@
          Polymer({
            is: "photo-imageset-page",
            properties: {
+             tagHotkeys: { type: Array, value: window.tagHotkeys }
            },
            ready: function() {
              // not enough- the page updater replaces the photo-tag-edit element sometimes, and
@@ -104,6 +114,21 @@
              this.querySelector("photo-tag-edit").addEventListener('tags-saved', function() {
                this.querySelector("photo-related-links").reload();
              }.bind(this));
+             document.addEventListener('keypress', function(ev) {
+               var tag = ev.target.tagName.toLowerCase();
+               if (tag == "textarea" || tag == "input") {
+                 return;
+               }
+               if (!ev.shiftKey) {
+                 return;
+               }
+               var key = ev.key.toLowerCase();
+               for (var row of tagHotkeys) {
+                 if (row.key == key) {
+                   this.querySelector("photo-tag-edit").addTag(row.tag);
+                 }
+               }
+             });
            }
          });
        });
