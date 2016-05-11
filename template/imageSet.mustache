@@ -99,6 +99,8 @@
            properties: {
            },
            ready: function() {
+             // not enough- the page updater replaces the photo-tag-edit element sometimes, and
+             // then the new one doesn't trigger the update.
              this.querySelector("photo-tag-edit").addEventListener('tags-saved', function() {
                this.querySelector("photo-related-links").reload();
              }.bind(this));

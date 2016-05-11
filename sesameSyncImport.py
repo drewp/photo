@@ -79,6 +79,7 @@ def onChange(filename):
             fixSftpPerms()
         log.info("scanFs and scanExif on %r", filename)
         picUri = scanFs.fileChanged(filename)
+        log.info('picUri is %r', picUri)
         if picUri is not None:
             # this will fail on videos (though i wish i could get the Pre metadata out of them)
             scanExif.addPic(picUri, rerunScans=True)
