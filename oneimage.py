@@ -14,9 +14,9 @@ the fetching of the resized images is still over in serve
 """
 from __future__ import division
 import boot
-import web, sys, json, time, urllib, datetime, itertools
+import json, time, urllib, datetime, itertools
 from dateutil.tz import tzlocal
-from web.contrib.template import render_genshi
+from klein import run, route
 from rdflib import URIRef, Variable, Literal
 import auth
 from xml.utils import iso8601
@@ -27,229 +27,226 @@ from ns import PHO, FOAF, EXIF, SCOT, DC, RDF, DCTERMS
 from urls import localSite
 from alternates import findAltRoot
 import db
+import networking
 
 log = boot.log
-render = render_genshi('.', auto_reload=True)
 
-class viewPerm(object):
-    def GET(self):
-        i = web.input()
-        uri = URIRef(i['img'])
-        web.header('Content-type', 'application/json')
-        return json.dumps({"viewableBy" :
-                    "public" if access.isPublic(graph, uri) else "superuser"})
-        
-    def POST(self):
-        """
-        moved to /aclChange
-        """
-        raise NotImplementedError
+@route('/viewPerm', methods=['GET'])
+def GET_viewPerm(request):
+    uri = URIRef(request.args['img'][0])
+    request.setHeader('Content-type', 'application/json')
+    return json.dumps({"viewableBy" :
+                "public" if access.isPublic(graph, uri) else "superuser"})
 
-class facts(object):
-    def GET(self):
-        web.header("content-type", "application/json")
-        img = URIRef(web.input()['uri'])
+@route('/viewPerm', methods=['POST'])
+def POST_viewPerm(request):
+    """
+    moved to /aclChange
+    """
+    raise NotImplementedError
 
-        # check security
+@route('/facts')
+def GET_facts(request):
+    request.setHeader("content-type", "application/json")
+    img = URIRef(request.args['uri'][0])
 
-        ret = {}
-        lines = []
-        now = time.time()
+    # check security
 
-        try:
-            created = photoCreated(graph, img)
-            ret['created'] = created.isoformat()
-            sec = time.mktime(created.timetuple())
-        except ValueError, e:
-            log.warn("no created time for %s" % img)
-            import traceback
-            traceback.print_exc()
-            created = sec = None
+    ret = {}
+    lines = []
+    now = time.time()
 
-        if sec is not None:
-            ago = int((now - sec) / 86400)
-            if ago < 365:
-                ago = '; %s days ago' % ago
-            else:
-                ago = ''
-            lines.append("Picture taken %s%s" % (created.isoformat(' '), ago))
+    try:
+        created = photoCreated(graph, img)
+        ret['created'] = created.isoformat()
+        sec = time.mktime(created.timetuple())
+    except ValueError, e:
+        log.warn("no created time for %s" % img)
+        import traceback
+        traceback.print_exc()
+        created = sec = None
 
-        allDepicts = [row['who'] for row in
-                      graph.queryd(
-                          "SELECT DISTINCT ?who WHERE { ?img foaf:depicts ?who }",
-                          initBindings={"img" : img})]
+    if sec is not None:
+        ago = int((now - sec) / 86400)
+        if ago < 365:
+            ago = '; %s days ago' % ago
+        else:
+            ago = ''
+        lines.append("Picture taken %s%s" % (created.isoformat(' '), ago))
 
-        allTags = getTagLabels(graph, "todo", img)
+    allDepicts = [row['who'] for row in
+                  graph.queryd(
+                      "SELECT DISTINCT ?who WHERE { ?img foaf:depicts ?who }",
+                      initBindings={"img" : img})]
 
-        if created is not None:
-            for who, tag, birthday in [
-                (URIRef("http://photo.bigasterisk.com/2008/person/apollo"),
-                'apollo',
-                 '2008-07-22'),
-                ] + auth.birthdays:
-                try:
-                    if (who in allDepicts or Literal(tag) in allTags):
-                        name = graph.value(
-                            who, FOAF.name, default=graph.label(
-                                who, default=tag))
+    allTags = getTagLabels(graph, "todo", img)
 
-                        lines.append("%s is %s old. " % (
-                            name, personAgeString(birthday, created.isoformat())))
-                except Exception, e:
-                    log.error("%s birthday failed: %s" % (who, e))
-
-        ret['factLines'] = [dict(line=x) for x in lines]
-
-        # 'used in this blog entry'        
-        return json.dumps(ret)
-
-class links(object):
-    """images and other things related to this one"""
-    def GET(self):
-
-        img = URIRef(web.input()['uri'])
-        links = {}
-        
-        def relQuery(rel):
-            rows = graph.queryd("""
-               SELECT DISTINCT ?d ?label WHERE {
-                 ?img ?rel ?d .
-                 OPTIONAL { ?d rdfs:label ?label }
-               }""", initBindings={Variable("rel") : rel,
-                                   Variable("img") : img})
-            for r in rows:
-                if 'label' not in r:
-                    r['label'] = r['d']
-                yield r
-
-        def setUrl(**params):
-            params['current'] = img
-            return ('/set?' + urllib.urlencode(params))
-
-        for row in relQuery(FOAF.depicts):
+    if created is not None:
+        for who, tag, birthday in [
+            (URIRef("http://photo.bigasterisk.com/2008/person/apollo"),
+            'apollo',
+             '2008-07-22'),
+            ] + auth.birthdays:
             try:
-                links.setdefault('depicting', []).append(
-                    {'uri' : localSite(row['d']), 'label' : row['label']})
-            except ValueError, e:
-                log.warn("error in FOAF.depicts: %s %s" % (vars(), e))
-                pass
+                if (who in allDepicts or Literal(tag) in allTags):
+                    name = graph.value(
+                        who, FOAF.name, default=graph.label(
+                            who, default=tag))
 
-        for row in relQuery(PHO.inDirectory):
-            links.setdefault('inDirectory', []).append(
-                {'uri' : setUrl(dir=row['d']),
-                 'label' : row['d'].split('/')[-2]})
+                    lines.append("%s is %s old. " % (
+                        name, personAgeString(birthday, created.isoformat())))
+            except Exception, e:
+                log.error("%s birthday failed: %s" % (who, e))
 
-        for row in relQuery(DC.date):
-            links.setdefault('takenOn', []).append(
-                {'uri' : setUrl(date=row['d']),
-                 'label' : row['d']})
-        # photos from email may have only the email's date
+    ret['factLines'] = [dict(line=x) for x in lines]
 
-        for row in relQuery(SCOT.hasTag):
-            links.setdefault('withTag', []).append(
-                {'uri' : setUrl(tag=row['label']),
-                 'label' : row['label']})
+    # 'used in this blog entry'        
+    return json.dumps(ret)
 
-        alts = findAltRoot(graph, img)
-        if alts:
-            links['alternates'] = [{'uri' : setUrl(alt=alts[0]),
-                                   'label' : alts[1]}]
+@route('/links')
+def GET_links(request):
+    """images and other things related to this one"""
 
-        # taken near xxxxx
+    img = URIRef(request.args['uri'][0])
+    links = {}
 
-        return json.dumps({'links' : links.items()})
+    def relQuery(rel):
+        rows = graph.queryd("""
+           SELECT DISTINCT ?d ?label WHERE {
+             ?img ?rel ?d .
+             OPTIONAL { ?d rdfs:label ?label }
+           }""", initBindings={Variable("rel") : rel,
+                               Variable("img") : img})
+        for r in rows:
+            if 'label' not in r:
+                r['label'] = r['d']
+            yield r
+
+    def setUrl(**params):
+        params['current'] = img
+        return ('/set?' + urllib.urlencode(params))
+
+    for row in relQuery(FOAF.depicts):
+        try:
+            links.setdefault('depicting', []).append(
+                {'uri' : localSite(row['d']), 'label' : row['label']})
+        except ValueError, e:
+            log.warn("error in FOAF.depicts: %s %s" % (vars(), e))
+            pass
+
+    for row in relQuery(PHO.inDirectory):
+        links.setdefault('inDirectory', []).append(
+            {'uri' : setUrl(dir=row['d']),
+             'label' : row['d'].split('/')[-2]})
+
+    for row in relQuery(DC.date):
+        links.setdefault('takenOn', []).append(
+            {'uri' : setUrl(date=row['d']),
+             'label' : row['d']})
+    # photos from email may have only the email's date
+
+    for row in relQuery(SCOT.hasTag):
+        links.setdefault('withTag', []).append(
+            {'uri' : setUrl(tag=row['label']),
+             'label' : row['label']})
+
+    alts = findAltRoot(graph, img)
+    if alts:
+        links['alternates'] = [{'uri' : setUrl(alt=alts[0]),
+                               'label' : alts[1]}]
+
+    # taken near xxxxx
+
+    return json.dumps({'links' : links.items()})
 
 from tagging import getTags, saveTags
 
 
-
-class tags(object):
+@route('/tags', methods=['GET'])
+def GET_tags(request):
     """description too, though you can get that separately if you want"""
-    def GET(self):
-        img = URIRef(web.input()['uri'])
-        user = webuser.getUserWebpy(web.ctx.environ)
-        web.header("Content-Type", "text/json")
-        return json.dumps(getTags(graph, user, img))
+    img = URIRef(request.args['uri'][0])
+    user = webuser.getUserKlein(request)
+    request.setHeader("Content-Type", "text/json")
+    return json.dumps(getTags(graph, user, img))
 
-    def PUT(self):
-        i = web.input()
-        img = URIRef(i['uri'])
-        user = webuser.getUserWebpy(web.ctx.environ)
-        saveTags(graph,
-                 foafUser=user,
-                 img=img,
-                 tagString=i.get('tags', ''),
-                 desc=i.get('desc', ''))
-        web.header("Content-Type", "text/json")
-        return json.dumps(getTags(graph, user, img))
+@route('/tags', methods=['PUT'])
+def PUT_tags(request):
+    img = URIRef(request.args['uri'][0])
+    user = webuser.getUserKlein(request)
+    log.info('user %r', user)
+    saveTags(graph,
+             foafUser=user,
+             img=img,
+             tagString=request.args.get('tags', '')[0],
+             desc=request.args.get('desc', '')[0])
+    request.setHeader("Content-Type", "text/json")
+    return json.dumps(getTags(graph, user, img))
 
         
+@route('/stats')
+def GET_stats(request):
+    uri = URIRef(request.args['img'][0])
+    request.setHeader('Content-type', 'application/json')
 
-class stats(object):
-    def GET(self):
-        i = web.input()
-        uri = URIRef(i['img'])
-        web.header('Content-type', 'application/json')
+    # check security
 
-        # check security
+    # this will be all the stuff in render_facts
 
-        # this will be all the stuff in render_facts
+    d = graph.value(uri, EXIF.dateTime)
 
-        d = graph.value(uri, EXIF.dateTime)
+    return json.dumps({"date" : d,
 
-        return json.dumps({"date" : d,
-                             
-                              })
+                          })
 
-class alt(object):
-    # GET should tell you about the alts for the image
-    
-    def POST(self):
-        uri = URIRef(web.input()['uri'])
-        desc = json.loads(web.data())
-        if desc['source'] != str(uri):
-            # sometimes this happens on a : vs %3A disagreement, which
-            # is something I think I workaround elsewhere. Drop
-            # 'source' attr entirely? figure out where this new :
-            # escaping is happening?
-            raise ValueError("source %r != %r" % (desc['source'], str(uri)))
-        newAltUri = self.pickNewUri(uri, desc['tag'])
+# GET should tell you about the alts for the image
+@route('/alt', methods=['POST'])
+def POST_alt(request):
+    uri = URIRef(request.args['uri'][0])
+    desc = json.load(request.content)
+    if desc['source'] != str(uri):
+        # sometimes this happens on a : vs %3A disagreement, which
+        # is something I think I workaround elsewhere. Drop
+        # 'source' attr entirely? figure out where this new :
+        # escaping is happening?
+        raise ValueError("source %r != %r" % (desc['source'], str(uri)))
+    newAltUri = pickNewUri(uri, desc['tag'])
 
-        ctx = URIRef(newAltUri + "#create")
-        now = Literal(datetime.datetime.now(tzlocal()))
-        creator = webuser.getUserWebpy(web.ctx.environ)
-        if not creator:
-            raise ValueError("missing creator")
-        
-        stmts = [
-            (uri, PHO.alternate, newAltUri),
-            (newAltUri, RDF.type, FOAF.Image),
-            (newAltUri, DCTERMS.creator, creator),
-            (newAltUri, DCTERMS.created, now),
-            ]
-        
-        for k, v in desc.items():
-            if k in ['source']:
-                continue
-            if k == 'types':
-                for typeUri in v:
-                    stmts.append((newAltUri, RDF.type, URIRef(typeUri)))
-            else:
-                # this handles basic json types at most. consider
-                # JSON-LD or just n3 as better input formats, but make
-                # sure all their statements are about the uri, not
-                # arbitrary data that could change security
-                # permissions and stuff
-                stmts.append((newAltUri, PHO[k], Literal(v)))
-        
-        graph.add(stmts, context=ctx)
-        return "added %s statements to context %s" % (len(stmts), ctx)
+    ctx = URIRef(newAltUri + "#create")
+    now = Literal(datetime.datetime.now(tzlocal()))
+    creator = webuser.getUserKlein(request)
+    if not creator:
+        raise ValueError("missing creator")
 
-    def pickNewUri(self, uri, tag):
-        for suffix in itertools.count(1):
-            proposed = URIRef("%s/alt/%s%s" % (uri, tag, suffix))
-            if not graph.contains((proposed, None, None)):
-                return proposed
+    stmts = [
+        (uri, PHO.alternate, newAltUri),
+        (newAltUri, RDF.type, FOAF.Image),
+        (newAltUri, DCTERMS.creator, creator),
+        (newAltUri, DCTERMS.created, now),
+        ]
+
+    for k, v in desc.items():
+        if k in ['source']:
+            continue
+        if k == 'types':
+            for typeUri in v:
+                stmts.append((newAltUri, RDF.type, URIRef(typeUri)))
+        else:
+            # this handles basic json types at most. consider
+            # JSON-LD or just n3 as better input formats, but make
+            # sure all their statements are about the uri, not
+            # arbitrary data that could change security
+            # permissions and stuff
+            stmts.append((newAltUri, PHO[k], Literal(v)))
+
+    graph.add(stmts, context=ctx)
+    return "added %s statements to context %s" % (len(stmts), ctx)
+
+def pickNewUri(self, uri, tag):
+    for suffix in itertools.count(1):
+        proposed = URIRef("%s/alt/%s%s" % (uri, tag, suffix))
+        if not graph.contains((proposed, None, None)):
+            return proposed
                 
 
 
@@ -267,19 +264,6 @@ def personAgeString(isoBirthday, photoDate):
         return "%.1f years" % (days / 365)
 
 if __name__ == '__main__':
-    
     graph = db.getGraph()
+    run('0.0.0.0', networking.oneImageServer()[1])
 
-    urls = (r'/', "index",
-            r'/facts', 'facts',
-            r'/links', 'links',
-            r'/viewPerm', 'viewPerm',
-            r'/stats', 'stats',
-            r'/tags', 'tags',
-            r'/alt', 'alt',
-            )
-
-    app = web.application(urls, globals(), autoreload=False)
-
-    sys.argv.append("9043")
-    app.run()

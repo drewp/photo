@@ -13,6 +13,11 @@ def getUserWebpy(environ):
 def getUserCyclone(request):
     return _getUser(request.headers.get)
 
+def getUserKlein(request):
+    headers = dict((k.lower(), v) for k,v in
+                   request.requestHeaders.getAllRawHeaders())
+    return _getUser(lambda k: headers.get(k, [None])[0])
+    
 def _getUser(getHeader):
     if os.environ.get('PHOTO_FORCE_LOGIN', ''):
         return URIRef(os.environ['PHOTO_FORCE_LOGIN'])
