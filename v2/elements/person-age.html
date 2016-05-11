@@ -1,0 +1,38 @@
+<link rel="import" href="https://bigasterisk.com/lib/polymer/1.0.9/polymer/polymer.html"></script>
+
+<dom-module id="person-age">
+  <template>{{format}}</template>
+  <script src="https://bigasterisk.com/lib/moment/2.11.1/moment.min.js"></script>
+  <script>
+   Polymer({
+     is: "person-age",
+     properties: {
+       format: { type: String },
+       born: { type: String },
+       asOf: { type: String, default: "now" }
+     },
+     ready: function() {
+       var asOf = this.asOf == "now" ? moment() : moment(this.asOf);
+       var born = moment(this.born);
+       var dt = moment.duration(asOf.diff(born));
+
+       if (dt.as('months') > 23) {
+         var x = Math.floor(dt.asYears());
+         var single = 'year', plural = 'years';
+       } else if (dt.as('weeks') > 10) {
+         var x = Math.floor(dt.asMonths());
+         var single = 'month', plural = 'months';
+       } else if (dt.as('days') > 8) {
+         var x = Math.floor(dt.asWeeks());
+         var single = 'week', plural = 'weeks';
+       } else {
+         var x = Math.floor(dt.asDays());
+         var single = 'day', plural = 'days';
+       }
+
+       var tenthed = Math.round(x * 10) / 10;
+       this.format = tenthed + ' ' + (tenthed == 1 ? single : plural);
+     }
+   });
+  </script>
+</dom-module>
