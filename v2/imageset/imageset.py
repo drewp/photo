@@ -68,6 +68,7 @@ results:
     total: <n>
 }
 """
+from __future__ import division
 import logging
 from klein import run, route
 from twisted.internet import reactor
@@ -83,7 +84,7 @@ from requestprofile import timed
 from oneimagequery import photoCreated
 from queryparams import queryFromParams
 from mediaresource import MediaResource
-from tagging import getTags
+from tagging import getTagLabels
 import networking
 
 logging.basicConfig(level=logging.INFO)
@@ -95,7 +96,7 @@ class ImageIndex(object):
     once, but then needs update(uri) called on any further changes.
     """
     def __init__(self, graph):
-        self.pool = concurrent.futures.ThreadPoolExecutor(max_workers=128)
+        self.pool = concurrent.futures.ThreadPoolExecutor(max_workers=8)
         self.graph = graph
 
         # managed by update()
@@ -123,8 +124,10 @@ class ImageIndex(object):
             self.update(self._toRead.pop())
         self.updateFinalSorts()
         
-    def _continueIndexing(self, docsAtOnce=256, maxTimePerCall=1):
+    def _continueIndexing(self, docsAtOnce=256, maxTimePerCall=.5):
         t1 = time.time()
+        cumGatherDocsTime = 0
+        docsAdded = 0
 
         while True:
             if not self._toRead:
@@ -146,6 +149,8 @@ class ImageIndex(object):
 
             for doc in docs:
                 self.addToIndices(doc)
+                cumGatherDocsTime += doc['_docTime']
+                docsAdded += 1
 
             if time.time() - t1 > maxTimePerCall:
                 break
@@ -155,7 +160,13 @@ class ImageIndex(object):
             self.updateFinalSorts()
             return
         self.updateSorts()
-        log.info("%s left to index", len(self._toRead))
+        chunkSec = time.time() - t1
+        log.info("%s left to index. last batch %.1f ms / %s docs = %.1f ms/doc. avg doc gather time %.1f ms",
+                 len(self._toRead),
+                 chunkSec * 1000,
+                 docsAdded,
+                 chunkSec / docsAdded * 1000,
+                 cumGatherDocsTime / docsAdded * 1000)
         reactor.callLater(.01, self._continueIndexing)
 
     def updateSorts(self):
@@ -163,7 +174,7 @@ class ImageIndex(object):
         if now > getattr(self, '_lastSort', 0) + 30:
             self._lastSort = now
             self.byTime = self.byUri.values()
-            self.byTime.sort(key=lambda d: (bool(d['t']), d['t'] or d['uri']))
+            self.byTime.sort(key=lambda d: d['unixTime'])
 
             if len(self.shuffled) < 1000:
                 self.updateShuffle()
@@ -178,23 +189,29 @@ class ImageIndex(object):
         r.shuffle(self.shuffled)
         
     def gatherDocs(self, uri):
+       
+        t1 = time.time()
         # check image first- maybe it was deleted
         try:
             t = photoCreated(self.graph, uri)
+            unixTime = time.mktime(t.timetuple()) # untested
         except ValueError:
             t = None
+            unixTime = 0
 
         m = MediaResource(self.graph, uri)
         
-            
         viewableBy = []
 
-        return [{
+        doc = {
             'uri': uri,
-            't': t,
+            't': t, # may be none
+            'unixTime': unixTime, # always a number, maybe 0
             'isVideo': m.isVideo(),
-            'tags': set(str(lit) for lit in getTags(self.graph, 'todo', uri)['tags'])
-            }]
+            'tags': set(str(lit) for lit in getTagLabels(self.graph, 'todo', uri)),
+            }
+        doc['_docTime'] = time.time() - t1
+        return [doc]
 
     def addToIndices(self, doc):
         self.byUri[doc['uri']] = doc
