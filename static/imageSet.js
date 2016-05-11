@@ -151,6 +151,7 @@ $(function () {
     }
 
     function gotoPage(newPath) {
+        newPath = rootUrl(newPath);
 	stopAllAjax();
 
         $("body").css("cursor", "wait"); // doesn't work on the nextClick image!
