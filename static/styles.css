@@ -98,6 +98,9 @@ div.tagging div:nth-child(1) {
 
 ul.tagit {
     background: white !important;
+    display: inline-block;
+    margin-top: 0;
+    margin-bottom: 0;
 }
    
 .tagit-autocomplete a {
