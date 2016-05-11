@@ -311,7 +311,7 @@ def main():
     @route('/update', methods=['POST'])
     def update(request):
         log.info('updating %r', request.args)
-        index.update(URIRef(request.args['uri']))
+        index.update(URIRef(request.args['uri'][0]))
         # schedule updateSorts? maybe they need to schedule themselves
         return 'indexed'
     

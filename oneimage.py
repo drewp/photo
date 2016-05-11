@@ -178,8 +178,8 @@ def PUT_tags(request):
     saveTags(graph,
              foafUser=user,
              img=img,
-             tagString=request.args.get('tags', '')[0],
-             desc=request.args.get('desc', '')[0])
+             tagString=request.args.get('tags', [''])[0],
+             desc=request.args.get('desc', [''])[0])
     request.setHeader("Content-Type", "text/json")
     return json.dumps(getTags(graph, user, img))
 
