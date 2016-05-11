@@ -73,6 +73,7 @@ from klein import run, route
 from twisted.internet import reactor
 import sys, json, itertools, random, time, sha
 from rdflib import URIRef
+import concurrent.futures
 sys.path.append("../..")
 
 from db import getGraph
@@ -90,6 +91,7 @@ class ImageIndex(object):
     once, but then needs update(uri) called on any further changes.
     """
     def __init__(self, graph):
+        self.pool = concurrent.futures.ThreadPoolExecutor(max_workers=128)
         self.graph = graph
 
         # managed by update()
@@ -100,7 +102,7 @@ class ImageIndex(object):
         self.shuffled = []
         
         self._toRead = self._allImages()
-        self._updateMore()
+        self._continueIndexing()
         
     def _allImages(self):
         log.info("finding all images")
@@ -117,14 +119,31 @@ class ImageIndex(object):
             self.update(self._toRead.pop())
         self.updateFinalSorts()
         
-    def _updateMore(self):
+    def _continueIndexing(self):
         t1 = time.time()
+
         while True:
             if not self._toRead:
                 break
-            uri = self._toRead.pop()
-            self.update(uri)
-            if time.time() - t1 > 1:
+
+            uris = set()
+            for n in range(1024):
+                if self._toRead:
+                    uris.add(self._toRead.pop())
+
+            docs = []
+            if True:
+                # parallel
+                docs = sum(self.pool.map(self.gatherDocs, uris), [])
+            else:
+                # serial
+                for uri in uris:
+                    docs.extend(self.gatherDocs(uri))
+
+            for doc in docs:
+                self.addToIndices(doc)
+
+            if time.time() - t1 > 2:
                 break
 
         if not self._toRead:
@@ -133,7 +152,7 @@ class ImageIndex(object):
             return
         self.updateSorts()
         log.info("%s left to index", len(self._toRead))
-        reactor.callLater(.01, self._updateMore)
+        reactor.callLater(.01, self._continueIndexing)
 
     def updateSorts(self):
         now = time.time()
@@ -154,7 +173,7 @@ class ImageIndex(object):
         r = random.Random(987)
         r.shuffle(self.shuffled)
         
-    def update(self, uri):
+    def gatherDocs(self, uri):
         # check image first- maybe it was deleted
         try:
             t = photoCreated(self.graph, uri)
@@ -162,12 +181,18 @@ class ImageIndex(object):
             t = None
         viewableBy = []
 
-        doc = {
+        return [{
             'uri': uri,
             't': t,
-            }
+            }]
 
-        self.byUri[uri] = doc
+    def addToIndices(self, doc):
+        self.byUri[doc['uri']] = doc
+
+    def update(self, uri):
+        docs = self.gatherDocs(uri)
+        for doc in docs:
+            self.addToIndices(doc)
 
     # we'll need a fancier updater for when ACL and groups change
 
