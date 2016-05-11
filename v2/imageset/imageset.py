@@ -71,15 +71,19 @@ results:
 import logging
 from klein import run, route
 from twisted.internet import reactor
-import sys, json, itertools, random, time, sha
+import sys, json, itertools, random, time, sha, collections
 from rdflib import URIRef
 import concurrent.futures
+from dateutil.parser import parse
+import dateutil.tz
 sys.path.append("../..")
 
 from db import getGraph
 from requestprofile import timed
 from oneimagequery import photoCreated
 from queryparams import queryFromParams
+from mediaresource import MediaResource
+from tagging import getTags
 import networking
 
 logging.basicConfig(level=logging.INFO)
@@ -119,7 +123,7 @@ class ImageIndex(object):
             self.update(self._toRead.pop())
         self.updateFinalSorts()
         
-    def _continueIndexing(self):
+    def _continueIndexing(self, docsAtOnce=256, maxTimePerCall=1):
         t1 = time.time()
 
         while True:
@@ -127,7 +131,7 @@ class ImageIndex(object):
                 break
 
             uris = set()
-            for n in range(1024):
+            for n in range(docsAtOnce):
                 if self._toRead:
                     uris.add(self._toRead.pop())
 
@@ -143,7 +147,7 @@ class ImageIndex(object):
             for doc in docs:
                 self.addToIndices(doc)
 
-            if time.time() - t1 > 2:
+            if time.time() - t1 > maxTimePerCall:
                 break
 
         if not self._toRead:
@@ -179,11 +183,17 @@ class ImageIndex(object):
             t = photoCreated(self.graph, uri)
         except ValueError:
             t = None
+
+        m = MediaResource(self.graph, uri)
+        
+            
         viewableBy = []
 
         return [{
             'uri': uri,
             't': t,
+            'isVideo': m.isVideo(),
+            'tags': set(str(lit) for lit in getTags(self.graph, 'todo', uri)['tags'])
             }]
 
     def addToIndices(self, doc):
@@ -210,6 +220,7 @@ class ImageSet(object):
         self.index = index
 
     def request(self, query):
+        log.info('query: %r', query)
         paging = {
             'limit': query.get('paging', {}).get('limit', 10),
             'skip': query.get('paging', {}).get('skip', 0),
@@ -217,12 +228,31 @@ class ImageSet(object):
         
         s = query.get('sort', [{'time': 'asc'}])
 
-        allImages = self.imageStream(s)
+        stream = self.imageStream(s)
         
-        allowedImages = self.viewableStream(allImages)
-        
+        stream = self.viewableStream(stream)
+
+        qf = collections.defaultdict(lambda: None, query.get('filter', {}))
+        if qf['type'] == 'image':
+            stream = itertools.ifilter(lambda doc: not doc['isVideo'], stream)
+        elif qf['type'] == 'video':
+            stream = itertools.ifilter(lambda doc: doc['isVideo'], stream)
+        stream = itertools.ifilter(lambda doc: doc['tags'].isdisjoint(qf['withoutTags']), stream)
+        if qf['onlyTagged']:
+            stream = itertools.ifilter(lambda doc: not doc['tags'].isdisjoint(qf['onlyTagged']), stream)
+
+        if qf['timeRange']:
+            # move the parsing to queryparams!
+            s, e = qf['timeRange']
+            if s:
+                st = parse(s).replace(tzinfo=dateutil.tz.tzlocal())
+                stream = itertools.ifilter(lambda doc: doc['t'] and doc['t'] >= st, stream)
+            if e:
+                et = parse(e).replace(tzinfo=dateutil.tz.tzlocal())
+                stream = itertools.ifilter(lambda doc: doc['t'] and doc['t'] <= et, stream)
+            
         images = []
-        for rowNum, row in enumerate(allowedImages):
+        for rowNum, row in enumerate(stream):
             if rowNum < paging['skip']:
                 continue
             if len(images) >= paging['limit']:
@@ -230,6 +260,11 @@ class ImageSet(object):
                 continue
 
             outDoc = {'uri': row['uri']}
+            if 0: # debug
+                rowForJson = row.copy()
+                rowForJson['tags'] = list(rowForJson['tags'])
+                rowForJson['t'] = rowForJson['t'].isoformat() if rowForJson['t'] else None
+                outDoc['_doc'] = rowForJson
             if row['t'] is not None:
                 outDoc['time'] = row['t'].isoformat()
             images.append(outDoc)

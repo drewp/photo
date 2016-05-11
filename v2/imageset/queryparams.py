@@ -9,10 +9,10 @@ def queryFromParams(params):
             elif k == 'skip': q.setdefault('paging', {})['skip'] = int(v)
             elif k == 'tag':
                 if v != '':
-                    qf.setdefault('tags', []).append(v)
+                    qf.setdefault('tags', set()).append(v)
             elif k == 'withoutTag':
                 if v != '':
-                    qf.setdefault('withoutTags', []).add(v)
+                    qf.setdefault('withoutTags', set()).add(v)
             elif (k, v) == ('hidden', 'none'):
                 # this is now order-dependent with a withoutTags=nsfw param
                 for h in HIDDEN:
@@ -33,6 +33,9 @@ def queryFromParams(params):
                     q.setdefault('sort', []).append({'time': 'asc'})
                 else:
                     raise ValueError
+            elif k == 'time':
+                # incomplete
+                qf['timeRange'] = v.split(',')
             elif k == 'attrs':
                 raise NotImplementedError
             elif k == 'after':
