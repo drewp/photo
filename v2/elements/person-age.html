@@ -7,31 +7,27 @@
    Polymer({
      is: "person-age",
      properties: {
-       format: { type: String },
+       format: { type: String, computed: "_format(born, asOf)" },
        born: { type: String },
-       asOf: { type: String, default: "now" }
+       asOf: { type: String, notify: true, value: "now" }
      },
-     ready: function() {
-       var asOf = this.asOf == "now" ? moment() : moment(this.asOf);
-       var born = moment(this.born);
+     _format: function(born, asOf) {
+       var asOf = asOf == "now" ? moment() : moment(asOf);
+       var born = moment(born);
        var dt = moment.duration(asOf.diff(born));
 
        if (dt.as('months') > 23) {
-         var x = Math.floor(dt.asYears());
-         var single = 'year', plural = 'years';
+         var x = dt.asYears(), single = 'year', plural = 'years';
        } else if (dt.as('weeks') > 10) {
-         var x = Math.floor(dt.asMonths());
-         var single = 'month', plural = 'months';
+         var x = dt.asMonths(), single = 'month', plural = 'months';
        } else if (dt.as('days') > 8) {
-         var x = Math.floor(dt.asWeeks());
-         var single = 'week', plural = 'weeks';
+         var x = dt.asWeeks(), single = 'week', plural = 'weeks';
        } else {
-         var x = Math.floor(dt.asDays());
-         var single = 'day', plural = 'days';
+         var x = dt.asDays(), single = 'day', plural = 'days';
        }
 
-       var tenthed = Math.round(x * 10) / 10;
-       this.format = tenthed + ' ' + (tenthed == 1 ? single : plural);
+       var tenthed = Math.floor(x * 10) / 10.;
+       return format = tenthed + ' ' + (tenthed == 1 ? single : plural);
      }
    });
   </script>
