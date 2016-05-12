@@ -33,6 +33,7 @@ def saveTags(graph, foafUser, img, tagString, desc):
         (img, PHO.tagString, Literal(tagString)),
         (img, RDFS.comment, Literal(desc)),
         ])
+    log.info('save tags %r', stmts)
     tagDefs = set()
     for w in tagString.split():
         # need to trim bad url chars and whatever else we're not going to allow

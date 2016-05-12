@@ -14,7 +14,7 @@ the fetching of the resized images is still over in serve
 """
 from __future__ import division
 import boot
-import json, time, urllib, datetime, itertools
+import json, time, urllib, datetime, itertools, cgi
 from dateutil.tz import tzlocal
 from klein import run, route
 from rdflib import URIRef, Variable, Literal
@@ -175,11 +175,12 @@ def PUT_tags(request):
     img = URIRef(request.args['uri'][0])
     user = webuser.getUserKlein(request)
     log.info('user %r', user)
+    body = cgi.parse_qs(request.content.read())
     saveTags(graph,
              foafUser=user,
              img=img,
-             tagString=request.args.get('tags', [''])[0],
-             desc=request.args.get('desc', [''])[0])
+             tagString=body.get('tags', [''])[0],
+             desc=body.get('desc', [''])[0])
     request.setHeader("Content-Type", "text/json")
     return json.dumps(getTags(graph, user, img))
 
