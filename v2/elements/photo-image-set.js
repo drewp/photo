@@ -1,19 +1,16 @@
 Polymer({
     is: 'photo-image-set',
     properties: {
-        limit: { type: String, notify: true, observer: 'paramChanged' },
+        status: { type: String },
         out: {
             type: Object,
             value: function () {
-                return { images: [{ uri: 'one' }] };
+                return { images: [] };
             },
             notify: true
         },
-        seed: {
-            type: String,
-            notify: true,
-            observer: 'paramChanged'
-        },
+        limit: { type: String, notify: true, observer: 'paramChanged' },
+        seed: { type: String, notify: true, observer: 'paramChanged'},
         onlyTagged: {
             // support is incomplete. this should take space-separated tags.
             type: String,
@@ -23,19 +20,12 @@ Polymer({
         sort: { type: String, notify: true, observer: 'paramChanged' },
         type: { type: String, notify: true, observer: 'paramChanged' },
         time: { type: String, notify: true, observer: 'paramChanged' },
-        status: {type: String}
     },
     paramChanged: function () {
-        if (this.timer) {
-            clearTimeout(this.timer);
-        }
-        this.timer = setTimeout(this.reloadSet.bind(this), 50);
+        this.debounce('reloadSet', this.reloadSet.bind(this), 100);
     },
-    reloadSet: function () {
-        this.timer = null;
+    makeQueryParams: function() {
         var self = this;
-        // if status==loading AND all params match, we could return here
-        self.status = 'loading';
         var params = {};
         [
             'limit',
@@ -52,10 +42,17 @@ Polymer({
         if (self.seed && params.sort == 'random') {
             params.sort = 'random ' + self.seed;
         }
-       
-        this.latestParams = params;
+        return params;
+    },
+    reloadSet: function () {
+        var self = this;
+        // if status==loading AND all params match, we could return here
+        self.status = 'loading';
+        var params = self.makeQueryParams();
         $.getJSON('https://photo.bigasterisk.com/imageSet/set.json', params, function (js) {
-            if (!_.isEqual(params, self.latestParams)) {
+            // Note: because of debounce, reloadSet might not have
+            // even been called yet on the current params.
+            if (!_.isEqual(params, self.makeQueryParams())) {
                 return;
             }
             self.out = js;
