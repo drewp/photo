@@ -67,6 +67,13 @@ results:
     count: <len(images)>
     total: <n>
 }
+
+----
+Watch the startup logs in gnuplot like this:
+set yran [0:]
+plot "< tail -n 10000 /tmp/photo_imageset_8045-stderr*log | grep left" using 0:18 with imp
+
+
 """
 from __future__ import division
 import logging
@@ -159,7 +166,7 @@ class ImageIndex(object):
             log.info("background indexing is done")
             self.updateFinalSorts()
             return
-        self.updateSorts()
+        self.updateSorts(periodic=True)
         chunkSec = time.time() - t1
         log.info("%s left to index. last batch %.1f ms / %s docs = %.1f ms/doc. avg doc gather time %.1f ms",
                  len(self._toRead),
@@ -169,14 +176,15 @@ class ImageIndex(object):
                  cumGatherDocsTime / docsAdded * 1000)
         reactor.callLater(.01, self._continueIndexing)
 
-    def updateSorts(self):
+    def updateSorts(self, periodic=False):
         now = time.time()
-        if now > getattr(self, '_lastSort', 0) + 30:
+        if not periodic or now > getattr(self, '_lastSort', 0) + 30:
             self._lastSort = now
             self.byTime = self.byUri.values()
             self.byTime.sort(key=lambda d: d['unixTime'])
+            log.info('sorted byTime in %.1f ms', (time.time() - now) * 1000)
 
-            if len(self.shuffled) < 1000:
+            if periodic and len(self.shuffled) < 1000:
                 self.updateShuffle()
         
     def updateFinalSorts(self):
@@ -184,9 +192,11 @@ class ImageIndex(object):
         self.updateShuffle()
 
     def updateShuffle(self):
+        t1 = time.time()
         self.shuffled = self.byTime[:]
         r = random.Random(987)
         r.shuffle(self.shuffled)
+        log.info('shuffled in %.1f ms', (time.time() - t1) * 1000)
         
     def gatherDocs(self, uri):
        
@@ -331,6 +341,7 @@ def main():
     def update(request):
         log.info('updating %r', request.args)
         index.update(URIRef(request.args['uri'][0]))
+        log.info('done updating')
         # schedule updateSorts? maybe they need to schedule themselves
         return 'indexed'
     
