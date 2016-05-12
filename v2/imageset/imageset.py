@@ -121,7 +121,7 @@ class ImageIndex(object):
 
     def finishBackgroundIndexing(self):
         while self._toRead:
-            self.update(self._toRead.pop())
+            self.update(self._toRead.pop(), finalSort=False)
         self.updateFinalSorts()
         
     def _continueIndexing(self, docsAtOnce=256, maxTimePerCall=.5):
@@ -216,10 +216,12 @@ class ImageIndex(object):
     def addToIndices(self, doc):
         self.byUri[doc['uri']] = doc
 
-    def update(self, uri):
+    def update(self, uri, finalSort=True):
         docs = self.gatherDocs(uri)
         for doc in docs:
             self.addToIndices(doc)
+        if finalSort:
+            self.updateFinalSorts()
 
     # we'll need a fancier updater for when ACL and groups change
 
