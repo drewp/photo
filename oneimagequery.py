@@ -8,7 +8,10 @@ def photoCreated(graph, uri):
     this process"""
 
     try:
-        return _photoCreated[uri]
+        ret = _photoCreated[uri]
+        if isinstance(ret, ValueError):
+            raise ret
+        return ret
     except KeyError:
         pass
 
@@ -26,7 +29,8 @@ def photoCreated(graph, uri):
            }""", initBindings={'uri' : uri})
         if not rows:
             # also look up the :alternate tree for source images with times
-            raise ValueError("can't find a date for %s" % uri)
+            _photoCreated[uri] = ValueError("can't find a date for %s" % uri)
+            raise _photoCreated[uri]
     
     photoDate = rows[0]['t']
 
