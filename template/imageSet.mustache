@@ -122,7 +122,7 @@
                if (!ev.shiftKey) {
                  return;
                }
-               var key = ev.key.toLowerCase();
+               var key = (ev.key || ev.code.substr(-1)).toLowerCase();
                for (var row of tagHotkeys) {
                  if (row.key == key) {
                    this.querySelector("photo-tag-edit").addTag(row.tag);
