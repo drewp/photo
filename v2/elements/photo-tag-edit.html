@@ -3,32 +3,44 @@
 <link rel="import" href="https://bigasterisk.com/lib/polymer/1.0.9/iron-autogrow-textarea/iron-autogrow-textarea.html">
 
 <dom-module id="photo-tag-edit">
+  <template>
   <link rel="stylesheet" href="/randoms/aehlke-tag-it-6ccd2de/css/jquery.tagit.css">
   <link rel="stylesheet" href="/randoms/aehlke-tag-it-6ccd2de/css/tagit.ui-zendesk.css">
   <style>
-     form {
+   form {
        border: 1px outset gray;
        padding: 5px;
        margin: 5px;
-     width: 300px;
-     background: #241e29;
-     }
-     icon-checkbox {
+       width: 300px;
+       background: #241e29;
+       color: white;
+   }
+   ul.tagit {
+       background: white !important;
+       display: inline-block;
+       margin-top: 0;
+       margin-bottom: 0;
+   }
+   
+   .tagit-autocomplete a {
+       color: #242452;
+   }
+
+   icon-checkbox {
        vertical-align: middle;
-     }
-     .tagMatches span {
+   }
+   .tagMatches span {
        color: white;
        background: blue;
        margin: 2px;
        padding: 0 2px;
    }
    #desc {
-     background: white;
-     color: black;
-     }
+       background: white;
+       color: black;
+   }
 
     </style>
-  <template>
     <form>
       <div>
         Tags:

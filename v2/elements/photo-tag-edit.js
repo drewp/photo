@@ -52,6 +52,11 @@ TagitWidget.prototype.setTags = function(tags, onDone) {
     tags.forEach(function(tag) {
         this.t.tagit('createTag', tag);
     }.bind(this));
+
+    // shady dom would have put this class on if it could, and it has
+    // mangled the styles to all require this class
+    this.elem.nextElementSibling.classList.add('photo-tag-edit');
+
     if (onDone) {
         onDone();
     }
@@ -100,6 +105,7 @@ Polymer({
     },
     ready: function () {
         var self = this;
+
         self.widget = new TagitWidget(self.$.tags, self.tagsChanged.bind(self));
 
         // todo: these may be available in a page global already
