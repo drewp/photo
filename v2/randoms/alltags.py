@@ -3,6 +3,7 @@ from klein import run, route
 import json
 sys.path.append("../..")
 from db import getGraph
+import auth
 
 graph = getGraph()
 
@@ -11,7 +12,10 @@ def allTags(request):
     tags = set()
     for row in graph.queryd(
             "SELECT ?tag WHERE { ?pic scot:hasTag [ rdfs:label ?tag ] }"):
-        tags.add(unicode(row['tag']))
+        tag = unicode(row['tag'])
+        if tag in auth.hiddenTags:
+            continue
+        tags.add(tag)
     tags = sorted(tags)
     return json.dumps({'tags': tags})
 

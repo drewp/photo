@@ -9,6 +9,7 @@ from rdflib import URIRef, Literal, Variable
 log = logging.getLogger()
 from ns import RDF, RDFS, DCTERMS, PHO, SCOT
 import v2.imageset.client
+import auth
 
 _twf = None
 
@@ -96,6 +97,8 @@ def getTagsWithFreqs(graph):
         return _twf
     freq = {}
     for row in graph.queryd("SELECT ?tag WHERE { ?pic scot:hasTag [ rdfs:label ?tag ] }"):
+        if str(row['tag']) in auth.hiddenTags:
+            continue
         freq[row['tag']] = freq.get(row['tag'], 0) + 1
     _twf = freq
     return freq
