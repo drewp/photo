@@ -48,21 +48,29 @@ class ScanExif(object):
 
     def addByFilename(self, uri, filename):
         try:
-            vals = self.exifValues(filename)
-            log.debug("exif values: %r", vals)
-        except (ExpatError, ValueError):
-            stmts = self.fileTimeStatements(uri, filename)
-        else:
-            stmts = []
+            try:
+                vals = self.exifValues(filename)
+                log.debug("exif values: %r", vals)
+            except (ExpatError, ValueError):
+                stmts = self.fileTimeStatements(uri, filename)
+            else:
+                stmts = []
 
-            stmts.extend(self.timeStatements(uri, vals))
-            stmts.extend(self.positionStatements(uri, vals))
-            stmts.extend(self.exposureStatements(uri, vals))
+                stmts.extend(self.timeStatements(uri, vals))
+                stmts.extend(self.positionStatements(uri, vals))
+                stmts.extend(self.exposureStatements(uri, vals))
+                try:
+                    stmts.extend(self.orientationStatements(uri, vals))
+                except ValueError as e:
+                    log.warn('orientationStatements on %r: %r', uri, e)
 
-        #self.graph.remove([(uri, None, None)]) # used to flush some stmts
-        self.graph.add(stmts,
-             context=URIRef("http://photo.bigasterisk.com/scan/exif"))
-        log.info("added exif from %s %s triples" % (filename, len(stmts)))
+            #self.graph.remove([(uri, None, None)]) # used to flush some stmts
+            self.graph.add(stmts,
+                 context=URIRef("http://photo.bigasterisk.com/scan/exif"))
+            log.info("added exif from %s %s triples" % (filename, len(stmts)))
+        except:
+            log.error("on uri=%r filename=%r", uri, filename)
+            raise
 
     def exifValues(self, filename):
         # ctypes was starting to work, but libexif uses C macros for
@@ -72,6 +80,8 @@ class ScanExif(object):
         #exif.exif_data_new_from_file.restype = ExifData
         #ed = exif.exif_data_new_from_file(filename)
         #exif.exif_data_dump(ed)
+        #
+        # also, PIL has PIL.ExifTags (untested)
 
         assert filename.startswith('/'), "%r not an absolute path" % filename
 
@@ -172,6 +182,20 @@ class ScanExif(object):
                                       datatype=XS.decimal)))
             except (ZeroDivisionError, ValueError) as e:
                 log.warn("can't use exposure time %r for %r: %r", vals['Exposure_Time'], uri, e)
+        return stmts
+        
+    def orientationStatements(self, uri, vals):
+        stmts = []
+        if 'Orientation' in vals:
+            o = vals['Orientation'].lower()
+            if o not in [
+                    'top-left', 'top-right',
+                    'bottom-right', 'bottom-left',
+                    'left-top', 'right-top',
+                    'right-bottom', 'left-bottom',
+                    ]:
+                raise ValueError(repr(o))
+            stmts.append((uri, EXIF['orientation'], EXIF[o]))
         return stmts
 
     def fileTimeStatements(self, uri, filename):

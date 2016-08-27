@@ -7,7 +7,7 @@ from twisted.python.util import sibpath
 from StringIO import StringIO
 from PIL import Image
 from lib import print_timing
-from ns import RDF, PHO
+from ns import RDF, PHO, EXIF
 from scanFs import videoExtensions
 from dims import fitSize, videoSize
 log = logging.getLogger()
@@ -106,7 +106,7 @@ class MediaResource(object):
                 except IOError:
                     jpg = self._runPhotoResize(size)
                     return jpg.getvalue(), time.time()
-
+                    
     def _returnCached(self, size, useMp4=False):
         thumbPath = self._thumbPath(size, useMp4=useMp4)
         f = open(thumbPath)
@@ -123,6 +123,17 @@ class MediaResource(object):
         else:
             for size in [75,250,600]:
                 self.getImageAndMtime(size)
+
+    def purgeCached(self):
+        """delete all cached sizes"""
+        possiblePaths = []
+        for size in sizes.values():
+            if size != Full:
+                possiblePaths.append(self._thumbPath(size))
+        possiblePaths.append(self._thumbPath(Video2, useMp4=True))
+        for p in possiblePaths:
+            if os.path.exists(p):
+                os.unlink(p)
 
     def _fullVideoFile(self):
         # might be 100s of MBs!
@@ -179,6 +190,27 @@ class MediaResource(object):
             w, h = img.size
             outW, outH = fitSize(w, h, maxSize, maxSize)
             img = img.resize((outW, outH), Image.ANTIALIAS)
+
+        rows = list(self.graph.queryd(
+            "SELECT ?o WHERE { ?uri exif:orientation ?o }",
+            initBindings={'uri' : self.uri}))
+        if len(rows) == 1:
+            orientation = rows[0]['o']
+            angle = {
+                EXIF['top-left']: None,
+                EXIF['top-right']: NotImplementedError('hflip'),
+                EXIF['bottom-right']: 180,
+                EXIF['bottom-left']: NotImplementedError('vflip'),
+                EXIF['left-top']: NotImplementedError('transpose'),
+                EXIF['right-top']: 270,
+                EXIF['right-bottom']: NotImplementedError('transverse'),
+                EXIF['left-bottom']: 90,
+            }[orientation]
+            if angle is not None:
+                img = img.rotate(angle, expand=True)
+        elif len(rows) > 1:
+            log.warn("found %s orientation rows for %s - ignoring them",
+                     len(rows), self.uri)
 
         jpg = StringIO()
         q = 80
@@ -257,6 +289,8 @@ class MediaResource(object):
             ext = 'mp4' if useMp4 else 'webm'
             return '/var/cache/photo/video/%s/%s.%s' % (h[:2], h[2:], ext)
         else:
+            if not isinstance(maxSize, int):
+                raise TypeError(maxSize)
             thumbUrl = self.uri + "?size=%s" % maxSize
             cksum = hashlib.md5(thumbUrl).hexdigest()
             return "/var/cache/photo/%s/%s/%s" % (cksum[:2], cksum[2:4], cksum[4:])
