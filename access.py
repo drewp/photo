@@ -29,10 +29,11 @@ def agentClassCheck(graph, agent, photo):
     is there a perm that specifically lets this agent (or class) see this photo?
     """
     bb = {'initBindings' : {'photo' : photo, 'agent' : agent}}
-    # UNION was breaking
-    return (graph.queryd("ASK { ?photo pho:viewableByClass ?agent . }", **bb) or
-            graph.queryd("ASK { ?photo pho:viewableBy ?agent . }", **bb) or
-            graph.queryd("ASK { [ acl:agent ?agent ; acl:mode acl:Read ; acl:accessTo ?photo ] . }", **bb))
+    return graph.queryd("""ASK {
+       { ?photo pho:viewableByClass ?agent . } UNION
+       { ?photo pho:viewableBy ?agent . } UNION
+       { [ acl:agent ?agent ; acl:mode acl:Read ; acl:accessTo ?photo ] . }
+      }""", **bb)
 
 def viewableViaPerm(graph, uri, agent):
     """

@@ -386,9 +386,10 @@ class View(TemplateSpec):
         # not absoluteSite() here, since i didn't want to make
         # separate shortener entries for test sites and the real one
         target = self.desc.currentPhoto()+"/single"
-        if access.viewable(self.graph, self.desc.currentPhoto(), FOAF.Agent):
-            short = hasShortUrlSync(target)
-            if short:
+        short = hasShortUrlSync(target)
+        if short:
+            if access.viewable(self.graph, self.desc.currentPhoto(), FOAF.Agent):
+            
                 return dict(hasLink=dict(short=short))
         return dict(makeLink=dict(show=True))
 
