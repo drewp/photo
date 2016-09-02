@@ -26,6 +26,11 @@ class ImageSetDesc(object): # in design phase
         uriOrQuery is like /set?tag=foo&star=only
         """
         self.graph = graph
+        
+        if '?' not in uriOrQuery:
+            # sometimes a single image uri comes in, and it wasn't getting handled right
+            uriOrQuery = str(url.URL().add('current', uriOrQuery))
+            
         # shouldn't these removes be handled by paramsAffectingSet or something?
         self.parsedUrl = url.URL.fromString(uriOrQuery).remove('jsonUpdate').remove('setList')
         params = dict(self.parsedUrl.queryList())
