@@ -14,7 +14,12 @@ assert toDir.endswith('/')
 
 sync = restkit.Resource("http://bang:9042/")
 
-out = subprocess.check_output(['/usr/bin/rsync', '-av', fromDir, toDir])
+out = subprocess.check_output(['/usr/bin/rsync',
+                               '-v',
+                               '--recursive',
+                               '--links',
+                               '--times',
+                               fromDir, toDir])
 errored = []
 for line in out.splitlines():
     target = os.path.join(toDir, line.strip())
