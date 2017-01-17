@@ -95,7 +95,7 @@ class ImageSet(rend.Page):
         
         if ctx.arg('archive') == 'zip':
             request = inevow.IRequest(ctx)
-            ua = request.getHeader('User-agent')
+            ua = request.getHeader('User-agent') or ''
             if 'Googlebot' in ua or 'Yahoo! Slurp' in ua or 'http://search.msn.com/msnbot.htm' in ua:
                 raise ValueError("bots, you don't want these huge zip files")
 

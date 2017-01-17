@@ -120,7 +120,7 @@ class Main(rend.Page):
         that there's nothing you can get to at your access level.
         """
         accept = request.getHeader('accept')
-        ua = request.getHeader('user-agent')
+        ua = request.getHeader('user-agent') or ''
 
         if (accept.split(',')[0].startswith('image/') or
             # http://code.google.com/p/chromium/issues/detail?id=63173

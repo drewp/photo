@@ -194,7 +194,7 @@ T.p["You're probably looking for ", T.a(href="harlan/")["Harlan's pictures"]],
 
     def child_set(self, ctx):
         imageSet = importModule('imageSet')
-        ua = inevow.IRequest(ctx).getHeader('user-agent')
+        ua = inevow.IRequest(ctx).getHeader('user-agent') or ''
         if 'iPad' in ua or ctx.arg('tablet') == '1':
             cls = imageSet.ImageSetTablet
         else:
