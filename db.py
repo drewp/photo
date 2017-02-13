@@ -11,6 +11,15 @@ from ns import initNs
 def getGraph():
     return SyncGraph('sesame', networking.graphRepoRoot()+'/photo', initNs=initNs)
 
+def getTestGraph(n3):
+    from rdflib import Graph
+    from rdflib.parser import StringInputSource
+    g = Graph()
+    g.parse(StringInputSource(n3), format="n3")
+    for k,v in initNs.items():
+        g.bind(k, v)
+    return g
+    
 def getMonque():
     from pymongo import Connection
     db = Connection(*networking.monqueMongo())['photoQueue']

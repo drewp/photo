@@ -1,20 +1,17 @@
+import re
 from xml.utils import iso8601
 import datetime
 from dateutil.tz import tzlocal
 
-_photoCreated = {} # uri : datetime
-def photoCreated(graph, uri):
-    """datetime of the photo's creation time. Cached for the life of
-    this process"""
+def _fromBasename(graph, uri):
 
-    try:
-        ret = _photoCreated[uri]
-        if isinstance(ret, ValueError):
-            raise ret
-        return ret
-    except KeyError:
-        pass
-
+    for row in graph.query("SELECT ?bn WHERE { ?uri pho:basename ?bn }", initBindings={'uri': uri}):
+        match = re.match(r'^(\d\d\d\d)-(\d\d)-(\d\d)T(\d\d)-(\d\d)-(\d\d)\.mov$', row['bn'])
+        if match:
+            y,mo,d,h,mi,s = map(int, match.groups())
+            return datetime.datetime(y, mo, d, h, mi, s, tzinfo=tzlocal())
+    
+def _fromGraphData(graph, uri):
     rows = list(graph.query("""
        SELECT ?t ?mail WHERE {
          { ?uri exif:dateTime ?t }
@@ -28,9 +25,7 @@ def photoCreated(graph, uri):
              ?email a pho:Email ; dcterms:created ?t ; dcterms:hasPart ?uri .
            }""", initBindings={'uri' : uri})
         if not rows:
-            # also look up the :alternate tree for source images with times
-            _photoCreated[uri] = ValueError("can't find a date for %s" % uri)
-            raise _photoCreated[uri]
+            return None
     
     photoDate = rows[0]['t']
 
@@ -43,7 +38,29 @@ def photoCreated(graph, uri):
         sec = iso8601.parse(str(photoDate) + '-0700')
 
     # todo: this is losing the original tz unnecessarily
-    ret = datetime.datetime.fromtimestamp(sec, tzlocal())
+    return datetime.datetime.fromtimestamp(sec, tzlocal())
+    
+_photoCreated = {} # uri : datetime
+def photoCreated(graph, uri):
+    """datetime of the photo's creation time. Cached for the life of
+    this process"""
+
+    try:
+        ret = _photoCreated[uri]
+        if isinstance(ret, ValueError):
+            raise ret
+        return ret
+    except KeyError:
+        pass
+
+    ret = _fromBasename(graph, uri)
+    if not ret:
+        ret = _fromGraphData(graph, uri)
+        if not ret:
+            # also look up the :alternate tree for source images with times
+            _photoCreated[uri] = ValueError("can't find a date for %s" % uri)
+            raise _photoCreated[uri]
+          
     _photoCreated[uri] = ret
     return ret
 

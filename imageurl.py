@@ -1,4 +1,5 @@
 import logging, datetime
+import requests
 from rdflib import URIRef, Literal, RDF
 from nevow import url
 import tagging
@@ -281,25 +282,31 @@ def daysInSpan(day, span):
 def queryOneTopic(graph, uri):
     if uri in _photosWithTopic:
         return _photosWithTopic[uri]
-        
-    ret = graph.queryd("""SELECT DISTINCT ?photo ?isVideo WHERE {
-                           {
-                             ?photo foaf:depicts ?u .
-                           } UNION {
-                             ?photo pho:inDirectory ?u .
-                           } UNION {
-                             ?photo scot:hasTag ?u .
-                           } UNION {
-                             ?photo dc:date ?u .
-                           } UNION {
-                             ?email a pho:Email ; dc:date ?u ; dcterms:hasPart ?photo .
-                           }
-                          # ?photo pho:viewableBy pho:friends .
-                           OPTIONAL {
-                             ?photo a ?isVideo .
-                             FILTER( ?isVideo = pho:Video ) .
-                           }
-                         }""",
-                      initBindings={'u' : uri})
+
+    if getattr(uri, 'datatype', None) == XS['date']:
+        d = parse(uri)
+        d2 = d + datetime.timedelta(days=1)
+        r = requests.get('http://bang:8045/set.json', params={'time': '%s,%s' % (d, d2), 'limit': '3000'})
+        ret = [{'photo': URIRef(row['uri'])} for row in r.json()['images']]
+        for row in ret:
+            row['isVideo'] = graph.queryd("ASK { ?uri a pho:Video }", initBindings={'uri' : row['photo']})
+    else:
+        ret = graph.queryd("""SELECT DISTINCT ?photo ?isVideo WHERE {
+                               {
+                                 ?photo foaf:depicts ?u .
+                               } UNION {
+                                 ?photo pho:inDirectory ?u .
+                               } UNION {
+                                 ?photo scot:hasTag ?u .
+                               } UNION {
+                                 ?email a pho:Email ; dc:date ?u ; dcterms:hasPart ?photo .
+                               }
+                              # ?photo pho:viewableBy pho:friends .
+                               OPTIONAL {
+                                 ?photo a ?isVideo .
+                                 FILTER( ?isVideo = pho:Video ) .
+                               }
+                             }""",
+                          initBindings={'u' : uri})
     _photosWithTopic[uri] = ret
     return ret
