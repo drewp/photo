@@ -35,8 +35,8 @@ def _fromGraphData(graph, uri):
         # i think this is the 1-hour error bug on the site. incoming
         # dates might not have any zone, but we can make a guess about
         # their local time
-        sec = iso8601.parse(str(photoDate) + '-0700')
-
+        sec = iso8601.parse(str(photoDate) + '-0800')
+        
     # todo: this is losing the original tz unnecessarily
     return datetime.datetime.fromtimestamp(sec, tzlocal())
     
