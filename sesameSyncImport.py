@@ -66,7 +66,14 @@ def fixSftpPerms():
     os.system("/my/pic/upload/fixperms")
 
 
+def fixZfsMount(filename):
+    """i watch via a symlink, but returned filenames have the real path"""
+    if filename.startswith('/stor6/'):
+        filename = filename[len('/stor6'):]
+    return filename
+    
 def onChange(filename):
+    filename = fixZfsMount(filename)
     for root, sync in syncs.items():
         if filename.startswith(root):
             # this one reads .n3 files into sesame
