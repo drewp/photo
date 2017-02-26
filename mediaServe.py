@@ -147,5 +147,5 @@ if __name__ == '__main__':
     import logging
     log.setLevel(logging.WARN)
     
-    reactor.listenTCP(int(sys.argv[1]), site)
+    reactor.listenTCP(int(sys.argv[1]), site, interface='::')
     reactor.run()

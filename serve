@@ -295,5 +295,6 @@ graph = getGraph()
 
 application = service.Application('photo')
 webServer = internet.TCPServer(int(os.environ['PORT']),
-                               appserver.NevowSite(Main(graph)))
+                               appserver.NevowSite(Main(graph)),
+                               interface='::')
 webServer.setServiceParent(application)
