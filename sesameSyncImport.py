@@ -16,6 +16,7 @@ from picdirs import picSubDirs
 import networking
 from ns import PHO, FOAF, RDFS
 from db import getGraph
+import v2.imageset.client
 
 log = boot.log
 
@@ -88,6 +89,7 @@ def onChange(filename):
                 mr.videoProgress()
             # todo: freshen thumbs here too? that should be on a lower
             # priority queue than getting the exif/file data
+            v2.imageset.client.changed(picUri)
 
 quick = False
   
