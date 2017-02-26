@@ -40,10 +40,13 @@ class MediaResource(object):
     """
     this is one pic or video which can be returned at various scales
     """
-    def __init__(self, graph, uri):
+    def __init__(self, graph, uri, allVideos=None):
+        """allVideos is an optimization. dict of uri:isVideo."""
         self.graph, self.uri = graph, uri
         if uri is None:
             raise TypeError
+        if allVideos is not None:
+            self._isVideo = uri in allVideos
 
     def isVideo(self):
         if not hasattr(self, '_isVideo'):

@@ -60,7 +60,7 @@ def getTagLabels(graph, foafUser, img):
     # check user read perms
     return [r['tag'] for r in graph.queryd(
         "SELECT ?tag WHERE { ?img scot:hasTag [ rdfs:label ?tag ] }",
-        initBindings={Variable("img") : img})]
+        initBindings={"img" : img})]
 
 def getTags(graph, foafUser, img):
 

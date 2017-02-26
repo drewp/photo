@@ -1,4 +1,4 @@
-import logging, datetime
+import logging, datetime, time
 import requests
 from rdflib import URIRef, Literal, RDF
 from nevow import url
@@ -16,9 +16,6 @@ log = logging.getLogger()
 
 class NoSetUri(ValueError):
     "there is no stable URI that can represent this set"
-
-# these could go wrong whenever there's an edit!
-_imageSetDescCache = pylru.lrucache(500)
 
 class ImageSetDesc(object): # in design phase
     @print_timing
@@ -76,9 +73,6 @@ class ImageSetDesc(object): # in design phase
         self.topicDict = topicDict
 
     def determineTopic(self, graph, params):
-        key = (self.parsedUrl.path, tuple(sorted(params.items())))
-        if key in _imageSetDescCache:
-            return _imageSetDescCache[key]
         topicDict = {}
         completeUri = SITE[self.parsedUrl.path]
         if graph.queryd("ASK { ?img a foaf:Image }",
@@ -113,7 +107,6 @@ class ImageSetDesc(object): # in design phase
             else:
                 raise ValueError("no topic; %r" % params)
         topicDict['topic'] = topic
-        _imageSetDescCache[key] = topicDict
         return topicDict
 
     def determineLabel(self, graph, topicDict):
@@ -246,9 +239,6 @@ def starFilter(graph, starArg, agent, photos):
     else:
         raise NotImplementedError("star == %r" % starArg)
 
-# could easily be wrong after edits
-_photosWithTopic = pylru.lrucache(2)
-
 def photosWithTopic(graph, topicDict, isVideo):
     """photos can be related to uri in a variety of ways: foaf:depicts,
     dc:date, etc
@@ -280,13 +270,12 @@ def daysInSpan(day, span):
         yield Literal(d.date().isoformat(), datatype=XS['date'])
 
 def queryOneTopic(graph, uri):
-    if uri in _photosWithTopic:
-        return _photosWithTopic[uri]
-
     if getattr(uri, 'datatype', None) == XS['date']:
         d = parse(uri)
         d2 = d + datetime.timedelta(days=1)
+        t1 = time.time()
         r = requests.get('http://bang:8045/set.json', params={'time': '%s,%s' % (d, d2), 'limit': '3000'})
+        log.info('http://bang:8045/set.json in %.1f ms', 1000 * (time.time() - t1))
         ret = [{'photo': URIRef(row['uri'])} for row in r.json()['images']]
         for row in ret:
             row['isVideo'] = graph.queryd("ASK { ?uri a pho:Video }", initBindings={'uri' : row['photo']})
@@ -308,5 +297,4 @@ def queryOneTopic(graph, uri):
                                }
                              }""",
                           initBindings={'u' : uri})
-    _photosWithTopic[uri] = ret
     return ret

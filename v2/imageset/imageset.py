@@ -79,7 +79,7 @@ from __future__ import division
 import logging
 from klein import run, route
 from twisted.internet import reactor
-import sys, json, itertools, random, time, sha, collections
+import sys, json, itertools, random, time, sha, collections, calendar
 from rdflib import URIRef
 import concurrent.futures
 from dateutil.parser import parse
@@ -120,9 +120,17 @@ class ImageIndex(object):
         log.info("finding all images")
         t1 = time.time()
         uris = set()
+        self.allVideos = {}
         for row in self.graph.query(
-                "SELECT DISTINCT ?uri WHERE { ?uri a foaf:Image . }"):
+                """SELECT DISTINCT ?uri ?vid WHERE {
+                     ?uri a foaf:Image .
+                     OPTIONAL {
+                       ?uri a ?vid .
+                       FILTER (?vid = pho:Video)
+                     }
+                   }"""):
             uris.add(row['uri'])
+            self.allVideos[row['uri']] = bool(row['vid'])
         log.info("found %s images in %s sec", len(uris), time.time() - t1)
         return uris
 
@@ -131,7 +139,7 @@ class ImageIndex(object):
             self.update(self._toRead.pop(), finalSort=False)
         self.updateFinalSorts()
         
-    def _continueIndexing(self, docsAtOnce=256, maxTimePerCall=.5):
+    def _continueIndexing(self, docsAtOnce=512, maxTimePerCall=1):
         t1 = time.time()
         cumGatherDocsTime = 0
         docsAdded = 0
@@ -209,7 +217,7 @@ class ImageIndex(object):
             t = None
             unixTime = 0
 
-        m = MediaResource(self.graph, uri)
+        m = MediaResource(self.graph, uri, allVideos=self.allVideos)
         
         viewableBy = []
 
@@ -238,6 +246,10 @@ class ImageIndex(object):
 def mixed(i, maximum):
     """i hashed into 0..maximum"""
     return int(sha.new(str(i)).hexdigest(), 16) % maximum
+
+def parseToUnixtime(s):
+    dt = parse(s).replace(tzinfo=dateutil.tz.tzlocal()).astimezone(dateutil.tz.tzutc()) # untested
+    return calendar.timegm(dt.timetuple())
     
 class ImageSet(object):
     """
@@ -274,11 +286,11 @@ class ImageSet(object):
             # move the parsing to queryparams!
             s, e = qf['timeRange']
             if s:
-                st = parse(s).replace(tzinfo=dateutil.tz.tzlocal())
-                stream = itertools.ifilter(lambda doc: doc['t'] and doc['t'] >= st, stream)
+                st = parseToUnixtime(s)
+                stream = itertools.ifilter(lambda doc: doc['unixTime'] >= st, stream)
             if e:
-                et = parse(e).replace(tzinfo=dateutil.tz.tzlocal())
-                stream = itertools.ifilter(lambda doc: doc['t'] and doc['t'] <= et, stream)
+                et = parseToUnixtime(e)
+                stream = itertools.ifilter(lambda doc: doc['unixTime'] and doc['unixTime'] <= et, stream)
             
         images = []
         for rowNum, row in enumerate(stream):
@@ -352,7 +364,9 @@ def main():
             for v in vs:
                 pairs.append((k, v))
         q = queryFromParams(pairs)
+        t1 = time.time()
         result = iset.request(q)
+        log.info('iset.request in %.1f ms', 1000 * (time.time() - t1))
         return json.dumps(result)
 
     run("0.0.0.0", networking.imageSet()[1])
