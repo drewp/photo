@@ -45,8 +45,8 @@ class MediaResource(object):
         self.graph, self.uri = graph, uri
         if uri is None:
             raise TypeError
-        if allVideos is not None:
-            self._isVideo = uri in allVideos
+        if allVideos is not None and uri in allVideos:
+            self._isVideo = allVideos[uri]
 
     def isVideo(self):
         if not hasattr(self, '_isVideo'):
