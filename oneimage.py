@@ -20,6 +20,7 @@ from klein import run, route
 from rdflib import URIRef, Variable, Literal
 import auth
 from xml.utils import iso8601
+import shove_leveldb.store
 from tagging import getTagLabels
 import access, webuser
 from oneimagequery import photoCreated
@@ -30,6 +31,8 @@ import db
 import networking
 
 log = boot.log
+
+_photoCreatedCache = shove_leveldb.store.LevelDBStore('leveldb:///tmp/photoCreatedCache') # uri : datetime
 
 @route('/viewPerm', methods=['GET'])
 def GET_viewPerm(request):
@@ -57,7 +60,7 @@ def GET_facts(request):
     now = time.time()
 
     try:
-        created = photoCreated(graph, img)
+        created = photoCreated(graph, img, _cache=_photoCreatedCache)
         ret['created'] = created.isoformat()
         sec = time.mktime(created.timetuple())
     except ValueError, e:

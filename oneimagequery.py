@@ -1,4 +1,4 @@
-import re, shelve
+import re
 from xml.utils import iso8601
 import datetime
 from dateutil.tz import tzlocal
@@ -40,18 +40,18 @@ def _fromGraphData(graph, uri):
     # todo: this is losing the original tz unnecessarily
     return datetime.datetime.fromtimestamp(sec, tzlocal())
     
-_photoCreated = shelve.open('/tmp/photoCreatedCache') # uri : datetime
-def photoCreated(graph, uri):
+def photoCreated(graph, uri, _cache=None):
     """datetime of the photo's creation time. Cached for the life of
     this process"""
 
-    try:
-        ret = _photoCreated[str(uri)]
-        if isinstance(ret, ValueError):
-            raise ret
-        return ret
-    except KeyError:
-        pass
+    if _cache is not None:
+        try:
+            ret = _cache[str(uri)]
+            if isinstance(ret, ValueError):
+                raise ret
+            return ret
+        except KeyError:
+            pass
 
     ret = _fromBasename(graph, uri)
     if not ret:
@@ -60,7 +60,8 @@ def photoCreated(graph, uri):
             # also look up the :alternate tree for source images with times
             _photoCreated[str(uri)] = ValueError("can't find a date for %s" % uri)
             raise _photoCreated[str(uri)]
-          
-    _photoCreated[str(uri)] = ret
+
+    if _cache is not None:
+        _cache[str(uri)] = ret
     return ret
 
