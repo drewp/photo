@@ -34,7 +34,7 @@ def copy(source, dest, mock):
 
     # dotfiles are ignored by the other fileschanged process that is
     # watching for files to ingest
-    tempDest = dest.sibling("."+dest.basename()+_secureEnoughString())
+    tempDest = dest.sibling("."+dest.basename()+_secureEnoughString(dest))
     source.copyTo(tempDest)
     tempDest.chmod(0644)
     os.utime(tempDest.path, (source.getModificationTime(),

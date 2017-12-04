@@ -1,7 +1,7 @@
 Genshi==0.7
-Nevow==0.10.0
+Nevow==0.14.3rc3
 Pillow==3.0.0
-Twisted==14.0.0
+Twisted==17.5.0
 argparse==1.2.1
 cyclone==1.1
 flickrapi==1.4.2
