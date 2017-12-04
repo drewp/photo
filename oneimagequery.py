@@ -52,14 +52,16 @@ def photoCreated(graph, uri, _cache=None):
             return ret
         except KeyError:
             pass
+    else:
+        _cache = {}
 
     ret = _fromBasename(graph, uri)
     if not ret:
         ret = _fromGraphData(graph, uri)
         if not ret:
             # also look up the :alternate tree for source images with times
-            _photoCreated[str(uri)] = ValueError("can't find a date for %s" % uri)
-            raise _photoCreated[str(uri)]
+            _cache[str(uri)] = ValueError("can't find a date for %s" % uri)
+            raise _cache[str(uri)]
 
     if _cache is not None:
         _cache[str(uri)] = ret

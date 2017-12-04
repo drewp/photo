@@ -14,7 +14,7 @@ the fetching of the resized images is still over in serve
 """
 from __future__ import division
 import boot
-import json, time, urllib, datetime, itertools, cgi
+import json, time, urllib, datetime, itertools, cgi, sys
 from dateutil.tz import tzlocal
 from klein import run, route
 from rdflib import URIRef, Variable, Literal
@@ -32,7 +32,10 @@ import networking
 
 log = boot.log
 
-_photoCreatedCache = shove_leveldb.store.LevelDBStore('leveldb:///tmp/photoCreatedCache') # uri : datetime
+if sys.argv[0].endswith('oneimage.py'):
+    _photoCreatedCache = shove_leveldb.store.LevelDBStore('leveldb:///tmp/photoCreatedCache') # uri : datetime
+else:
+    _photoCreatedCache = None
 
 @route('/viewPerm', methods=['GET'])
 def GET_viewPerm(request):
