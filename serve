@@ -22,7 +22,8 @@ from urls import absoluteSite, absSiteHost, relPath
 from ns import PHO, SITE, FOAF, SIOC, DC, DCTERMS, SCOT, XS, RDF
 
 log = boot.log
-#logging.getLogger("timing").setLevel(logging.INFO)
+if os.environ.get('PHOTO_TIMING_LOG'):
+    logging.getLogger("timing").setLevel(logging.INFO)
 
 myPicSubdirs = [d for d in os.listdir("/my/pic") if d != "~thumb"]
 

@@ -239,6 +239,7 @@ def starFilter(graph, starArg, agent, photos):
     else:
         raise NotImplementedError("star == %r" % starArg)
 
+@print_timing
 def photosWithTopic(graph, topicDict, isVideo):
     """photos can be related to uri in a variety of ways: foaf:depicts,
     dc:date, etc
@@ -280,7 +281,7 @@ def queryOneTopic(graph, uri):
         for row in ret:
             row['isVideo'] = graph.queryd("ASK { ?uri a pho:Video }", initBindings={'uri' : row['photo']})
     else:
-        ret = graph.queryd("""SELECT DISTINCT ?photo ?isVideo WHERE {
+        ret = print_timing(graph.queryd)("""SELECT DISTINCT ?photo ?isVideo WHERE {
                                {
                                  ?photo foaf:depicts ?u .
                                } UNION {

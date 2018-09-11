@@ -1,7 +1,12 @@
-import re
+import re, logging
 from xml.utils import iso8601
-import datetime
+import datetime, urllib
 from dateutil.tz import tzlocal
+from lib import print_timing
+from dateutil.parser import parse
+import restkit.errors
+from servicecall import serviceCallSync, plainCallSync
+log = logging.getLogger()
 
 def _fromBasename(graph, uri):
 
@@ -54,16 +59,29 @@ def photoCreated(graph, uri, _cache=None):
             pass
     else:
         _cache = {}
-
-    ret = _fromBasename(graph, uri)
+        
+    ret = _photoCreatedEval(graph, uri)
     if not ret:
-        ret = _fromGraphData(graph, uri)
-        if not ret:
-            # also look up the :alternate tree for source images with times
-            _cache[str(uri)] = ValueError("can't find a date for %s" % uri)
-            raise _cache[str(uri)]
+        # also look up the :alternate tree for source images with times
+        _cache[str(uri)] = ValueError("can't find a date for %s" % uri)
+        raise _cache[str(uri)]
 
     if _cache is not None:
         _cache[str(uri)] = ret
     return ret
 
+def _photoCreatedEval(graph, uri):
+    try:
+        lines = plainCallSync('todo', 'imageset', '/created?' + urllib.urlencode({'uri': [str(uri)]}, doseq=1))
+    except restkit.errors.RequestFailed:
+        log.warn('imageset/created failed on %s', uri)
+    else:
+        if lines != 'None':
+            return parse(lines)
+
+    ret = _fromBasename(graph, uri)
+    if ret:
+        return ret
+
+    ret = _fromGraphData(graph, uri)
+    return ret

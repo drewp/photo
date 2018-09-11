@@ -43,6 +43,7 @@ def serviceUrl(name):
         'links' : 'http://%s:9043/links' % serviceHost,
         'tags' : 'http://%s:9043/tags' % serviceHost,
         'comments' : 'http://%s:%s%s' % commentProxy(),
+        'imageset' : 'http://%s:8045' % serviceHost,
         }[name]
 
 def jqueryLink(forwardedFor):

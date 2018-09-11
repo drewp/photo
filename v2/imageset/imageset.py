@@ -356,7 +356,16 @@ def main():
         log.info('done updating')
         # schedule updateSorts? maybe they need to schedule themselves
         return 'indexed'
-    
+
+    @route('/created', methods=['GET'])
+    def created(request):
+        def tOut(uri):
+            t = index.byUri[uri]['t']
+            if t is None:
+                return 'None'
+            return t.isoformat()
+        return '\n'.join(tOut(URIRef(uri)) for uri in request.args['uri'])
+        
     @route('/set.json')
     def main(request):
         pairs = []
