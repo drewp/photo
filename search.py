@@ -1,6 +1,6 @@
 import urllib, os, random, datetime, time, logging
 from nevow import rend, loaders, tags as T
-from rdflib import Variable, Literal
+from rdflib import Literal
 from urls import localSite
 from tagging import getTagsWithFreqs, hasTags
 from isodate.isodates import date_isoformat
@@ -121,7 +121,7 @@ def dateHasPics(graph, date):
     rows = graph.queryd("""
                SELECT ?img WHERE {
                  ?img a foaf:Image; dc:date ?d .
-               } LIMIT 1""", initBindings={Variable("d") : dlit})
+               } LIMIT 1""", initBindings={"d" : dlit})
     ret = bool(list(rows))
     if ret:
         _dateHasPics.add(dlit)
