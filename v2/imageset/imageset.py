@@ -209,6 +209,15 @@ class ImageIndex(object):
     def gatherDocs(self, uri):
        
         t1 = time.time()
+        try:
+            doc = self.imageDoc(uri)
+        except Exception, e:
+            log.error("can't index %r: %r", uri, e)
+            return []
+        doc['_docTime'] = time.time() - t1
+        return [doc]
+
+    def imageDoc(self, uri):
         # check image first- maybe it was deleted
         try:
             t = photoCreated(self.graph, uri)
@@ -226,7 +235,7 @@ class ImageIndex(object):
             't': t, # may be none
             'unixTime': unixTime, # always a number, maybe 0
             'isVideo': m.isVideo(),
-            'tags': set(str(lit) for lit in getTagLabels(self.graph, 'todo', uri)),
+            'tags': set(unicode(lit) for lit in getTagLabels(self.graph, 'todo', uri)),
             }
         doc['_docTime'] = time.time() - t1
         return [doc]

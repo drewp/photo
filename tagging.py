@@ -97,7 +97,7 @@ def getTagsWithFreqs(graph):
         return _twf
     freq = {}
     for row in graph.queryd("SELECT ?tag WHERE { ?pic scot:hasTag [ rdfs:label ?tag ] }"):
-        if str(row['tag']) in auth.hiddenTags:
+        if unicode(row['tag']) in auth.hiddenTags:
             continue
         freq[row['tag']] = freq.get(row['tag'], 0) + 1
     _twf = freq

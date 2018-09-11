@@ -153,7 +153,7 @@ def GET_links(request):
 
     for row in relQuery(SCOT.hasTag):
         links.setdefault('withTag', []).append(
-            {'uri' : setUrl(tag=row['label']),
+            {'uri' : setUrl(tag=row['label'].encode('utf8')),
              'label' : row['label']})
 
     alts = findAltRoot(graph, img)
