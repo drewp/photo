@@ -10,7 +10,7 @@ def fitSize(w, h, maxW, maxH):
     
 
 def avprobe(filename):
-    return subprocess.check_output(['/usr/bin/avprobe', filename],
+    return subprocess.check_output(['/usr/bin/ffprobe', filename],
                                    stderr=subprocess.STDOUT)
 
 def videoSize(filename, probe=None):

@@ -54,7 +54,7 @@ def run(inPath, outPath):
     convArgs = _avconvArgs(inPath, outSize, probe, tmpOut)
         
     try:
-        subprocess.check_call(['/usr/bin/avconv'] + convArgs)
+        subprocess.check_call(['/usr/bin/ffmpeg'] + convArgs)
         os.rename(tmpOut, outPath)
     except Exception as e:
         try:
