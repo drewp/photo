@@ -220,7 +220,7 @@ class ImageIndex(object):
     def imageDoc(self, uri):
         # check image first- maybe it was deleted
         try:
-            t = photoCreated(self.graph, uri)
+            t = photoCreated(self.graph, uri, useImageSet=False)
             unixTime = time.mktime(t.timetuple()) # untested
         except ValueError:
             t = None

@@ -45,7 +45,7 @@ def _fromGraphData(graph, uri):
     # todo: this is losing the original tz unnecessarily
     return datetime.datetime.fromtimestamp(sec, tzlocal())
     
-def photoCreated(graph, uri, _cache=None):
+def photoCreated(graph, uri, _cache=None, useImageSet=True):
     """datetime of the photo's creation time. Cached for the life of
     this process"""
 
@@ -60,7 +60,7 @@ def photoCreated(graph, uri, _cache=None):
     else:
         _cache = {}
         
-    ret = _photoCreatedEval(graph, uri)
+    ret = _photoCreatedEval(graph, uri, useImageSet)
     if not ret:
         # also look up the :alternate tree for source images with times
         _cache[str(uri)] = ValueError("can't find a date for %s" % uri)
@@ -70,14 +70,17 @@ def photoCreated(graph, uri, _cache=None):
         _cache[str(uri)] = ret
     return ret
 
-def _photoCreatedEval(graph, uri):
-    try:
-        lines = plainCallSync('todo', 'imageset', '/created?' + urllib.urlencode({'uri': [str(uri)]}, doseq=1))
-    except restkit.errors.RequestFailed:
-        log.warn('imageset/created failed on %s', uri)
-    else:
-        if lines != 'None':
-            return parse(lines)
+def _photoCreatedEval(graph, uri, useImageSet):
+    if useImageSet:
+        try:
+            lines = plainCallSync('todo', 'imageset',
+                                  '/created?' + urllib.urlencode({
+                                      'uri': [str(uri)]}, doseq=1))
+        except restkit.errors.RequestFailed:
+            log.warn('imageset/created failed on %s', uri)
+        else:
+            if lines != 'None':
+                return parse(lines)
 
     ret = _fromBasename(graph, uri)
     if ret:
